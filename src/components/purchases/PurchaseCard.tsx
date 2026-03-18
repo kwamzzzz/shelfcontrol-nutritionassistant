@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrency } from "@/lib/currency";
 import { type PurchaseWithItems, useDeletePurchase } from "@/hooks/usePurchases";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ const PurchaseCard = ({ purchase }: Props) => {
             </div>
             <div className="ml-4 shrink-0 text-right">
               {purchase.total_cost != null && purchase.total_cost > 0 && (
-                <span className="text-sm font-semibold text-foreground">${Number(purchase.total_cost).toFixed(2)}</span>
+                <span className="text-sm font-semibold text-foreground">{formatCurrency(Number(purchase.total_cost))}</span>
               )}
             </div>
           </button>
@@ -79,7 +80,7 @@ const PurchaseCard = ({ purchase }: Props) => {
                       <td className="py-1.5 text-right text-muted-foreground tabular-nums">{pi.quantity}</td>
                       <td className="py-1.5 text-right text-muted-foreground">{pi.unit}</td>
                       <td className="py-1.5 text-right text-foreground tabular-nums font-medium">
-                        {pi.unit_price != null ? `$${Number(pi.unit_price).toFixed(2)}` : "—"}
+                        {pi.unit_price != null ? formatCurrency(Number(pi.unit_price)) : "—"}
                       </td>
                     </tr>
                   ))}

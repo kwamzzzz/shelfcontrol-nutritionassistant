@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { formatCurrency } from "@/lib/currency";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
 import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog";
@@ -30,7 +31,7 @@ const ShoppingList = () => {
           <p className="mt-1 text-muted-foreground">
             {unpurchased.length} item{unpurchased.length !== 1 ? "s" : ""} to buy
             {totalEstimate > 0 && (
-              <span className="ml-1">· est. ${totalEstimate.toFixed(2)}</span>
+              <span className="ml-1">· est. {formatCurrency(totalEstimate)}</span>
             )}
           </p>
         </div>

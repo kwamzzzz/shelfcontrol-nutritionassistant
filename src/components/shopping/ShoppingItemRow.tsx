@@ -1,4 +1,5 @@
 import { type ShoppingItem, useUpdateShoppingItem } from "@/hooks/useShoppingList";
+import { formatCurrency } from "@/lib/currency";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,7 @@ const ShoppingItemRow = ({ item, onClick }: Props) => {
           <span className="font-semibold text-foreground">×{item.quantity}</span>
         )}
         {item.estimated_cost != null && item.estimated_cost > 0 && (
-          <span className="text-muted-foreground">${Number(item.estimated_cost).toFixed(2)}</span>
+          <span className="text-muted-foreground">{formatCurrency(Number(item.estimated_cost))}</span>
         )}
       </div>
     </button>

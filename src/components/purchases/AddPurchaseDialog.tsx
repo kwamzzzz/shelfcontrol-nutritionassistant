@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
+import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";
@@ -254,7 +255,7 @@ const AddPurchaseDialog = () => {
           {totalCost > 0 && (
             <div className="flex justify-between text-sm font-medium text-foreground border-t pt-3">
               <span>Total</span>
-              <span>${totalCost.toFixed(2)}</span>
+              <span>{formatCurrency(totalCost)}</span>
             </div>
           )}
 
