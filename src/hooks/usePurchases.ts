@@ -27,7 +27,7 @@ export type NewPurchaseLineItem = {
   item_id: string;
   quantity: number;
   unit: string;
-  unit_price: number | null;
+  line_total: number | null;
   restock: boolean;
   storage_location?: string;
 };
