@@ -101,8 +101,8 @@ const Dashboard = () => {
       <h1 className="text-3xl font-display font-bold text-foreground">Dashboard</h1>
       <p className="mt-1 text-muted-foreground">Overview of your kitchen at a glance.</p>
 
-      {/* ── Primary stat cards ── */}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      {/* ── Pantry & Spending cards ── */}
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           icon={Package}
           label="Items in Stock"
@@ -122,6 +122,10 @@ const Dashboard = () => {
           value={weekSpend > 0 ? formatCurrency(weekSpend) : "—"}
           sub={`${purchases?.filter((p) => isThisWeek(parseISO(p.purchased_at), { weekStartsOn: 1 })).length ?? 0} trip(s)`}
         />
+      </div>
+
+      {/* ── Today's nutrition cards ── */}
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           icon={Flame}
           label="Calories Today"
@@ -132,6 +136,11 @@ const Dashboard = () => {
           icon={Beef}
           label="Protein Today"
           value={todayNutrition.protein > 0 ? `${todayNutrition.protein.toFixed(0)}g` : "—"}
+        />
+        <StatCard
+          icon={Wheat}
+          label="Carbs Today"
+          value={todayNutrition.carbs > 0 ? `${todayNutrition.carbs.toFixed(0)}g` : "—"}
         />
         <StatCard
           icon={Droplets}
