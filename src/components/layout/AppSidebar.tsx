@@ -17,6 +17,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pantry", label: "Pantry", icon: Package },
   { to: "/shopping", label: "Shopping List", icon: ShoppingCart },
+  { to: "/purchases", label: "Purchases", icon: Receipt },
   { to: "/recipes", label: "Recipes", icon: UtensilsCrossed },
   { to: "/consumption", label: "Consumption", icon: Heart },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
