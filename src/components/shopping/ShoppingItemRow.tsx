@@ -67,7 +67,7 @@ const ShoppingItemRow = ({ item, onClick }: Props) => {
           <span className="text-muted-foreground">{formatCurrency(Number(item.estimated_cost))}</span>
         )}
       </div>
-    </button>
+    </div>
   );
 };
 
