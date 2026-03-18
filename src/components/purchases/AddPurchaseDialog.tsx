@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
-import { useItems, type Item } from "@/hooks/usePantry";
+import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,15 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { UNITS, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import { Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Plus, Trash2, ShoppingBag, Check, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const emptyLine = (): NewPurchaseLineItem => ({
   item_id: "",
   quantity: 1,
   unit: "unit",
-  unit_price: null,
+  line_total: null,
   restock: false,
   storage_location: "",
 });
@@ -27,9 +30,16 @@ const AddPurchaseDialog = () => {
   const [purchasedAt, setPurchasedAt] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<NewPurchaseLineItem[]>([emptyLine()]);
+  const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const { data: items } = useItems();
   const createPurchase = useCreatePurchase();
   const { toast } = useToast();
+
+  const itemMap = useMemo(() => {
+    const map = new Map<string, string>();
+    items?.forEach((i) => map.set(i.id, i.name));
+    return map;
+  }, [items]);
 
   const reset = () => {
     setStoreName("");
@@ -52,10 +62,10 @@ const AddPurchaseDialog = () => {
       item_id: itemId,
       unit: item?.default_unit ?? "unit",
     });
+    setOpenCombobox(null);
   };
 
-  const totalCost = lines.reduce((sum, l) => sum + (l.quantity * (l.unit_price ?? 0)), 0);
-
+  const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
   const validLines = lines.filter((l) => l.item_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,14 +132,42 @@ const AddPurchaseDialog = () => {
                 <div className="flex gap-2">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs">Catalog Item *</Label>
-                    <Select value={line.item_id} onValueChange={(v) => handleItemSelect(idx, v)}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select item" /></SelectTrigger>
-                      <SelectContent>
-                        {items?.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openCombobox === idx} onOpenChange={(v) => setOpenCombobox(v ? idx : null)}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCombobox === idx}
+                          className="h-9 w-full justify-between text-sm font-normal"
+                        >
+                          {line.item_id ? itemMap.get(line.item_id) ?? "Select item" : "Select item..."}
+                          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search items..." className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>No items found.</CommandEmpty>
+                            <CommandGroup>
+                              {items?.map((item) => (
+                                <CommandItem
+                                  key={item.id}
+                                  value={item.name}
+                                  onSelect={() => handleItemSelect(idx, item.id)}
+                                >
+                                  <Check className={cn("mr-2 h-3.5 w-3.5", line.item_id === item.id ? "opacity-100" : "opacity-0")} />
+                                  <span>{item.name}</span>
+                                  {item.category && (
+                                    <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   {lines.length > 1 && (
                     <Button type="button" variant="ghost" size="icon" className="mt-5 h-9 w-9 shrink-0" onClick={() => removeLine(idx)}>
@@ -154,8 +192,8 @@ const AddPurchaseDialog = () => {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Price</Label>
-                    <Input type="number" min={0} step="0.01" className="h-9 text-sm" placeholder="$" value={line.unit_price ?? ""} onChange={(e) => updateLine(idx, { unit_price: e.target.value ? Number(e.target.value) : null })} />
+                    <Label className="text-xs">Line Total</Label>
+                    <Input type="number" min={0} step="0.01" className="h-9 text-sm" placeholder="e.g. 32" value={line.line_total ?? ""} onChange={(e) => updateLine(idx, { line_total: e.target.value ? Number(e.target.value) : null })} />
                   </div>
                 </div>
                 {/* Restock toggle */}

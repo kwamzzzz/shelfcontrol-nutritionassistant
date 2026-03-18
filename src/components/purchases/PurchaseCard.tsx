@@ -69,8 +69,7 @@ const PurchaseCard = ({ purchase }: Props) => {
                     <th className="text-left py-1.5 font-medium">Item</th>
                     <th className="text-right py-1.5 font-medium">Qty</th>
                     <th className="text-right py-1.5 font-medium">Unit</th>
-                    <th className="text-right py-1.5 font-medium">Price</th>
-                    <th className="text-right py-1.5 font-medium">Subtotal</th>
+                    <th className="text-right py-1.5 font-medium">Line Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -79,11 +78,8 @@ const PurchaseCard = ({ purchase }: Props) => {
                       <td className="py-1.5 text-foreground">{pi.items?.name ?? "Unknown"}</td>
                       <td className="py-1.5 text-right text-muted-foreground tabular-nums">{pi.quantity}</td>
                       <td className="py-1.5 text-right text-muted-foreground">{pi.unit}</td>
-                      <td className="py-1.5 text-right text-muted-foreground tabular-nums">
-                        {pi.unit_price != null ? `$${Number(pi.unit_price).toFixed(2)}` : "—"}
-                      </td>
                       <td className="py-1.5 text-right text-foreground tabular-nums font-medium">
-                        {pi.unit_price != null ? `$${(pi.quantity * Number(pi.unit_price)).toFixed(2)}` : "—"}
+                        {pi.unit_price != null ? `$${Number(pi.unit_price).toFixed(2)}` : "—"}
                       </td>
                     </tr>
                   ))}

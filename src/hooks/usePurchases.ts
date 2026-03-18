@@ -65,7 +65,7 @@ export const useCreatePurchase = () => {
           item_id: li.item_id,
           quantity: li.quantity,
           unit: li.unit,
-          unit_price: li.unit_price,
+          unit_price: li.line_total,
         }));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
