@@ -1,12 +1,47 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { useAuth } from "@/hooks/useAuth";
+import AppLayout from "@/components/layout/AppLayout";
+import Dashboard from "@/pages/Dashboard";
+import Pantry from "@/pages/Pantry";
+import ShoppingList from "@/pages/ShoppingList";
+import Recipes from "@/pages/Recipes";
+import Consumption from "@/pages/Consumption";
+import Analytics from "@/pages/Analytics";
+import Auth from "@/pages/Auth";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const ProtectedRoutes = () => {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <AppLayout />;
+};
+
+const AuthRoute = () => {
+  const { session, loading } = useAuth();
+
+  if (loading) return null;
+  if (session) return <Navigate to="/" replace />;
+
+  return <Auth />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -15,8 +50,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<AuthRoute />} />
+          <Route element={<ProtectedRoutes />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/pantry" element={<Pantry />} />
+            <Route path="/shopping" element={<ShoppingList />} />
+            <Route path="/recipes" element={<Recipes />} />
+            <Route path="/consumption" element={<Consumption />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
