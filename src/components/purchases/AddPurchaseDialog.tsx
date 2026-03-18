@@ -139,7 +139,7 @@ const AddPurchaseDialog = () => {
                 <div className="flex gap-2">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs">Catalog Item *</Label>
-                    <Popover open={openCombobox === idx} onOpenChange={(v) => setOpenCombobox(v ? idx : null)}>
+                    <Popover open={openCombobox === idx} onOpenChange={(v) => { setOpenCombobox(v ? idx : null); if (!v) setShowQuickAdd(null); }}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
