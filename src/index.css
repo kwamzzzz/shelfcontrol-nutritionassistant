@@ -105,10 +105,7 @@
     @apply bg-background text-foreground font-sans;
   }
 
-  h1 { @apply font-display; }
-  h2 { @apply font-display; }
-  h3 { @apply font-display; }
-  h4 { @apply font-display; }
-  h5 { @apply font-display; }
-  h6 { @apply font-display; }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+  }
 }
