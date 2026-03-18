@@ -54,7 +54,14 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
       toast({ title: "Deleted", description: `${item.name} removed from catalog.` });
       onClose();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      const isFkError = err.message?.includes("violates foreign key constraint") || err.code === "23503";
+      toast({
+        title: isFkError ? "Cannot delete" : "Error",
+        description: isFkError
+          ? "This item is still used in your pantry. Remove the linked inventory entries first."
+          : err.message,
+        variant: "destructive",
+      });
     }
   };
 
