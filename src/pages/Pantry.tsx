@@ -3,10 +3,10 @@ import { useInventory, type InventoryRow } from "@/hooks/usePantry";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import AddItemDialog from "@/components/pantry/AddItemDialog";
 import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
+import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import { Package, Search } from "lucide-react";
 
 const Pantry = () => {
@@ -35,10 +35,7 @@ const Pantry = () => {
             {inventory?.length ?? 0} items in stock
           </p>
         </div>
-        <div className="flex gap-2">
-          <AddItemDialog />
-          <AddInventoryDialog />
-        </div>
+        <AddInventoryDialog />
       </div>
 
       {/* Filters */}
@@ -99,6 +96,9 @@ const Pantry = () => {
       {editing && (
         <EditInventoryDialog entry={editing} open={!!editing} onClose={() => setEditing(null)} />
       )}
+
+      {/* Item Catalog Management */}
+      <ItemCatalogSection />
     </div>
   );
 };
