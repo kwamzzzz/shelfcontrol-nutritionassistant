@@ -66,7 +66,7 @@ const ShoppingList = () => {
       {/* Purchased items */}
       {purchased.length > 0 && (
         <div className="mt-6">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Purchased ({purchased.length})
           </p>
           <div className="space-y-2">
