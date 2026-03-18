@@ -11,6 +11,7 @@ import ShoppingList from "@/pages/ShoppingList";
 import Recipes from "@/pages/Recipes";
 import Consumption from "@/pages/Consumption";
 import Analytics from "@/pages/Analytics";
+import Purchases from "@/pages/Purchases";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 
