@@ -9,8 +9,17 @@ import AddItemDialog from "./AddItemDialog";
 
 const ItemCatalogSection = () => {
   const { data: items, isLoading } = useItems();
+  const { data: inventory } = useInventory();
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+
+  const inventoryCountByItem = useMemo(() => {
+    const counts: Record<string, number> = {};
+    inventory?.forEach((inv) => {
+      counts[inv.item_id] = (counts[inv.item_id] ?? 0) + 1;
+    });
+    return counts;
+  }, [inventory]);
 
   return (
     <>
