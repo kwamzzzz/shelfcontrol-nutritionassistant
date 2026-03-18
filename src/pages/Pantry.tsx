@@ -3,10 +3,10 @@ import { useInventory, type InventoryRow } from "@/hooks/usePantry";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import AddItemDialog from "@/components/pantry/AddItemDialog";
 import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
+import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import { Package, Search } from "lucide-react";
 
 const Pantry = () => {
