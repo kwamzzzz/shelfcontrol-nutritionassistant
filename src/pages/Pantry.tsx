@@ -96,6 +96,9 @@ const Pantry = () => {
       {editing && (
         <EditInventoryDialog entry={editing} open={!!editing} onClose={() => setEditing(null)} />
       )}
+
+      {/* Item Catalog Management */}
+      <ItemCatalogSection />
     </div>
   );
 };
