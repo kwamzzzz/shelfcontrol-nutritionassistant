@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import QuickAddItemForm from "./QuickAddItemForm";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const AddPurchaseDialog = () => {
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<NewPurchaseLineItem[]>([emptyLine()]);
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
   const { data: items } = useItems();
   const createPurchase = useCreatePurchase();
   const { toast } = useToast();
@@ -63,6 +65,11 @@ const AddPurchaseDialog = () => {
       unit: item?.default_unit ?? "unit",
     });
     setOpenCombobox(null);
+    setShowQuickAdd(null);
+  };
+
+  const handleQuickItemCreated = (idx: number, itemId: string) => {
+    handleItemSelect(idx, itemId);
   };
 
   const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
@@ -132,7 +139,7 @@ const AddPurchaseDialog = () => {
                 <div className="flex gap-2">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs">Catalog Item *</Label>
-                    <Popover open={openCombobox === idx} onOpenChange={(v) => setOpenCombobox(v ? idx : null)}>
+                    <Popover open={openCombobox === idx} onOpenChange={(v) => { setOpenCombobox(v ? idx : null); if (!v) setShowQuickAdd(null); }}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -145,27 +152,49 @@ const AddPurchaseDialog = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search items..." className="h-9" />
-                          <CommandList>
-                            <CommandEmpty>No items found.</CommandEmpty>
-                            <CommandGroup>
-                              {items?.map((item) => (
-                                <CommandItem
-                                  key={item.id}
-                                  value={item.name}
-                                  onSelect={() => handleItemSelect(idx, item.id)}
-                                >
-                                  <Check className={cn("mr-2 h-3.5 w-3.5", line.item_id === item.id ? "opacity-100" : "opacity-0")} />
-                                  <span>{item.name}</span>
-                                  {item.category && (
-                                    <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>
-                                  )}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
+                        {showQuickAdd === idx ? (
+                          <div>
+                            <div className="flex items-center justify-between px-3 pt-2">
+                              <span className="text-xs font-medium text-muted-foreground">New Catalog Item</span>
+                              <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowQuickAdd(null)}>
+                                Back
+                              </Button>
+                            </div>
+                            <QuickAddItemForm onCreated={(id) => handleQuickItemCreated(idx, id)} />
+                          </div>
+                        ) : (
+                          <Command>
+                            <CommandInput placeholder="Search items..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>
+                                <p className="text-sm text-muted-foreground">No items found.</p>
+                                <Button type="button" variant="outline" size="sm" className="mt-2 h-7 text-xs" onClick={() => setShowQuickAdd(idx)}>
+                                  <Plus className="mr-1 h-3 w-3" /> Create new item
+                                </Button>
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {items?.map((item) => (
+                                  <CommandItem
+                                    key={item.id}
+                                    value={item.name}
+                                    onSelect={() => handleItemSelect(idx, item.id)}
+                                  >
+                                    <Check className={cn("mr-2 h-3.5 w-3.5", line.item_id === item.id ? "opacity-100" : "opacity-0")} />
+                                    <span>{item.name}</span>
+                                    {item.category && (
+                                      <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>
+                                    )}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                            <div className="border-t p-1">
+                              <Button type="button" variant="ghost" size="sm" className="w-full h-8 text-xs justify-start" onClick={() => setShowQuickAdd(idx)}>
+                                <Plus className="mr-1.5 h-3 w-3" /> Create new catalog item
+                              </Button>
+                            </div>
+                          </Command>
+                        )}
                       </PopoverContent>
                     </Popover>
                   </div>
