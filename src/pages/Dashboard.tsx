@@ -142,8 +142,8 @@ const Dashboard = () => {
 
       {/* ── Nutrition data warning ── */}
       {todayNutrition.missing > 0 && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 text-sm text-muted-foreground">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-accent bg-accent/10 p-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent-foreground" />
           <span>
             {todayNutrition.missing} of today's {todayNutrition.total} consumed item(s) have no nutrition data.
             Update them in the Pantry catalog for accurate totals.
