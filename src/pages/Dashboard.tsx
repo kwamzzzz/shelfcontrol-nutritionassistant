@@ -26,7 +26,7 @@ const StatCard = ({
   sub?: string;
   accent?: "warning" | "destructive";
 }) => (
-  <div className="rounded-xl border bg-card p-5 shadow-sm">
+  <div className="rounded-xl border bg-card p-4 shadow-sm">
     <div className="flex items-center gap-2 text-muted-foreground">
       <Icon
         className={`h-4 w-4 ${
@@ -39,7 +39,7 @@ const StatCard = ({
       />
       <p className="text-xs font-medium">{label}</p>
     </div>
-    <p className="mt-1 text-2xl font-display font-bold text-foreground tabular-nums">
+    <p className="mt-1 text-xl font-display font-bold text-foreground tabular-nums">
       {value}
     </p>
     {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}

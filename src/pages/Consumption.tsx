@@ -17,7 +17,7 @@ const NutritionCard = ({ icon: Icon, label, value, unit }: { icon: any; label: s
       <Icon className="h-4 w-4" />
       <p className="text-xs font-medium">{label}</p>
     </div>
-    <p className="mt-1 text-2xl font-display font-bold text-foreground tabular-nums">
+    <p className="mt-1 text-xl font-display font-bold text-foreground tabular-nums">
       {value > 0 ? value.toFixed(0) : "—"}
       {value > 0 && <span className="ml-1 text-sm font-normal text-muted-foreground">{unit}</span>}
     </p>

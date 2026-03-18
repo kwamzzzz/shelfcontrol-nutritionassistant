@@ -22,7 +22,7 @@ const Purchases = () => {
         <AddPurchaseDialog />
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-2">
         {isLoading ? (
           <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">Loading...</div>
         ) : !purchases?.length ? (
