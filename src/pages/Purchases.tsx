@@ -1,4 +1,5 @@
 import { usePurchases } from "@/hooks/usePurchases";
+import { formatCurrency } from "@/lib/currency";
 import AddPurchaseDialog from "@/components/purchases/AddPurchaseDialog";
 import PurchaseCard from "@/components/purchases/PurchaseCard";
 import { Receipt } from "lucide-react";
