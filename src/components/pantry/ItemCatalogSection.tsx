@@ -62,6 +62,7 @@ const ItemCatalogSection = () => {
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">P</th>
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">C</th>
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">F</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">In Use</th>
                       <th className="px-4 py-2.5 w-10" />
                     </tr>
                   </thead>
