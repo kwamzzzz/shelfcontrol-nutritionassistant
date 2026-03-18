@@ -89,6 +89,15 @@ const ItemCatalogSection = () => {
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
                           {item.fat_g ?? 0}g
                         </td>
+                        <td className="px-4 py-2.5 text-right">
+                          {inventoryCountByItem[item.id] ? (
+                            <Badge variant="secondary" className="text-xs font-normal">
+                              {inventoryCountByItem[item.id]}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5">
                           <Button
                             variant="ghost"
