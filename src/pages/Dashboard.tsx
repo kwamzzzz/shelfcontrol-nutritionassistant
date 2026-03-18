@@ -134,6 +134,11 @@ const Dashboard = () => {
           value={todayNutrition.protein > 0 ? `${todayNutrition.protein.toFixed(0)}g` : "—"}
         />
         <StatCard
+          icon={Wheat}
+          label="Carbs Today"
+          value={todayNutrition.carbs > 0 ? `${todayNutrition.carbs.toFixed(0)}g` : "—"}
+        />
+        <StatCard
           icon={Droplets}
           label="Fat Today"
           value={todayNutrition.fat > 0 ? `${todayNutrition.fat.toFixed(0)}g` : "—"}
