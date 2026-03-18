@@ -71,6 +71,7 @@ const AppSidebar = () => {
         </button>
       </div>
     </aside>
+    </>
   );
 };
 
