@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useItems, type Item } from "@/hooks/usePantry";
+import { useState, useMemo } from "react";
+import { useItems, useInventory, type Item } from "@/hooks/usePantry";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
