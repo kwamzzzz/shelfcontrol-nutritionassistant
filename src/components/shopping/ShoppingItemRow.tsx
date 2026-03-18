@@ -1,4 +1,5 @@
 import { type ShoppingItem, useUpdateShoppingItem } from "@/hooks/useShoppingList";
+import { formatCurrency } from "@/lib/currency";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
