@@ -11,6 +11,7 @@ import ShoppingList from "@/pages/ShoppingList";
 import Recipes from "@/pages/Recipes";
 import Consumption from "@/pages/Consumption";
 import Analytics from "@/pages/Analytics";
+import Purchases from "@/pages/Purchases";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/pantry" element={<Pantry />} />
             <Route path="/shopping" element={<ShoppingList />} />
+            <Route path="/purchases" element={<Purchases />} />
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/consumption" element={<Consumption />} />
             <Route path="/analytics" element={<Analytics />} />
