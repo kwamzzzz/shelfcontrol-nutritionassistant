@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useItems, type Item } from "@/hooks/usePantry";
+import { useState, useMemo } from "react";
+import { useItems, useInventory, type Item } from "@/hooks/usePantry";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,17 @@ import AddItemDialog from "./AddItemDialog";
 
 const ItemCatalogSection = () => {
   const { data: items, isLoading } = useItems();
+  const { data: inventory } = useInventory();
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+
+  const inventoryCountByItem = useMemo(() => {
+    const counts: Record<string, number> = {};
+    inventory?.forEach((inv) => {
+      counts[inv.item_id] = (counts[inv.item_id] ?? 0) + 1;
+    });
+    return counts;
+  }, [inventory]);
 
   return (
     <>
@@ -53,6 +62,7 @@ const ItemCatalogSection = () => {
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">P</th>
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">C</th>
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">F</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">In Use</th>
                       <th className="px-4 py-2.5 w-10" />
                     </tr>
                   </thead>
@@ -78,6 +88,15 @@ const ItemCatalogSection = () => {
                         </td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
                           {item.fat_g ?? 0}g
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          {inventoryCountByItem[item.id] ? (
+                            <Badge variant="secondary" className="text-xs font-normal">
+                              {inventoryCountByItem[item.id]}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground/40 text-xs">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5">
                           <Button
