@@ -35,10 +35,7 @@ const Pantry = () => {
             {inventory?.length ?? 0} items in stock
           </p>
         </div>
-        <div className="flex gap-2">
-          <AddItemDialog />
-          <AddInventoryDialog />
-        </div>
+        <AddInventoryDialog />
       </div>
 
       {/* Filters */}
