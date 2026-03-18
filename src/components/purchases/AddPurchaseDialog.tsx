@@ -255,7 +255,7 @@ const AddPurchaseDialog = () => {
           {totalCost > 0 && (
             <div className="flex justify-between text-sm font-medium text-foreground border-t pt-3">
               <span>Total</span>
-              <span>${totalCost.toFixed(2)}</span>
+              <span>{formatCurrency(totalCost)}</span>
             </div>
           )}
 
