@@ -19,10 +19,13 @@ const ShoppingItemRow = ({ item, onClick }: Props) => {
   };
 
   return (
-    <button
+    <div
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/30",
+        "flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/30",
         item.is_purchased && "opacity-60"
       )}
     >
@@ -64,7 +67,7 @@ const ShoppingItemRow = ({ item, onClick }: Props) => {
           <span className="text-muted-foreground">{formatCurrency(Number(item.estimated_cost))}</span>
         )}
       </div>
-    </button>
+    </div>
   );
 };
 
