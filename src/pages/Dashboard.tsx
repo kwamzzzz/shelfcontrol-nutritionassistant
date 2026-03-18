@@ -39,7 +39,7 @@ const StatCard = ({
       />
       <p className="text-xs font-medium">{label}</p>
     </div>
-    <p className="mt-1 text-2xl font-display font-bold text-foreground tabular-nums">
+    <p className="mt-1 text-xl font-display font-bold text-foreground tabular-nums">
       {value}
     </p>
     {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}

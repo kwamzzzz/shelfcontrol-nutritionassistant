@@ -147,7 +147,7 @@ const AddShoppingItemDialog = () => {
             </div>
             <div className="space-y-2">
               <Label>Est. Cost</Label>
-              <Input type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="$" />
+              <Input type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
             </div>
           </div>
 
