@@ -55,7 +55,7 @@ const PurchaseCard = ({ purchase }: Props) => {
             </div>
             <div className="ml-4 shrink-0 text-right">
               {purchase.total_cost != null && purchase.total_cost > 0 && (
-                <span className="text-sm font-semibold text-foreground">${Number(purchase.total_cost).toFixed(2)}</span>
+                <span className="text-sm font-semibold text-foreground">{formatCurrency(Number(purchase.total_cost))}</span>
               )}
             </div>
           </button>
