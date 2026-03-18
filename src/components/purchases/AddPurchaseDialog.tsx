@@ -65,6 +65,11 @@ const AddPurchaseDialog = () => {
       unit: item?.default_unit ?? "unit",
     });
     setOpenCombobox(null);
+    setShowQuickAdd(null);
+  };
+
+  const handleQuickItemCreated = (idx: number, itemId: string) => {
+    handleItemSelect(idx, itemId);
   };
 
   const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
