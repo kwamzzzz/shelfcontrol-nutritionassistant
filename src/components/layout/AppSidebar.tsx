@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Receipt,
   UtensilsCrossed,
   Heart,
   BarChart3,
