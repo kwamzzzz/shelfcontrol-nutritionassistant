@@ -31,7 +31,7 @@ const StatCard = ({
       <Icon
         className={`h-4 w-4 ${
           accent === "warning"
-            ? "text-yellow-500"
+            ? "text-accent-foreground"
             : accent === "destructive"
             ? "text-destructive"
             : ""
