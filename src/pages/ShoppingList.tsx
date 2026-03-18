@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { formatCurrency } from "@/lib/currency";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
 import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog";
