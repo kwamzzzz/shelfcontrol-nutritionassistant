@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCurrency } from "@/lib/currency";
 import { type PurchaseWithItems, useDeletePurchase } from "@/hooks/usePurchases";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
