@@ -32,6 +32,7 @@ const AddPurchaseDialog = () => {
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<NewPurchaseLineItem[]>([emptyLine()]);
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
   const { data: items } = useItems();
   const createPurchase = useCreatePurchase();
   const { toast } = useToast();
