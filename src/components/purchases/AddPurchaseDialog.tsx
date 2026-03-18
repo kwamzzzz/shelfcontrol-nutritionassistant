@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
+import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";

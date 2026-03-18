@@ -31,7 +31,7 @@ const ShoppingList = () => {
           <p className="mt-1 text-muted-foreground">
             {unpurchased.length} item{unpurchased.length !== 1 ? "s" : ""} to buy
             {totalEstimate > 0 && (
-              <span className="ml-1">· est. ${totalEstimate.toFixed(2)}</span>
+              <span className="ml-1">· est. {formatCurrency(totalEstimate)}</span>
             )}
           </p>
         </div>

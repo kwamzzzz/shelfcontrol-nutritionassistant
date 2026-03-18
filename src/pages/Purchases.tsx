@@ -16,7 +16,7 @@ const Purchases = () => {
           <h1 className="text-3xl font-display font-bold text-foreground">Purchases</h1>
           <p className="mt-1 text-muted-foreground">
             {purchases?.length ?? 0} purchase{(purchases?.length ?? 0) !== 1 ? "s" : ""} recorded
-            {totalSpent > 0 && <span className="ml-1">· ${totalSpent.toFixed(2)} total</span>}
+            {totalSpent > 0 && <span className="ml-1">· {formatCurrency(totalSpent)} total</span>}
           </p>
         </div>
         <AddPurchaseDialog />

@@ -80,7 +80,7 @@ const PurchaseCard = ({ purchase }: Props) => {
                       <td className="py-1.5 text-right text-muted-foreground tabular-nums">{pi.quantity}</td>
                       <td className="py-1.5 text-right text-muted-foreground">{pi.unit}</td>
                       <td className="py-1.5 text-right text-foreground tabular-nums font-medium">
-                        {pi.unit_price != null ? `$${Number(pi.unit_price).toFixed(2)}` : "—"}
+                        {pi.unit_price != null ? formatCurrency(Number(pi.unit_price)) : "—"}
                       </td>
                     </tr>
                   ))}
