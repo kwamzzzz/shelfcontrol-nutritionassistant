@@ -6,7 +6,8 @@ import { getExpiryStatus } from "@/lib/pantry-utils";
 import { formatCurrencyAlways } from "@/lib/currency";
 import {
   parseISO, isThisWeek, isThisMonth, isToday, startOfWeek,
-  differenceInDays, format, formatDistanceToNow,
+  differenceInDays, format, formatDistanceToNow, subDays,
+  startOfDay, isYesterday,
 } from "date-fns";
 
 /* ── Types ── */
@@ -45,6 +46,11 @@ export interface ValueItem {
   proteinPerAed: number;
   calPerAed: number;
   totalSpent: number;
+}
+
+export interface TrendPoint {
+  label: string;
+  value: number;
 }
 
 /* ── Hook ── */
@@ -101,6 +107,44 @@ export const useAnalytics = () => {
       lastStore, lastDate, mostVisited,
     };
   }, [purchases]);
+
+  /* ── Spending Trend (last 7 days) ── */
+  const spendingTrend = useMemo((): TrendPoint[] => {
+    if (!purchases) return [];
+    const now = new Date();
+    const days: TrendPoint[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const day = startOfDay(subDays(now, i));
+      const label = format(day, "EEE");
+      let total = 0;
+      for (const p of purchases) {
+        const pd = startOfDay(parseISO(p.purchased_at));
+        if (pd.getTime() === day.getTime()) total += Number(p.total_cost ?? 0);
+      }
+      days.push({ label, value: total });
+    }
+    return days;
+  }, [purchases]);
+
+  /* ── Consumption Trend (last 7 days calories) ── */
+  const consumptionTrend = useMemo((): TrendPoint[] => {
+    if (!logs) return [];
+    const now = new Date();
+    const days: TrendPoint[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const day = startOfDay(subDays(now, i));
+      const label = format(day, "EEE");
+      let cal = 0;
+      for (const log of logs) {
+        const ld = startOfDay(parseISO(log.consumed_at));
+        if (ld.getTime() === day.getTime()) {
+          cal += Number(log.quantity) * Number(log.items?.calories_per_unit ?? 0);
+        }
+      }
+      days.push({ label, value: Math.round(cal) });
+    }
+    return days;
+  }, [logs]);
 
   /* ── Pantry Health ── */
   const pantry = useMemo(() => {
@@ -276,6 +320,26 @@ export const useAnalytics = () => {
     };
   }, [purchases]);
 
+  /* ── Macro Distribution for donut (pantry) ── */
+  const macroDistribution = useMemo(() => {
+    const total = pantryMacros.protein + pantryMacros.carbs + pantryMacros.fat;
+    if (total === 0) return [];
+    return [
+      { name: "Protein", value: Math.round(pantryMacros.protein), fill: "hsl(142, 50%, 38%)" },
+      { name: "Carbs", value: Math.round(pantryMacros.carbs), fill: "hsl(30, 80%, 56%)" },
+      { name: "Fat", value: Math.round(pantryMacros.fat), fill: "hsl(38, 92%, 50%)" },
+    ];
+  }, [pantryMacros]);
+
+  /* ── Store spend distribution for bar chart ── */
+  const storeChartData = useMemo(() => {
+    return spending.stores.slice(0, 5).map((s) => ({
+      name: s.name.length > 12 ? s.name.slice(0, 12) + "…" : s.name,
+      spend: Math.round(s.total),
+      visits: s.visits,
+    }));
+  }, [spending.stores]);
+
   /* ── Insights ── */
   const insights = useMemo((): Insight[] => {
     const list: Insight[] = [];
@@ -306,10 +370,11 @@ export const useAnalytics = () => {
   }, [pantry, pantryMacros, weekConsumption, todayNutrition, spending, bestValue]);
 
   return {
-    spending, pantry, pantryMacros, todayNutrition, weekConsumption,
+    spending, spendingTrend, consumptionTrend,
+    pantry, pantryMacros, macroDistribution, storeChartData,
+    todayNutrition, weekConsumption,
     recentActivity, topConsumed, topPurchased,
     consumptionVelocity, bestValue, insights,
-    // Raw data pass-through for tabs that need it
     logs, inventory, purchases,
   };
 };
