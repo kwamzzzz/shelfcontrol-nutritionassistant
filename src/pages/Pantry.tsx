@@ -18,14 +18,13 @@ interface StatusGroup {
   label: string;
   icon: React.ReactNode;
   colorClasses: string;
-  borderColor: string;
 }
 
 const STATUS_GROUPS: StatusGroup[] = [
-  { key: "expired", label: "Expired", icon: <AlertTriangle className="h-4 w-4" />, colorClasses: "text-destructive", borderColor: "border-l-destructive" },
-  { key: "expiring", label: "Expiring Soon", icon: <Clock className="h-4 w-4" />, colorClasses: "text-warning", borderColor: "border-l-warning" },
-  { key: "fresh", label: "Fresh", icon: <ShieldCheck className="h-4 w-4" />, colorClasses: "text-success", borderColor: "border-l-success" },
-  { key: "no-date", label: "No Expiry Set", icon: <HelpCircle className="h-4 w-4" />, colorClasses: "text-muted-foreground", borderColor: "border-l-border" },
+  { key: "expired", label: "Expired", icon: <AlertTriangle className="h-4 w-4" />, colorClasses: "text-destructive" },
+  { key: "expiring", label: "Expiring Soon", icon: <Clock className="h-4 w-4" />, colorClasses: "text-warning" },
+  { key: "fresh", label: "Fresh Inventory", icon: <ShieldCheck className="h-4 w-4" />, colorClasses: "text-success" },
+  { key: "no-date", label: "No Expiry Set", icon: <HelpCircle className="h-4 w-4" />, colorClasses: "text-muted-foreground" },
 ];
 
 const Pantry = () => {
@@ -45,21 +44,15 @@ const Pantry = () => {
     });
   }, [inventory, search, filterCategory, filterLocation]);
 
-  // Intelligence strip counts
   const statusCounts = useMemo(() => {
     const counts: Record<ExpiryStatus, number> = { expired: 0, expiring: 0, fresh: 0, "no-date": 0 };
-    (filtered ?? []).forEach((e) => {
-      counts[getExpiryStatus(e.expiry_date)]++;
-    });
+    (filtered ?? []).forEach((e) => { counts[getExpiryStatus(e.expiry_date)]++; });
     return counts;
   }, [filtered]);
 
-  // Grouped items
   const grouped = useMemo(() => {
     const groups: Record<ExpiryStatus, InventoryRow[]> = { expired: [], expiring: [], fresh: [], "no-date": [] };
-    (filtered ?? []).forEach((e) => {
-      groups[getExpiryStatus(e.expiry_date)].push(e);
-    });
+    (filtered ?? []).forEach((e) => { groups[getExpiryStatus(e.expiry_date)].push(e); });
     return groups;
   }, [filtered]);
 
@@ -75,10 +68,8 @@ const Pantry = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Pantry</h1>
-          <p className="mt-1 text-muted-foreground">
-            {inventory?.length ?? 0} items in stock
-          </p>
+          <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
+          <p className="mt-1 text-muted-foreground">{inventory?.length ?? 0} items in stock</p>
         </div>
         <AddInventoryDialog />
       </div>
@@ -105,22 +96,13 @@ const Pantry = () => {
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
+            {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
           </SelectContent>
         </Select>
       </div>
@@ -128,20 +110,13 @@ const Pantry = () => {
       {/* Intelligence Strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {intelligenceCards.map((card) => (
-          <button
-            key={card.key}
-            onClick={() => {/* could filter by status in future */}}
-            className={cn(
-              "rounded-2xl p-4 text-left shadow-sm transition-shadow hover:shadow-md",
-              card.bg
-            )}
-          >
+          <div key={card.key} className={cn("rounded-2xl p-4 shadow-sm", card.bg)}>
             <div className={cn("mb-1", card.accent)}>{card.icon}</div>
-            <p className={cn("text-2xl font-bold tabular-nums", card.accent)}>
+            <p className={cn("text-2xl font-bold tabular-nums font-[Outfit,var(--font-heading),sans-serif]", card.accent)}>
               {statusCounts[card.key]}
             </p>
             <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
-          </button>
+          </div>
         ))}
       </div>
 
@@ -152,34 +127,28 @@ const Pantry = () => {
         <div className="rounded-2xl bg-card p-10 text-center shadow-sm">
           <Package className="mx-auto h-10 w-10 text-muted-foreground/50" />
           <p className="mt-3 text-muted-foreground">
-            {inventory?.length === 0
-              ? "Your pantry is empty. Add a catalog item first, then add it to your pantry."
-              : "No items match your filters."}
+            {inventory?.length === 0 ? "Your pantry is empty. Add a catalog item first, then add it to your pantry." : "No items match your filters."}
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {STATUS_GROUPS.map((group) => {
             const items = grouped[group.key];
             if (items.length === 0) return null;
             return (
               <section key={group.key}>
-                <div className={cn("mb-3 flex items-center gap-2", group.colorClasses)}>
+                <div className={cn("mb-4 flex items-center gap-2", group.colorClasses)}>
                   {group.icon}
-                  <h2 className="text-sm font-semibold uppercase tracking-wide">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide font-[Outfit,var(--font-heading),sans-serif]">
                     {group.label}
                   </h2>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                     {items.length}
                   </span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {items.map((entry) => (
-                    <InventoryCard
-                      key={entry.id}
-                      entry={entry}
-                      onClick={() => setEditing(entry)}
-                    />
+                    <InventoryCard key={entry.id} entry={entry} onClick={() => setEditing(entry)} />
                   ))}
                 </div>
               </section>
@@ -192,7 +161,6 @@ const Pantry = () => {
         <EditInventoryDialog entry={editing} open={!!editing} onClose={() => setEditing(null)} />
       )}
 
-      {/* Item Catalog Management */}
       <ItemCatalogSection />
     </div>
   );
