@@ -1,4 +1,6 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import QuickAddItemForm from "./QuickAddItemForm";
 import { formatCurrency } from "@/lib/currency";
 import { useUpdatePurchase, type PurchaseWithItems, type NewPurchaseLineItem } from "@/hooks/usePurchases";
@@ -24,30 +26,110 @@ interface Props {
   onClose: () => void;
 }
 
+type LinkedInventoryRow = {
+  item_id: string;
+  quantity: number;
+  unit: string;
+  expiry_date: string | null;
+  storage_location: string | null;
+};
+
+const normalizeQty = (value: number | string | null | undefined) => Number(value ?? 0).toString();
+const makeLineKey = (itemId: string, quantity: number, unit: string, expiryDate?: string | null) =>
+  `${itemId}::${normalizeQty(quantity)}::${unit}::${expiryDate ?? ""}`;
+
+const toBaseLine = (pi: PurchaseWithItems["purchase_items"][number]): NewPurchaseLineItem => ({
+  item_id: pi.item_id,
+  quantity: Number(pi.quantity),
+  unit: pi.unit,
+  line_total: pi.unit_price != null ? Number(pi.unit_price) : null,
+  restock: false,
+  storage_location: "",
+  expiry_date: (pi as any).expiry_date ?? "",
+  sealed_status: (pi as any).sealed_status ?? "sealed",
+  opened_date: (pi as any).opened_date ?? "",
+});
+
+const hydrateRestockState = (lines: NewPurchaseLineItem[], linkedInventory: LinkedInventoryRow[]): NewPurchaseLineItem[] => {
+  const buckets = new Map<string, string[]>();
+
+  linkedInventory.forEach((inv) => {
+    const key = makeLineKey(inv.item_id, Number(inv.quantity), inv.unit, inv.expiry_date);
+    const existing = buckets.get(key) ?? [];
+    existing.push(inv.storage_location ?? "");
+    buckets.set(key, existing);
+  });
+
+  return lines.map((line) => {
+    const key = makeLineKey(line.item_id, line.quantity, line.unit, line.expiry_date);
+    const matches = buckets.get(key);
+
+    if (matches && matches.length > 0) {
+      const storageLocation = matches.shift() ?? "";
+      return {
+        ...line,
+        restock: true,
+        storage_location: storageLocation,
+      };
+    }
+
+    return {
+      ...line,
+      restock: false,
+      storage_location: line.storage_location ?? "",
+    };
+  });
+};
+
 const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
   const [storeName, setStoreName] = useState(purchase.store_name ?? "");
   const [purchasedAt, setPurchasedAt] = useState(purchase.purchased_at?.slice(0, 10) ?? "");
   const [notes, setNotes] = useState(purchase.notes ?? "");
-  const [lines, setLines] = useState<NewPurchaseLineItem[]>(
-    purchase.purchase_items?.map((pi) => ({
-      item_id: pi.item_id,
-      quantity: Number(pi.quantity),
-      unit: pi.unit,
-      line_total: pi.unit_price != null ? Number(pi.unit_price) : null,
-      restock: false,
-      storage_location: "",
-      expiry_date: (pi as any).expiry_date ?? "",
-      sealed_status: (pi as any).sealed_status ?? "sealed",
-      opened_date: (pi as any).opened_date ?? "",
-    })) ?? []
-  );
+  const [lines, setLines] = useState<NewPurchaseLineItem[]>(() => purchase.purchase_items?.map(toBaseLine) ?? []);
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
+  const [restockHydrated, setRestockHydrated] = useState(false);
+
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const { data: items } = useItems();
   const updatePurchase = useUpdatePurchase();
   const { toast } = useToast();
+
+  const {
+    data: linkedInventory = [],
+    isLoading: isLoadingLinkedInventory,
+    isError: isLinkedInventoryError,
+  } = useQuery({
+    queryKey: ["purchase-linked-inventory", purchase.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("item_id, quantity, unit, expiry_date, storage_location")
+        .eq("purchase_id", purchase.id);
+
+      if (error) throw error;
+      return (data ?? []) as unknown as LinkedInventoryRow[];
+    },
+    enabled: open && !!purchase.id,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setStoreName(purchase.store_name ?? "");
+    setPurchasedAt(purchase.purchased_at?.slice(0, 10) ?? "");
+    setNotes(purchase.notes ?? "");
+    setLines(purchase.purchase_items?.map(toBaseLine) ?? []);
+    setRestockHydrated(false);
+  }, [open, purchase]);
+
+  useEffect(() => {
+    if (!open || restockHydrated || isLoadingLinkedInventory) return;
+
+    setLines((prev) => hydrateRestockState(prev, linkedInventory));
+    setRestockHydrated(true);
+  }, [open, restockHydrated, isLoadingLinkedInventory, linkedInventory]);
 
   const itemMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -65,12 +147,21 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
 
   const addLine = () => {
     const newLine: NewPurchaseLineItem = {
-      item_id: "", quantity: 1, unit: "Unit", line_total: null, restock: false,
-      storage_location: "", expiry_date: "", sealed_status: "sealed", opened_date: "",
+      item_id: "",
+      quantity: 1,
+      unit: "Unit",
+      line_total: null,
+      restock: false,
+      storage_location: "",
+      expiry_date: "",
+      sealed_status: "sealed",
+      opened_date: "",
     };
+
     setLines((p) => [...p, newLine]);
     const newIdx = lines.length;
     setHighlightIdx(newIdx);
+
     setTimeout(() => {
       lineRefs.current[newIdx]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       setHighlightIdx(null);
@@ -86,10 +177,28 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
 
   const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
   const validLines = lines.filter((l) => l.item_id);
-  const hasRestock = validLines.some((l) => l.restock);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLoadingLinkedInventory || !restockHydrated) {
+      toast({
+        title: "Please wait",
+        description: "Still loading linked pantry restock state for this purchase.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isLinkedInventoryError) {
+      toast({
+        title: "Cannot verify restock state",
+        description: "Could not load linked pantry entries. Please try again before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await updatePurchase.mutateAsync({
         id: purchase.id,
@@ -99,7 +208,8 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
         total_cost: totalCost || null,
         line_items: validLines,
       });
-      toast({ title: "Updated", description: "Purchase updated. Pantry inventory has been reconciled." });
+
+      toast({ title: "Updated", description: "Purchase updated and pantry reconciled." });
       onClose();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -113,12 +223,12 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
           <DialogTitle className="font-display">Edit Purchase</DialogTitle>
         </DialogHeader>
 
-        {/* Reconciliation notice */}
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-foreground">Pantry reconciliation</p>
-            <p>Saving will remove any pantry entries originally restocked from this purchase, then re-create them for items marked "Add to pantry" below. Manually added pantry entries are unaffected.</p>
+            <p>Saving removes pantry entries previously linked to this purchase, then recreates them from lines marked "Add to pantry".</p>
+            {isLoadingLinkedInventory ? <p className="mt-1">Detecting existing restocked lines…</p> : null}
           </div>
         </div>
 
@@ -205,6 +315,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
                     </Button>
                   )}
                 </div>
+
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Qty</Label>
@@ -244,7 +355,6 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
                   )}
                 </div>
 
-                {/* Restock toggle — now available in edit too */}
                 <div className="flex items-center gap-2 pt-1">
                   <Checkbox
                     id={`edit-restock-${idx}`}
@@ -267,6 +377,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
                 </div>
               </div>
             ))}
+
             <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLine}>
               <Plus className="mr-1 h-3 w-3" /> Add Line
             </Button>
@@ -279,7 +390,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={updatePurchase.isPending}>
+          <Button type="submit" className="w-full" disabled={updatePurchase.isPending || isLoadingLinkedInventory || !restockHydrated}>
             <Save className="mr-1.5 h-4 w-4" />
             {updatePurchase.isPending ? "Saving..." : "Update Purchase"}
           </Button>
