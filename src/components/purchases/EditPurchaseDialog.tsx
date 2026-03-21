@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import QuickAddItemForm from "./QuickAddItemForm";
+import ItemDetailsSection, { type ItemOverrides } from "./ItemDetailsSection";
 import { formatCurrency } from "@/lib/currency";
 import { useUpdatePurchase, type PurchaseWithItems, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
+import ItemDetailsSection, { type ItemOverrides } from "./ItemDetailsSection";
 import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
