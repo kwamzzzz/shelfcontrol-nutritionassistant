@@ -1,17 +1,22 @@
 import { useState, useMemo } from "react";
-import { useItems, useInventory, type Item } from "@/hooks/usePantry";
+import { useItems, useInventory, useUpdateItem, type Item } from "@/hooks/usePantry";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronRight, BookOpen, Pencil } from "lucide-react";
 import EditItemDialog from "./EditItemDialog";
 import AddItemDialog from "./AddItemDialog";
+import { useToast } from "@/hooks/use-toast";
 
 const ItemCatalogSection = () => {
   const { data: items, isLoading } = useItems();
   const { data: inventory } = useInventory();
+  const updateItem = useUpdateItem();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: string; value: string } | null>(null);
 
   const inventoryCountByItem = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -20,6 +25,50 @@ const ItemCatalogSection = () => {
     });
     return counts;
   }, [inventory]);
+
+  const handleInlineBlur = async () => {
+    if (!inlineEdit) return;
+    const { id, field, value } = inlineEdit;
+    try {
+      await updateItem.mutateAsync({ id, [field]: value ? Number(value) : 0 });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setInlineEdit(null);
+  };
+
+  const renderNutritionCell = (item: Item, field: "calories_per_unit" | "protein_g" | "carbs_g" | "fat_g", suffix: string = "") => {
+    const val = item[field] ?? 0;
+    const isEditing = inlineEdit?.id === item.id && inlineEdit?.field === field;
+
+    if (isEditing) {
+      return (
+        <Input
+          type="number"
+          min={0}
+          step="any"
+          className="h-7 w-16 text-xs text-right tabular-nums"
+          value={inlineEdit.value}
+          onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
+          onBlur={handleInlineBlur}
+          onKeyDown={(e) => { if (e.key === "Enter") handleInlineBlur(); if (e.key === "Escape") setInlineEdit(null); }}
+          autoFocus
+        />
+      );
+    }
+
+    return (
+      <span
+        className="cursor-pointer hover:text-foreground hover:underline underline-offset-2 transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          setInlineEdit({ id: item.id, field, value: String(val) });
+        }}
+      >
+        {val}{suffix}
+      </span>
+    );
+  };
 
   return (
     <>
@@ -76,18 +125,18 @@ const ItemCatalogSection = () => {
                         <td className="px-4 py-2.5 text-muted-foreground">
                           {item.category ?? <span className="text-muted-foreground/40">—</span>}
                         </td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{item.default_unit ?? "unit"}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{item.default_unit ?? "Unit"}</td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-                          {item.calories_per_unit ?? 0}
+                          {renderNutritionCell(item, "calories_per_unit")}
                         </td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-                          {item.protein_g ?? 0}g
+                          {renderNutritionCell(item, "protein_g", "g")}
                         </td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-                          {item.carbs_g ?? 0}g
+                          {renderNutritionCell(item, "carbs_g", "g")}
                         </td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-                          {item.fat_g ?? 0}g
+                          {renderNutritionCell(item, "fat_g", "g")}
                         </td>
                         <td className="px-4 py-2.5 text-right">
                           {inventoryCountByItem[item.id] ? (
