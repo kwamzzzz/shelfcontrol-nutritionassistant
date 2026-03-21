@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useCreateItem } from "@/hooks/usePantry";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CATEGORIES, UNITS } from "@/lib/pantry-utils";
+import { CATEGORIES } from "@/lib/pantry-utils";
 import { Plus, Loader2 } from "lucide-react";
 
 interface QuickAddItemFormProps {
@@ -15,7 +16,7 @@ interface QuickAddItemFormProps {
 const QuickAddItemForm = ({ initialName = "", onCreated }: QuickAddItemFormProps) => {
   const [name, setName] = useState(initialName);
   const [category, setCategory] = useState("");
-  const [defaultUnit, setDefaultUnit] = useState("unit");
+  const [defaultUnit, setDefaultUnit] = useState("Unit");
   const createItem = useCreateItem();
 
   const handleSubmit = async () => {
@@ -53,16 +54,7 @@ const QuickAddItemForm = ({ initialName = "", onCreated }: QuickAddItemFormProps
             ))}
           </SelectContent>
         </Select>
-        <Select value={defaultUnit} onValueChange={setDefaultUnit}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {UNITS.map((u) => (
-              <SelectItem key={u} value={u}>{u}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <GroupedUnitSelect value={defaultUnit} onValueChange={setDefaultUnit} triggerClassName="h-8 text-xs" />
       </div>
       <Button
         type="button"
