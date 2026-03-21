@@ -62,6 +62,7 @@ export type Database = {
           expiry_date: string | null
           id: string
           item_id: string
+          purchase_id: string | null
           quantity: number
           storage_location: string | null
           unit: string
@@ -72,6 +73,7 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           item_id: string
+          purchase_id?: string | null
           quantity?: number
           storage_location?: string | null
           unit?: string
@@ -82,6 +84,7 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           item_id?: string
+          purchase_id?: string | null
           quantity?: number
           storage_location?: string | null
           unit?: string
@@ -93,6 +96,13 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
             referencedColumns: ["id"]
           },
         ]

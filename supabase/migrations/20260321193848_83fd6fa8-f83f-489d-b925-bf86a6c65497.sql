@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS purchase_id uuid REFERENCES public.purchases(id) ON DELETE SET NULL;
