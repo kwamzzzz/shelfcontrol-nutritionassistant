@@ -270,6 +270,15 @@ const AddPurchaseDialog = () => {
                   )}
                 </div>
 
+                {/* Item details enrichment */}
+                {line.item_id && (
+                  <ItemDetailsSection
+                    item={items?.find((i) => i.id === line.item_id)}
+                    overrides={line.itemOverrides ?? {}}
+                    onChange={(patch) => updateLine(idx, { itemOverrides: { ...(line.itemOverrides ?? {}), ...patch } })}
+                  />
+                )}
+
                 {/* Restock toggle */}
                 <div className="flex items-center gap-2 pt-1">
                   <Checkbox
