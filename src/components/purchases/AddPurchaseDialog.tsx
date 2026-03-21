@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
+import ItemDetailsSection, { type ItemOverrides } from "./ItemDetailsSection";
 import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
@@ -268,6 +269,15 @@ const AddPurchaseDialog = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Item details enrichment */}
+                {line.item_id && (
+                  <ItemDetailsSection
+                    item={items?.find((i) => i.id === line.item_id)}
+                    overrides={line.itemOverrides ?? {}}
+                    onChange={(patch) => updateLine(idx, { itemOverrides: { ...(line.itemOverrides ?? {}), ...patch } })}
+                  />
+                )}
 
                 {/* Restock toggle */}
                 <div className="flex items-center gap-2 pt-1">

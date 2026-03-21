@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import QuickAddItemForm from "./QuickAddItemForm";
+import ItemDetailsSection, { type ItemOverrides } from "./ItemDetailsSection";
 import { formatCurrency } from "@/lib/currency";
 import { useUpdatePurchase, type PurchaseWithItems, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
@@ -354,6 +355,15 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
                     </div>
                   )}
                 </div>
+
+                {/* Item details enrichment */}
+                {line.item_id && (
+                  <ItemDetailsSection
+                    item={items?.find((i) => i.id === line.item_id)}
+                    overrides={line.itemOverrides ?? {}}
+                    onChange={(patch) => updateLine(idx, { itemOverrides: { ...(line.itemOverrides ?? {}), ...patch } })}
+                  />
+                )}
 
                 <div className="flex items-center gap-2 pt-1">
                   <Checkbox

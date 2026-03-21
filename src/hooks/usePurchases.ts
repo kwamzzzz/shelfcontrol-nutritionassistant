@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import type { ItemOverrides } from "@/components/purchases/ItemDetailsSection";
 
 export type Purchase = Tables<"purchases">;
 export type PurchaseItem = Tables<"purchase_items"> & { items: Tables<"items"> };
@@ -33,6 +34,26 @@ export type NewPurchaseLineItem = {
   expiry_date?: string;
   sealed_status?: string;
   opened_date?: string;
+  itemOverrides?: ItemOverrides;
+};
+
+const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
+  const itemsWithOverrides = lineItems.filter(
+    (li) => li.itemOverrides && Object.values(li.itemOverrides).some((v) => v !== undefined)
+  );
+  for (const li of itemsWithOverrides) {
+    const o = li.itemOverrides!;
+    const update: Record<string, unknown> = {};
+    if (o.brand !== undefined) update.brand = o.brand || null;
+    if (o.category !== undefined) update.category = o.category || null;
+    if (o.calories_per_unit !== undefined) update.calories_per_unit = o.calories_per_unit ?? 0;
+    if (o.protein_g !== undefined) update.protein_g = o.protein_g ?? 0;
+    if (o.carbs_g !== undefined) update.carbs_g = o.carbs_g ?? 0;
+    if (o.fat_g !== undefined) update.fat_g = o.fat_g ?? 0;
+    if (Object.keys(update).length > 0) {
+      await supabase.from("items").update(update).eq("id", li.item_id);
+    }
+  }
 };
 
 export const useCreatePurchase = () => {
@@ -89,6 +110,8 @@ export const useCreatePurchase = () => {
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
+        // Update catalog item overrides (brand, nutrition)
+        await updateItemOverrides(input.line_items);
       }
 
       return purchase;
@@ -96,6 +119,7 @@ export const useCreatePurchase = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
 };
@@ -163,11 +187,15 @@ export const useUpdatePurchase = () => {
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
+
+        // 6. Update catalog item overrides (brand, nutrition)
+        await updateItemOverrides(input.line_items);
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
 };
