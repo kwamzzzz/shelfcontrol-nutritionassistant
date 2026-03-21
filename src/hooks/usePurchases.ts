@@ -46,7 +46,6 @@ export const useCreatePurchase = () => {
       total_cost: number | null;
       line_items: NewPurchaseLineItem[];
     }) => {
-      // 1. Create the purchase record
       const { data: purchase, error: pErr } = await supabase
         .from("purchases")
         .insert({
@@ -60,7 +59,6 @@ export const useCreatePurchase = () => {
         .single();
       if (pErr) throw pErr;
 
-      // 2. Create line items
       if (input.line_items.length > 0) {
         const lineRows = input.line_items.map((li) => ({
           user_id: user!.id,
@@ -76,7 +74,7 @@ export const useCreatePurchase = () => {
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        // 3. Optional restock — add to inventory with expiry data
+        // Restock — add to inventory with purchase_id for reconciliation
         const restockItems = input.line_items.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
@@ -86,6 +84,7 @@ export const useCreatePurchase = () => {
             unit: li.unit,
             storage_location: li.storage_location || null,
             expiry_date: li.expiry_date || null,
+            purchase_id: purchase.id,
           }));
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
@@ -113,7 +112,7 @@ export const useUpdatePurchase = () => {
       total_cost: number | null;
       line_items: NewPurchaseLineItem[];
     }) => {
-      // Update the purchase record
+      // 1. Update the purchase record
       const { error: pErr } = await supabase
         .from("purchases")
         .update({
@@ -125,10 +124,15 @@ export const useUpdatePurchase = () => {
         .eq("id", input.id);
       if (pErr) throw pErr;
 
-      // Delete old line items and insert new ones
+      // 2. Delete old line items and insert new ones
       const { error: dErr } = await supabase.from("purchase_items").delete().eq("purchase_id", input.id);
       if (dErr) throw dErr;
 
+      // 3. Delete old inventory entries linked to this purchase (reconciliation)
+      const { error: invDelErr } = await supabase.from("inventory").delete().eq("purchase_id", input.id);
+      if (invDelErr) throw invDelErr;
+
+      // 4. Insert updated line items
       if (input.line_items.length > 0) {
         const lineRows = input.line_items.map((li) => ({
           user_id: user!.id,
@@ -143,10 +147,27 @@ export const useUpdatePurchase = () => {
         }));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
+
+        // 5. Re-create inventory for restocked items
+        const restockItems = input.line_items.filter((li) => li.restock);
+        if (restockItems.length > 0) {
+          const inventoryRows = restockItems.map((li) => ({
+            user_id: user!.id,
+            item_id: li.item_id,
+            quantity: li.quantity,
+            unit: li.unit,
+            storage_location: li.storage_location || null,
+            expiry_date: li.expiry_date || null,
+            purchase_id: input.id,
+          }));
+          const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
+          if (invErr) throw invErr;
+        }
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 };
@@ -155,7 +176,6 @@ export const useDeletePurchase = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Delete line items first, then purchase
       const { error: liErr } = await supabase.from("purchase_items").delete().eq("purchase_id", id);
       if (liErr) throw liErr;
       const { error } = await supabase.from("purchases").delete().eq("id", id);

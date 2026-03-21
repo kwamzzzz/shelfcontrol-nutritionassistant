@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const AddItemDialog = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
   const [defaultUnit, setDefaultUnit] = useState("Unit");
   const [calories, setCalories] = useState("");
@@ -23,13 +24,8 @@ const AddItemDialog = () => {
   const { toast } = useToast();
 
   const reset = () => {
-    setName("");
-    setCategory("");
-    setDefaultUnit("Unit");
-    setCalories("");
-    setProtein("");
-    setCarbs("");
-    setFat("");
+    setName(""); setBrand(""); setCategory(""); setDefaultUnit("Unit");
+    setCalories(""); setProtein(""); setCarbs(""); setFat("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +33,7 @@ const AddItemDialog = () => {
     try {
       await createItem.mutateAsync({
         name,
+        brand: brand || null,
         category: category || null,
         default_unit: defaultUnit,
         calories_per_unit: calories ? Number(calories) : 0,
@@ -65,9 +62,15 @@ const AddItemDialog = () => {
           <DialogTitle className="font-display">Add Catalog Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Chicken Breast" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Chicken Breast" />
+            </div>
+            <div className="space-y-2">
+              <Label>Brand</Label>
+              <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Al Ain" />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
