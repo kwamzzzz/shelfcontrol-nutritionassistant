@@ -119,6 +119,7 @@ export const useCreatePurchase = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
 };
