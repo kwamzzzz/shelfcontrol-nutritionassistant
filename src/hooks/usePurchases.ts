@@ -187,11 +187,15 @@ export const useUpdatePurchase = () => {
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
+
+        // 6. Update catalog item overrides (brand, nutrition)
+        await updateItemOverrides(input.line_items);
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
 };
