@@ -42,15 +42,50 @@ export const STORAGE_LOCATIONS = [
   "Other",
 ] as const;
 
-export const UNITS = [
-  "unit",
-  "g",
-  "kg",
-  "ml",
-  "L",
-  "oz",
-  "lb",
-  "cup",
-  "tbsp",
-  "tsp",
-] as const;
+/* ── Grouped Unit System ─────────────────────────── */
+
+export interface UnitGroup {
+  label: string;
+  units: string[];
+}
+
+export const UNIT_GROUPS: UnitGroup[] = [
+  {
+    label: "Count",
+    units: ["Piece", "Item", "Unit", "Slice", "Portion", "Serving", "Pack", "Packet", "Sachet", "Stick"],
+  },
+  {
+    label: "Cooking Measures",
+    units: ["Pinch", "Dash", "Drop", "tsp", "tbsp", "Dessert spoon", "Scoop", "Ladle"],
+  },
+  {
+    label: "Volume",
+    units: ["ml", "L", "fl oz", "Cup", "Pint", "Quart", "Gallon"],
+  },
+  {
+    label: "Weight",
+    units: ["mg", "g", "kg", "oz", "lb", "Tonne"],
+  },
+  {
+    label: "Packaging",
+    units: ["Box", "Carton", "Bottle", "Can", "Jar", "Tub", "Tray", "Bag", "Pouch", "Container", "Crate", "Case"],
+  },
+  {
+    label: "Food-Specific",
+    units: ["Loaf", "Fillet", "Clove", "Head", "Bunch", "Stalk", "Ear", "Block", "Cube"],
+  },
+  {
+    label: "Bulk / Retail",
+    units: ["Bundle", "Dozen", "Half-dozen", "Score", "Pair", "Set", "Lot"],
+  },
+  {
+    label: "Prepared / Serving",
+    units: ["Plate", "Bowl", "Glass", "Cup (serving)", "Meal"],
+  },
+];
+
+/** Flat list of all units for compatibility */
+export const UNITS: string[] = UNIT_GROUPS.flatMap((g) => g.units);
+
+export const SEALED_STATUS_OPTIONS = ["sealed", "opened"] as const;
+export type SealedStatus = (typeof SEALED_STATUS_OPTIONS)[number];
