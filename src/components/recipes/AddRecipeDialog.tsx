@@ -2,15 +2,14 @@ import { useState, useMemo } from "react";
 import { useCreateRecipe, type NewIngredientLine } from "@/hooks/useRecipes";
 import { useItems } from "@/hooks/usePantry";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { UNITS } from "@/lib/pantry-utils";
 import { Plus, Trash2, Check, ChevronsUpDown, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ import { cn } from "@/lib/utils";
 const emptyIngredient = (): NewIngredientLine => ({
   item_id: "",
   quantity: 1,
-  unit: "unit",
+  unit: "Unit",
 });
 
 const AddRecipeDialog = () => {
@@ -54,7 +53,7 @@ const AddRecipeDialog = () => {
 
   const handleItemSelect = (idx: number, itemId: string) => {
     const item = items?.find((i) => i.id === itemId);
-    updateIng(idx, { item_id: itemId, unit: item?.default_unit ?? "unit" });
+    updateIng(idx, { item_id: itemId, unit: item?.default_unit ?? "Unit" });
     setOpenCombobox(null);
     setShowQuickAdd(null);
   };
@@ -115,9 +114,6 @@ const AddRecipeDialog = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ingredients</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => setIngredients((p) => [...p, emptyIngredient()])}>
-                <Plus className="mr-1 h-3 w-3" /> Add
-              </Button>
             </div>
             {ingredients.map((ing, idx) => (
               <div key={idx} className="rounded-lg border bg-muted/30 p-3 space-y-2">
@@ -183,16 +179,14 @@ const AddRecipeDialog = () => {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Unit</Label>
-                    <Select value={ing.unit} onValueChange={(v) => updateIng(idx, { unit: v })}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <GroupedUnitSelect value={ing.unit} onValueChange={(v) => updateIng(idx, { unit: v })} triggerClassName="h-9 text-sm" />
                   </div>
                 </div>
               </div>
             ))}
+            <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setIngredients((p) => [...p, emptyIngredient()])}>
+              <Plus className="mr-1 h-3 w-3" /> Add Ingredient
+            </Button>
           </div>
 
           <Button type="submit" className="w-full" disabled={createRecipe.isPending}>

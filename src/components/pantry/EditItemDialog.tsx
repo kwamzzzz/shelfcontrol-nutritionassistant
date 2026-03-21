@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { type Item, useUpdateItem, useDeleteItem } from "@/hooks/usePantry";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { CATEGORIES, UNITS } from "@/lib/pantry-utils";
+import { CATEGORIES } from "@/lib/pantry-utils";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,7 +20,7 @@ interface Props {
 const EditItemDialog = ({ item, open, onClose }: Props) => {
   const [name, setName] = useState(item.name);
   const [category, setCategory] = useState(item.category ?? "");
-  const [defaultUnit, setDefaultUnit] = useState(item.default_unit ?? "unit");
+  const [defaultUnit, setDefaultUnit] = useState(item.default_unit ?? "Unit");
   const [calories, setCalories] = useState(String(item.calories_per_unit ?? 0));
   const [protein, setProtein] = useState(String(item.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(item.carbs_g ?? 0));
@@ -90,14 +91,7 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
             </div>
             <div className="space-y-2">
               <Label>Default Unit</Label>
-              <Select value={defaultUnit} onValueChange={setDefaultUnit}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNITS.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <GroupedUnitSelect value={defaultUnit} onValueChange={setDefaultUnit} />
             </div>
           </div>
           <div className="space-y-2">

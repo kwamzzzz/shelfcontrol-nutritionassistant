@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useCreateItem } from "@/hooks/usePantry";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CATEGORIES, UNITS } from "@/lib/pantry-utils";
+import { CATEGORIES } from "@/lib/pantry-utils";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +14,7 @@ const AddItemDialog = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
-  const [defaultUnit, setDefaultUnit] = useState("unit");
+  const [defaultUnit, setDefaultUnit] = useState("Unit");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
@@ -24,7 +25,7 @@ const AddItemDialog = () => {
   const reset = () => {
     setName("");
     setCategory("");
-    setDefaultUnit("unit");
+    setDefaultUnit("Unit");
     setCalories("");
     setProtein("");
     setCarbs("");
@@ -82,14 +83,7 @@ const AddItemDialog = () => {
             </div>
             <div className="space-y-2">
               <Label>Default Unit</Label>
-              <Select value={defaultUnit} onValueChange={setDefaultUnit}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNITS.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <GroupedUnitSelect value={defaultUnit} onValueChange={setDefaultUnit} />
             </div>
           </div>
           <div className="space-y-2">
