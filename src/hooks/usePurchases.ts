@@ -110,6 +110,8 @@ export const useCreatePurchase = () => {
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
+        // Update catalog item overrides (brand, nutrition)
+        await updateItemOverrides(input.line_items);
       }
 
       return purchase;
