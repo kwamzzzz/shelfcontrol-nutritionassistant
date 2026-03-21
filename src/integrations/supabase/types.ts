@@ -19,24 +19,33 @@ export type Database = {
           consumed_at: string
           id: string
           item_id: string
+          meal_type: string | null
+          note: string | null
           quantity: number
           recipe_id: string | null
+          unit: string | null
           user_id: string
         }
         Insert: {
           consumed_at?: string
           id?: string
           item_id: string
+          meal_type?: string | null
+          note?: string | null
           quantity?: number
           recipe_id?: string | null
+          unit?: string | null
           user_id: string
         }
         Update: {
           consumed_at?: string
           id?: string
           item_id?: string
+          meal_type?: string | null
+          note?: string | null
           quantity?: number
           recipe_id?: string | null
+          unit?: string | null
           user_id?: string
         }
         Relationships: [
@@ -62,8 +71,10 @@ export type Database = {
           expiry_date: string | null
           id: string
           item_id: string
+          opened_date: string | null
           purchase_id: string | null
           quantity: number
+          sealed_status: string | null
           storage_location: string | null
           unit: string
           user_id: string
@@ -73,8 +84,10 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           item_id: string
+          opened_date?: string | null
           purchase_id?: string | null
           quantity?: number
+          sealed_status?: string | null
           storage_location?: string | null
           unit?: string
           user_id: string
@@ -84,8 +97,10 @@ export type Database = {
           expiry_date?: string | null
           id?: string
           item_id?: string
+          opened_date?: string | null
           purchase_id?: string | null
           quantity?: number
+          sealed_status?: string | null
           storage_location?: string | null
           unit?: string
           user_id?: string
@@ -116,9 +131,14 @@ export type Database = {
           created_at: string
           default_unit: string | null
           fat_g: number | null
+          fiber_g: number | null
           id: string
           name: string
+          nutrition_basis: string | null
           protein_g: number | null
+          serving_size: string | null
+          sodium_mg: number | null
+          sugar_g: number | null
           user_id: string
         }
         Insert: {
@@ -129,9 +149,14 @@ export type Database = {
           created_at?: string
           default_unit?: string | null
           fat_g?: number | null
+          fiber_g?: number | null
           id?: string
           name: string
+          nutrition_basis?: string | null
           protein_g?: number | null
+          serving_size?: string | null
+          sodium_mg?: number | null
+          sugar_g?: number | null
           user_id: string
         }
         Update: {
@@ -142,9 +167,14 @@ export type Database = {
           created_at?: string
           default_unit?: string | null
           fat_g?: number | null
+          fiber_g?: number | null
           id?: string
           name?: string
+          nutrition_basis?: string | null
           protein_g?: number | null
+          serving_size?: string | null
+          sodium_mg?: number | null
+          sugar_g?: number | null
           user_id?: string
         }
         Relationships: []
@@ -360,6 +390,67 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waste_logs: {
+        Row: {
+          discarded_at: string
+          id: string
+          inventory_id: string | null
+          item_id: string
+          note: string | null
+          purchase_id: string | null
+          quantity: number
+          reason: string | null
+          unit: string
+          user_id: string
+        }
+        Insert: {
+          discarded_at?: string
+          id?: string
+          inventory_id?: string | null
+          item_id: string
+          note?: string | null
+          purchase_id?: string | null
+          quantity?: number
+          reason?: string | null
+          unit?: string
+          user_id: string
+        }
+        Update: {
+          discarded_at?: string
+          id?: string
+          inventory_id?: string | null
+          item_id?: string
+          note?: string | null
+          purchase_id?: string | null
+          quantity?: number
+          reason?: string | null
+          unit?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_logs_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_logs_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
             referencedColumns: ["id"]
           },
         ]
