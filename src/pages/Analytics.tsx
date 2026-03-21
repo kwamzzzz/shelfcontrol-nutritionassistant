@@ -6,9 +6,9 @@ import { formatCurrency } from "@/lib/currency";
 import { getExpiryStatus } from "@/lib/pantry-utils";
 import {
   Package, AlertTriangle, ShoppingBag, Flame, Beef, TrendingUp,
-  Store, Utensils, Info, BarChart3, Clock,
+  Store, Utensils, Info, BarChart3, Clock, MapPin, Calendar,
 } from "lucide-react";
-import { parseISO, isThisWeek, isThisMonth, startOfWeek, differenceInDays } from "date-fns";
+import { parseISO, isThisWeek, isThisMonth, startOfWeek, differenceInDays, format } from "date-fns";
 
 /* ── Stat Card ── */
 const StatCard = ({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) => (
@@ -53,21 +53,38 @@ const Analytics = () => {
 
   /* ── A. Spending ── */
   const spending = useMemo(() => {
-    if (!purchases) return { monthTotal: 0, weekTotal: 0, monthTrips: 0, byStore: [] as { name: string; total: number }[] };
+    if (!purchases) return {
+      monthTotal: 0, weekTotal: 0, monthTrips: 0,
+      byStore: [] as { name: string; total: number; visits: number }[],
+      uniqueStores: 0, avgPerTrip: 0, lastStore: "", lastDate: "",
+      mostVisited: "",
+    };
 
     let monthTotal = 0;
     let weekTotal = 0;
     let monthTrips = 0;
-    const storeMap = new Map<string, number>();
+    const storeMap = new Map<string, { total: number; visits: number }>();
+    let lastStore = "";
+    let lastDate = "";
 
     for (const p of purchases) {
       const d = parseISO(p.purchased_at);
       const cost = Number(p.total_cost ?? 0);
+
+      // Track last purchase (already sorted desc)
+      if (!lastStore && p.store_name) {
+        lastStore = p.store_name;
+        lastDate = format(d, "MMM d, yyyy");
+      }
+
       if (isThisMonth(d)) {
         monthTotal += cost;
         monthTrips++;
         const store = p.store_name || "Unknown";
-        storeMap.set(store, (storeMap.get(store) ?? 0) + cost);
+        const existing = storeMap.get(store) ?? { total: 0, visits: 0 };
+        existing.total += cost;
+        existing.visits++;
+        storeMap.set(store, existing);
       }
       if (isThisWeek(d, { weekStartsOn: 1 })) {
         weekTotal += cost;
@@ -75,11 +92,20 @@ const Analytics = () => {
     }
 
     const byStore = Array.from(storeMap.entries())
-      .map(([name, total]) => ({ name, total }))
+      .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
 
-    return { monthTotal, weekTotal, monthTrips, byStore };
+    const mostVisited = byStore.length > 0
+      ? [...byStore].sort((a, b) => b.visits - a.visits)[0].name
+      : "";
+
+    return {
+      monthTotal, weekTotal, monthTrips, byStore,
+      uniqueStores: storeMap.size,
+      avgPerTrip: monthTrips > 0 ? monthTotal / monthTrips : 0,
+      lastStore, lastDate, mostVisited,
+    };
   }, [purchases]);
 
   /* ── B. Pantry Health ── */
@@ -173,21 +199,67 @@ const Analytics = () => {
             value={spending.weekTotal > 0 ? formatCurrency(spending.weekTotal) : "—"}
           />
           <StatCard
-            icon={Store}
-            label="Trips This Month"
-            value={spending.monthTrips}
+            icon={ShoppingBag}
+            label="Avg per Trip"
+            value={spending.avgPerTrip > 0 ? formatCurrency(spending.avgPerTrip) : "—"}
+            sub={`${spending.monthTrips} trip(s) this month`}
           />
         </div>
+
+        {/* Shopping Footprint */}
+        <div className="mt-3 rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Shopping Footprint</p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Trips this month</p>
+              <p className="font-medium text-foreground">{spending.monthTrips}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Stores visited</p>
+              <p className="font-medium text-foreground">{spending.uniqueStores}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Most visited</p>
+              <p className="font-medium text-foreground truncate">{spending.mostVisited || "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Last shopped</p>
+              <p className="font-medium text-foreground truncate">
+                {spending.lastStore ? `${spending.lastStore} · ${spending.lastDate}` : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Store-level analytics */}
         {spending.byStore.length > 0 && (
           <div className="mt-3 rounded-xl border bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Spend by Store (this month)</p>
-            <div className="space-y-1.5">
-              {spending.byStore.map((s) => (
-                <div key={s.name} className="flex items-center justify-between text-sm">
-                  <span className="text-foreground truncate">{s.name}</span>
-                  <span className="shrink-0 text-foreground font-medium tabular-nums">{formatCurrency(s.total)}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-2 mb-3">
+              <Store className="h-4 w-4 text-muted-foreground" />
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Store Breakdown (this month)</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground">
+                    <th className="text-left py-1.5 font-medium">Store</th>
+                    <th className="text-right py-1.5 font-medium">Visits</th>
+                    <th className="text-right py-1.5 font-medium">Total Spend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {spending.byStore.map((s) => (
+                    <tr key={s.name} className="border-t border-border/50">
+                      <td className="py-1.5 text-foreground">{s.name}</td>
+                      <td className="py-1.5 text-right text-muted-foreground tabular-nums">{s.visits}</td>
+                      <td className="py-1.5 text-right text-foreground font-medium tabular-nums">{formatCurrency(s.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
