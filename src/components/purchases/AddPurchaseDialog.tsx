@@ -245,7 +245,7 @@ const AddPurchaseDialog = () => {
                 </div>
 
                 {/* Expiry & sealed row */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-[1.4fr_1fr_1.4fr] gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Expiry Date</Label>
                     <Input type="date" className="h-9 text-sm" value={line.expiry_date ?? ""} onChange={(e) => updateLine(idx, { expiry_date: e.target.value })} />
