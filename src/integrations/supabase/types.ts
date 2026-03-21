@@ -99,6 +99,7 @@ export type Database = {
       }
       items: {
         Row: {
+          brand: string | null
           calories_per_unit: number | null
           carbs_g: number | null
           category: string | null
@@ -111,6 +112,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          brand?: string | null
           calories_per_unit?: number | null
           carbs_g?: number | null
           category?: string | null
@@ -123,6 +125,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          brand?: string | null
           calories_per_unit?: number | null
           carbs_g?: number | null
           category?: string | null
@@ -159,28 +162,37 @@ export type Database = {
       }
       purchase_items: {
         Row: {
+          expiry_date: string | null
           id: string
           item_id: string
+          opened_date: string | null
           purchase_id: string
           quantity: number
+          sealed_status: string | null
           unit: string
           unit_price: number | null
           user_id: string
         }
         Insert: {
+          expiry_date?: string | null
           id?: string
           item_id: string
+          opened_date?: string | null
           purchase_id: string
           quantity?: number
+          sealed_status?: string | null
           unit?: string
           unit_price?: number | null
           user_id: string
         }
         Update: {
+          expiry_date?: string | null
           id?: string
           item_id?: string
+          opened_date?: string | null
           purchase_id?: string
           quantity?: number
+          sealed_status?: string | null
           unit?: string
           unit_price?: number | null
           user_id?: string
