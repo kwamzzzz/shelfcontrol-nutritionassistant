@@ -37,7 +37,26 @@ export type NewPurchaseLineItem = {
   itemOverrides?: ItemOverrides;
 };
 
-export const useCreatePurchase = () => {
+const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
+  const itemsWithOverrides = lineItems.filter(
+    (li) => li.itemOverrides && Object.values(li.itemOverrides).some((v) => v !== undefined)
+  );
+  for (const li of itemsWithOverrides) {
+    const o = li.itemOverrides!;
+    const update: Record<string, unknown> = {};
+    if (o.brand !== undefined) update.brand = o.brand || null;
+    if (o.category !== undefined) update.category = o.category || null;
+    if (o.calories_per_unit !== undefined) update.calories_per_unit = o.calories_per_unit ?? 0;
+    if (o.protein_g !== undefined) update.protein_g = o.protein_g ?? 0;
+    if (o.carbs_g !== undefined) update.carbs_g = o.carbs_g ?? 0;
+    if (o.fat_g !== undefined) update.fat_g = o.fat_g ?? 0;
+    if (Object.keys(update).length > 0) {
+      await supabase.from("items").update(update).eq("id", li.item_id);
+    }
+  }
+};
+
+
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
