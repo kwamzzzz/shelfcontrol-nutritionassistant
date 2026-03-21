@@ -56,8 +56,7 @@ const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
   }
 };
 
-
-  const qc = useQueryClient();
+export const useCreatePurchase = () => {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (input: {
