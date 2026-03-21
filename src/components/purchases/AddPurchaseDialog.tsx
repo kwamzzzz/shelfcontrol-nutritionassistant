@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
 import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { UNITS, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
+import { STORAGE_LOCATIONS, SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
 import { Plus, Trash2, ShoppingBag, Check, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -20,10 +21,13 @@ import { cn } from "@/lib/utils";
 const emptyLine = (): NewPurchaseLineItem => ({
   item_id: "",
   quantity: 1,
-  unit: "unit",
+  unit: "Unit",
   line_total: null,
   restock: false,
   storage_location: "",
+  expiry_date: "",
+  sealed_status: "sealed",
+  opened_date: "",
 });
 
 const AddPurchaseDialog = () => {
@@ -34,6 +38,8 @@ const AddPurchaseDialog = () => {
   const [lines, setLines] = useState<NewPurchaseLineItem[]>([emptyLine()]);
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
+  const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
+  const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { data: items } = useItems();
   const createPurchase = useCreatePurchase();
   const { toast } = useToast();
@@ -49,6 +55,7 @@ const AddPurchaseDialog = () => {
     setPurchasedAt(new Date().toISOString().slice(0, 10));
     setNotes("");
     setLines([emptyLine()]);
+    setHighlightIdx(null);
   };
 
   const updateLine = (idx: number, patch: Partial<NewPurchaseLineItem>) => {
@@ -59,11 +66,21 @@ const AddPurchaseDialog = () => {
     setLines((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const addLine = () => {
+    setLines((p) => [...p, emptyLine()]);
+    const newIdx = lines.length;
+    setHighlightIdx(newIdx);
+    setTimeout(() => {
+      lineRefs.current[newIdx]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      setHighlightIdx(null);
+    }, 600);
+  };
+
   const handleItemSelect = (idx: number, itemId: string) => {
     const item = items?.find((i) => i.id === itemId);
     updateLine(idx, {
       item_id: itemId,
-      unit: item?.default_unit ?? "unit",
+      unit: item?.default_unit ?? "Unit",
     });
     setOpenCombobox(null);
     setShowQuickAdd(null);
@@ -124,19 +141,26 @@ const AddPurchaseDialog = () => {
 
           <div className="space-y-2">
             <Label>Notes</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes..." className="h-16 resize-none" />
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Optional notes..."
+              className="h-16 max-h-32 resize-y"
+            />
           </div>
 
           {/* Line items */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Items</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => setLines((p) => [...p, emptyLine()])}>
-                <Plus className="mr-1 h-3 w-3" /> Add Line
-              </Button>
-            </div>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Items</Label>
             {lines.map((line, idx) => (
-              <div key={idx} className="rounded-lg border bg-muted/30 p-3 space-y-2">
+              <div
+                key={idx}
+                ref={(el) => { lineRefs.current[idx] = el; }}
+                className={cn(
+                  "rounded-lg border bg-muted/30 p-3 space-y-2 transition-colors duration-500",
+                  highlightIdx === idx && "ring-2 ring-primary/40 bg-primary/5"
+                )}
+              >
                 <div className="flex gap-2">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs">Catalog Item *</Label>
@@ -212,20 +236,39 @@ const AddPurchaseDialog = () => {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Unit</Label>
-                    <Select value={line.unit} onValueChange={(v) => updateLine(idx, { unit: v })}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {UNITS.map((u) => (
-                          <SelectItem key={u} value={u}>{u}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <GroupedUnitSelect value={line.unit} onValueChange={(v) => updateLine(idx, { unit: v })} triggerClassName="h-9 text-sm" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Line Total</Label>
                     <Input type="number" min={0} step="0.01" className="h-9 text-sm" placeholder="e.g. 32" value={line.line_total ?? ""} onChange={(e) => updateLine(idx, { line_total: e.target.value ? Number(e.target.value) : null })} />
                   </div>
                 </div>
+
+                {/* Expiry & sealed row */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Expiry Date</Label>
+                    <Input type="date" className="h-9 text-sm" value={line.expiry_date ?? ""} onChange={(e) => updateLine(idx, { expiry_date: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Status</Label>
+                    <Select value={line.sealed_status ?? "sealed"} onValueChange={(v) => updateLine(idx, { sealed_status: v })}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SEALED_STATUS_OPTIONS.map((s) => (
+                          <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {line.sealed_status === "opened" && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Opened Date</Label>
+                      <Input type="date" className="h-9 text-sm" value={line.opened_date ?? ""} onChange={(e) => updateLine(idx, { opened_date: e.target.value })} />
+                    </div>
+                  )}
+                </div>
+
                 {/* Restock toggle */}
                 <div className="flex items-center gap-2 pt-1">
                   <Checkbox
@@ -249,6 +292,11 @@ const AddPurchaseDialog = () => {
                 </div>
               </div>
             ))}
+
+            {/* Add Line button at bottom */}
+            <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLine}>
+              <Plus className="mr-1 h-3 w-3" /> Add Line
+            </Button>
           </div>
 
           {/* Total */}
