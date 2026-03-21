@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import type { ItemOverrides } from "@/components/purchases/ItemDetailsSection";
 
 export type Purchase = Tables<"purchases">;
 export type PurchaseItem = Tables<"purchase_items"> & { items: Tables<"items"> };
@@ -33,6 +34,7 @@ export type NewPurchaseLineItem = {
   expiry_date?: string;
   sealed_status?: string;
   opened_date?: string;
+  itemOverrides?: ItemOverrides;
 };
 
 export const useCreatePurchase = () => {
