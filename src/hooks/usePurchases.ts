@@ -30,6 +30,9 @@ export type NewPurchaseLineItem = {
   line_total: number | null;
   restock: boolean;
   storage_location?: string;
+  expiry_date?: string;
+  sealed_status?: string;
+  opened_date?: string;
 };
 
 export const useCreatePurchase = () => {
@@ -66,11 +69,14 @@ export const useCreatePurchase = () => {
           quantity: li.quantity,
           unit: li.unit,
           unit_price: li.line_total,
+          expiry_date: li.expiry_date || null,
+          sealed_status: li.sealed_status || "sealed",
+          opened_date: li.opened_date || null,
         }));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        // 3. Optional restock — add to inventory
+        // 3. Optional restock — add to inventory with expiry data
         const restockItems = input.line_items.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
@@ -79,6 +85,7 @@ export const useCreatePurchase = () => {
             quantity: li.quantity,
             unit: li.unit,
             storage_location: li.storage_location || null,
+            expiry_date: li.expiry_date || null,
           }));
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
@@ -90,6 +97,56 @@ export const useCreatePurchase = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+    },
+  });
+};
+
+export const useUpdatePurchase = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      store_name: string | null;
+      purchased_at: string;
+      notes: string | null;
+      total_cost: number | null;
+      line_items: NewPurchaseLineItem[];
+    }) => {
+      // Update the purchase record
+      const { error: pErr } = await supabase
+        .from("purchases")
+        .update({
+          store_name: input.store_name,
+          purchased_at: input.purchased_at,
+          notes: input.notes,
+          total_cost: input.total_cost,
+        })
+        .eq("id", input.id);
+      if (pErr) throw pErr;
+
+      // Delete old line items and insert new ones
+      const { error: dErr } = await supabase.from("purchase_items").delete().eq("purchase_id", input.id);
+      if (dErr) throw dErr;
+
+      if (input.line_items.length > 0) {
+        const lineRows = input.line_items.map((li) => ({
+          user_id: user!.id,
+          purchase_id: input.id,
+          item_id: li.item_id,
+          quantity: li.quantity,
+          unit: li.unit,
+          unit_price: li.line_total,
+          expiry_date: li.expiry_date || null,
+          sealed_status: li.sealed_status || "sealed",
+          opened_date: li.opened_date || null,
+        }));
+        const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
+        if (liErr) throw liErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchases"] });
     },
   });
 };

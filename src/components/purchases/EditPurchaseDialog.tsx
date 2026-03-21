@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import QuickAddItemForm from "./QuickAddItemForm";
 import { formatCurrency } from "@/lib/currency";
-import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
+import { useUpdatePurchase, type PurchaseWithItems, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useItems } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
@@ -9,39 +9,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { STORAGE_LOCATIONS, SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
-import { Plus, Trash2, ShoppingBag, Check, ChevronsUpDown } from "lucide-react";
+import { SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
+import { Plus, Trash2, Save, Check, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const emptyLine = (): NewPurchaseLineItem => ({
-  item_id: "",
-  quantity: 1,
-  unit: "Unit",
-  line_total: null,
-  restock: false,
-  storage_location: "",
-  expiry_date: "",
-  sealed_status: "sealed",
-  opened_date: "",
-});
+interface Props {
+  purchase: PurchaseWithItems;
+  open: boolean;
+  onClose: () => void;
+}
 
-const AddPurchaseDialog = () => {
-  const [open, setOpen] = useState(false);
-  const [storeName, setStoreName] = useState("");
-  const [purchasedAt, setPurchasedAt] = useState(new Date().toISOString().slice(0, 10));
-  const [notes, setNotes] = useState("");
-  const [lines, setLines] = useState<NewPurchaseLineItem[]>([emptyLine()]);
+const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
+  const [storeName, setStoreName] = useState(purchase.store_name ?? "");
+  const [purchasedAt, setPurchasedAt] = useState(purchase.purchased_at?.slice(0, 10) ?? "");
+  const [notes, setNotes] = useState(purchase.notes ?? "");
+  const [lines, setLines] = useState<NewPurchaseLineItem[]>(
+    purchase.purchase_items?.map((pi) => ({
+      item_id: pi.item_id,
+      quantity: Number(pi.quantity),
+      unit: pi.unit,
+      line_total: pi.unit_price != null ? Number(pi.unit_price) : null,
+      restock: false,
+      expiry_date: (pi as any).expiry_date ?? "",
+      sealed_status: (pi as any).sealed_status ?? "sealed",
+      opened_date: (pi as any).opened_date ?? "",
+    })) ?? []
+  );
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { data: items } = useItems();
-  const createPurchase = useCreatePurchase();
+  const updatePurchase = useUpdatePurchase();
   const { toast } = useToast();
 
   const itemMap = useMemo(() => {
@@ -49,14 +52,6 @@ const AddPurchaseDialog = () => {
     items?.forEach((i) => map.set(i.id, i.name));
     return map;
   }, [items]);
-
-  const reset = () => {
-    setStoreName("");
-    setPurchasedAt(new Date().toISOString().slice(0, 10));
-    setNotes("");
-    setLines([emptyLine()]);
-    setHighlightIdx(null);
-  };
 
   const updateLine = (idx: number, patch: Partial<NewPurchaseLineItem>) => {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -67,7 +62,11 @@ const AddPurchaseDialog = () => {
   };
 
   const addLine = () => {
-    setLines((p) => [...p, emptyLine()]);
+    const newLine: NewPurchaseLineItem = {
+      item_id: "", quantity: 1, unit: "Unit", line_total: null, restock: false,
+      expiry_date: "", sealed_status: "sealed", opened_date: "",
+    };
+    setLines((p) => [...p, newLine]);
     const newIdx = lines.length;
     setHighlightIdx(newIdx);
     setTimeout(() => {
@@ -78,16 +77,9 @@ const AddPurchaseDialog = () => {
 
   const handleItemSelect = (idx: number, itemId: string) => {
     const item = items?.find((i) => i.id === itemId);
-    updateLine(idx, {
-      item_id: itemId,
-      unit: item?.default_unit ?? "Unit",
-    });
+    updateLine(idx, { item_id: itemId, unit: item?.default_unit ?? "Unit" });
     setOpenCombobox(null);
     setShowQuickAdd(null);
-  };
-
-  const handleQuickItemCreated = (idx: number, itemId: string) => {
-    handleItemSelect(idx, itemId);
   };
 
   const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
@@ -95,37 +87,27 @@ const AddPurchaseDialog = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validLines.length === 0) {
-      toast({ title: "Error", description: "Add at least one item.", variant: "destructive" });
-      return;
-    }
     try {
-      await createPurchase.mutateAsync({
+      await updatePurchase.mutateAsync({
+        id: purchase.id,
         store_name: storeName || null,
         purchased_at: purchasedAt ? new Date(purchasedAt).toISOString() : new Date().toISOString(),
         notes: notes || null,
         total_cost: totalCost || null,
         line_items: validLines,
       });
-      toast({ title: "Purchase recorded", description: `${validLines.length} item(s) logged.` });
-      reset();
-      setOpen(false);
+      toast({ title: "Updated", description: "Purchase updated." });
+      onClose();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Log Purchase
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display">Log Purchase</DialogTitle>
+          <DialogTitle className="font-display">Edit Purchase</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -141,15 +123,9 @@ const AddPurchaseDialog = () => {
 
           <div className="space-y-2">
             <Label>Notes</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes..."
-              className="h-16 max-h-32 resize-y"
-            />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes..." className="h-16 max-h-32 resize-y" />
           </div>
 
-          {/* Line items */}
           <div className="space-y-3">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">Items</Label>
             {lines.map((line, idx) => (
@@ -166,12 +142,7 @@ const AddPurchaseDialog = () => {
                     <Label className="text-xs">Catalog Item *</Label>
                     <Popover open={openCombobox === idx} onOpenChange={(v) => { setOpenCombobox(v ? idx : null); if (!v) setShowQuickAdd(null); }}>
                       <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openCombobox === idx}
-                          className="h-9 w-full justify-between text-sm font-normal"
-                        >
+                        <Button variant="outline" role="combobox" className="h-9 w-full justify-between text-sm font-normal">
                           {line.item_id ? itemMap.get(line.item_id) ?? "Select item" : "Select item..."}
                           <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                         </Button>
@@ -181,11 +152,9 @@ const AddPurchaseDialog = () => {
                           <div>
                             <div className="flex items-center justify-between px-3 pt-2">
                               <span className="text-xs font-medium text-muted-foreground">New Catalog Item</span>
-                              <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowQuickAdd(null)}>
-                                Back
-                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setShowQuickAdd(null)}>Back</Button>
                             </div>
-                            <QuickAddItemForm onCreated={(id) => handleQuickItemCreated(idx, id)} />
+                            <QuickAddItemForm onCreated={(id) => handleItemSelect(idx, id)} />
                           </div>
                         ) : (
                           <Command>
@@ -199,16 +168,10 @@ const AddPurchaseDialog = () => {
                               </CommandEmpty>
                               <CommandGroup>
                                 {items?.map((item) => (
-                                  <CommandItem
-                                    key={item.id}
-                                    value={item.name}
-                                    onSelect={() => handleItemSelect(idx, item.id)}
-                                  >
+                                  <CommandItem key={item.id} value={item.name} onSelect={() => handleItemSelect(idx, item.id)}>
                                     <Check className={cn("mr-2 h-3.5 w-3.5", line.item_id === item.id ? "opacity-100" : "opacity-0")} />
                                     <span>{item.name}</span>
-                                    {item.category && (
-                                      <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>
-                                    )}
+                                    {item.category && <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>}
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
@@ -244,7 +207,6 @@ const AddPurchaseDialog = () => {
                   </div>
                 </div>
 
-                {/* Expiry & sealed row */}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Expiry Date</Label>
@@ -268,38 +230,13 @@ const AddPurchaseDialog = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Restock toggle */}
-                <div className="flex items-center gap-2 pt-1">
-                  <Checkbox
-                    id={`restock-${idx}`}
-                    checked={line.restock}
-                    onCheckedChange={(v) => updateLine(idx, { restock: !!v })}
-                  />
-                  <label htmlFor={`restock-${idx}`} className="text-xs text-muted-foreground cursor-pointer">
-                    Add to pantry inventory
-                  </label>
-                  {line.restock && (
-                    <Select value={line.storage_location ?? ""} onValueChange={(v) => updateLine(idx, { storage_location: v })}>
-                      <SelectTrigger className="h-7 w-28 text-xs ml-auto"><SelectValue placeholder="Location" /></SelectTrigger>
-                      <SelectContent>
-                        {STORAGE_LOCATIONS.map((l) => (
-                          <SelectItem key={l} value={l}>{l}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
               </div>
             ))}
-
-            {/* Add Line button at bottom */}
             <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLine}>
               <Plus className="mr-1 h-3 w-3" /> Add Line
             </Button>
           </div>
 
-          {/* Total */}
           {totalCost > 0 && (
             <div className="flex justify-between text-sm font-medium text-foreground border-t pt-3">
               <span>Total</span>
@@ -307,9 +244,9 @@ const AddPurchaseDialog = () => {
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={createPurchase.isPending}>
-            <ShoppingBag className="mr-1.5 h-4 w-4" />
-            {createPurchase.isPending ? "Saving..." : "Save Purchase"}
+          <Button type="submit" className="w-full" disabled={updatePurchase.isPending}>
+            <Save className="mr-1.5 h-4 w-4" />
+            {updatePurchase.isPending ? "Saving..." : "Update Purchase"}
           </Button>
         </form>
       </DialogContent>
@@ -317,4 +254,4 @@ const AddPurchaseDialog = () => {
   );
 };
 
-export default AddPurchaseDialog;
+export default EditPurchaseDialog;

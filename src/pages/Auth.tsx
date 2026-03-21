@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
@@ -51,8 +51,8 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-2">
-          <Package className="h-10 w-10 text-primary" />
-          <h1 className="text-2xl font-display font-bold text-foreground">PantryIQ</h1>
+          <ShieldCheck className="h-10 w-10 text-primary" />
+          <h1 className="text-2xl font-display font-bold text-foreground">Shelf Control</h1>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Sign in to your kitchen" : "Create your account"}
           </p>

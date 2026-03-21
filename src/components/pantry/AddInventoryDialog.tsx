@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useItems, useCreateInventory, type Item } from "@/hooks/usePantry";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { STORAGE_LOCATIONS, UNITS } from "@/lib/pantry-utils";
+import { STORAGE_LOCATIONS } from "@/lib/pantry-utils";
 import { PackagePlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +14,7 @@ const AddInventoryDialog = () => {
   const [open, setOpen] = useState(false);
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
-  const [unit, setUnit] = useState("unit");
+  const [unit, setUnit] = useState("Unit");
   const [location, setLocation] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const { data: items } = useItems();
@@ -25,7 +26,7 @@ const AddInventoryDialog = () => {
   const reset = () => {
     setItemId("");
     setQuantity("1");
-    setUnit("unit");
+    setUnit("Unit");
     setLocation("");
     setExpiryDate("");
   };
@@ -90,14 +91,7 @@ const AddInventoryDialog = () => {
             </div>
             <div className="space-y-2">
               <Label>Unit</Label>
-              <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNITS.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <GroupedUnitSelect value={unit} onValueChange={setUnit} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,9 +42,9 @@ const AppSidebar = () => {
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-sidebar-foreground">
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-        <Package className="h-5 w-5 text-sidebar-primary" />
+        <ShieldCheck className="h-5 w-5 text-sidebar-primary" />
         <span className="text-lg font-display font-bold tracking-tight text-sidebar-primary-foreground">
-          PantryIQ
+          Shelf Control
         </span>
       </div>
 
@@ -60,9 +61,9 @@ const AppSidebar = () => {
         )}
       >
         <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
-          <Package className="h-7 w-7 text-sidebar-primary" />
+          <ShieldCheck className="h-7 w-7 text-sidebar-primary" />
           <span className="text-xl font-display font-bold tracking-tight text-sidebar-primary-foreground">
-            PantryIQ
+            Shelf Control
           </span>
         </div>
 
