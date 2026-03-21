@@ -13,8 +13,8 @@ const MACRO_COLORS = ["hsl(142,50%,38%)", "hsl(30,80%,56%)", "hsl(38,92%,50%)", 
 const MacroBar = ({ label, value, max, color }: { label: string; value: number; max: number; color: string }) => (
   <div>
     <div className="flex justify-between text-xs mb-1 font-analytics">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground tabular-nums">{value.toFixed(0)}g</span>
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className="font-bold text-foreground tabular-nums">{value.toFixed(0)}g</span>
     </div>
     <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
       <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${Math.min(100, max > 0 ? (value / max) * 100 : 0)}%` }} />
@@ -24,7 +24,7 @@ const MacroBar = ({ label, value, max, color }: { label: string; value: number; 
 
 const SpeedBadge = ({ speed }: { speed: "fast" | "medium" | "slow" }) => {
   const cls = speed === "fast" ? "bg-destructive/10 text-destructive" : speed === "medium" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground";
-  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold font-analytics ${cls}`}>{speed}</span>;
+  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-analytics ${cls}`}>{speed}</span>;
 };
 
 const FoodPantryTab = ({ data }: { data: Analytics }) => {
@@ -34,7 +34,7 @@ const FoodPantryTab = ({ data }: { data: Analytics }) => {
   return (
     <AnalyticsLayout rail={<InsightsRail insights={insights} tab="food_pantry" />}>
       {/* Dominant: Pantry Nutrient Availability */}
-      <AnalyticsModule title="Pantry Nutrient Availability" icon={Package} className="!p-8">
+      <AnalyticsModule title="Pantry Nutrient Availability" icon={Package} className="!p-8" cta={{ label: "Open Pantry", to: "/pantry" }}>
         {pantry.total === 0 ? (
           <p className="text-sm text-muted-foreground font-analytics">No inventory data yet.</p>
         ) : (
@@ -56,8 +56,8 @@ const FoodPantryTab = ({ data }: { data: Analytics }) => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-2xl font-analytics font-light text-foreground tabular-nums mt-1">{pantryMacros.calories.toFixed(0)}</p>
-              <p className="text-xs text-muted-foreground font-analytics">total cal</p>
+              <p className="text-2xl font-analytics font-semibold text-foreground tabular-nums mt-1">{pantryMacros.calories.toFixed(0)}</p>
+              <p className="text-xs text-muted-foreground font-analytics font-medium">total cal</p>
             </div>
             {/* Bars */}
             <div className="flex-1 space-y-3.5">
@@ -72,15 +72,15 @@ const FoodPantryTab = ({ data }: { data: Analytics }) => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <HeroStatCard icon={Package} label="Total Entries" value={pantry.total} />
-        <HeroStatCard icon={AlertTriangle} label="Expiring" value={pantry.expiring} />
-        <HeroStatCard icon={AlertTriangle} label="Expired" value={pantry.expired} />
-        <HeroStatCard icon={Clock} label="No Expiry" value={pantry.noExpiry} />
+        <HeroStatCard icon={Package} label="Total Entries" value={pantry.total} cta={{ label: "Pantry", to: "/pantry" }} />
+        <HeroStatCard icon={AlertTriangle} label="Expiring" value={pantry.expiring} cta={{ label: "Review", to: "/pantry" }} />
+        <HeroStatCard icon={AlertTriangle} label="Expired" value={pantry.expired} cta={{ label: "Review", to: "/pantry" }} />
+        <HeroStatCard icon={Clock} label="No Expiry" value={pantry.noExpiry} cta={{ label: "Fix Dates", to: "/pantry" }} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Expiry Risk List */}
-        <AnalyticsModule title="Expiry Risk" icon={AlertTriangle} accentColor="border-l-warning">
+        <AnalyticsModule title="Expiry Risk" icon={AlertTriangle} accentColor="border-l-warning" cta={{ label: "Review Pantry", to: "/pantry" }}>
           {pantry.expiringItems.length === 0 ? (
             <p className="text-sm text-muted-foreground font-analytics">No items expiring within 3 days.</p>
           ) : (
@@ -88,7 +88,7 @@ const FoodPantryTab = ({ data }: { data: Analytics }) => {
               {pantry.expiringItems.map((name, i) => (
                 <div key={i} className="flex items-center gap-2.5 text-sm">
                   <span className="h-5 w-5 rounded-full bg-warning/10 flex items-center justify-center text-[10px] font-bold text-warning shrink-0">{i + 1}</span>
-                  <span className="text-foreground">{name}</span>
+                  <span className="text-foreground font-medium">{name}</span>
                 </div>
               ))}
             </div>
@@ -96,16 +96,16 @@ const FoodPantryTab = ({ data }: { data: Analytics }) => {
         </AnalyticsModule>
 
         {/* Consumption Velocity */}
-        <AnalyticsModule title="Consumption Velocity" icon={Zap}>
+        <AnalyticsModule title="Consumption Velocity" icon={Zap} cta={{ label: "Open Consumption", to: "/consumption" }}>
           {consumptionVelocity.length === 0 ? (
             <p className="text-sm text-muted-foreground font-analytics">Not enough consumption data yet.</p>
           ) : (
             <div className="space-y-2.5 font-analytics">
               {consumptionVelocity.map((item) => (
                 <div key={item.name} className="flex items-center justify-between text-sm">
-                  <span className="text-foreground truncate">{item.name}</span>
+                  <span className="text-foreground font-medium truncate">{item.name}</span>
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <span className="text-muted-foreground tabular-nums">{item.count}×</span>
+                    <span className="text-muted-foreground tabular-nums font-semibold">{item.count}×</span>
                     <SpeedBadge speed={item.speed} />
                   </div>
                 </div>

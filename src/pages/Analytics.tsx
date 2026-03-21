@@ -11,16 +11,16 @@ const Analytics = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-analytics font-light text-foreground tracking-tight">Analytics</h1>
-        <p className="mt-1 text-muted-foreground font-analytics">Intelligence workspace for your household.</p>
+        <h1 className="text-3xl font-analytics font-semibold text-foreground tracking-tight">Analytics</h1>
+        <p className="mt-1 text-muted-foreground font-analytics font-medium">Intelligence workspace for your household.</p>
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="mb-6 w-full sm:w-auto bg-muted/50 p-1 rounded-xl">
-          <TabsTrigger value="overview" className="font-analytics rounded-lg text-xs">Overview</TabsTrigger>
-          <TabsTrigger value="food_pantry" className="font-analytics rounded-lg text-xs">Food & Pantry</TabsTrigger>
-          <TabsTrigger value="consumption" className="font-analytics rounded-lg text-xs">Consumption</TabsTrigger>
-          <TabsTrigger value="spend_value" className="font-analytics rounded-lg text-xs">Spend & Value</TabsTrigger>
+          <TabsTrigger value="overview" className="font-analytics rounded-lg text-xs font-semibold">Overview</TabsTrigger>
+          <TabsTrigger value="food_pantry" className="font-analytics rounded-lg text-xs font-semibold">Food & Pantry</TabsTrigger>
+          <TabsTrigger value="consumption" className="font-analytics rounded-lg text-xs font-semibold">Consumption</TabsTrigger>
+          <TabsTrigger value="spend_value" className="font-analytics rounded-lg text-xs font-semibold">Spend & Value</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
