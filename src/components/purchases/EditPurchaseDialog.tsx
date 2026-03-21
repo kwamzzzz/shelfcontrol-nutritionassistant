@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
-import { Plus, Trash2, Save, Check, ChevronsUpDown } from "lucide-react";
+import { SEALED_STATUS_OPTIONS, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
+import { Plus, Trash2, Save, Check, ChevronsUpDown, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
       unit: pi.unit,
       line_total: pi.unit_price != null ? Number(pi.unit_price) : null,
       restock: false,
+      storage_location: "",
       expiry_date: (pi as any).expiry_date ?? "",
       sealed_status: (pi as any).sealed_status ?? "sealed",
       opened_date: (pi as any).opened_date ?? "",
@@ -64,7 +66,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
   const addLine = () => {
     const newLine: NewPurchaseLineItem = {
       item_id: "", quantity: 1, unit: "Unit", line_total: null, restock: false,
-      expiry_date: "", sealed_status: "sealed", opened_date: "",
+      storage_location: "", expiry_date: "", sealed_status: "sealed", opened_date: "",
     };
     setLines((p) => [...p, newLine]);
     const newIdx = lines.length;
@@ -84,6 +86,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
 
   const totalCost = lines.reduce((sum, l) => sum + (l.line_total ?? 0), 0);
   const validLines = lines.filter((l) => l.item_id);
+  const hasRestock = validLines.some((l) => l.restock);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +99,7 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
         total_cost: totalCost || null,
         line_items: validLines,
       });
-      toast({ title: "Updated", description: "Purchase updated." });
+      toast({ title: "Updated", description: "Purchase updated. Pantry inventory has been reconciled." });
       onClose();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -109,6 +112,16 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
         <DialogHeader>
           <DialogTitle className="font-display">Edit Purchase</DialogTitle>
         </DialogHeader>
+
+        {/* Reconciliation notice */}
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+          <div>
+            <p className="font-medium text-foreground">Pantry reconciliation</p>
+            <p>Saving will remove any pantry entries originally restocked from this purchase, then re-create them for items marked "Add to pantry" below. Manually added pantry entries are unaffected.</p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -228,6 +241,28 @@ const EditPurchaseDialog = ({ purchase, open, onClose }: Props) => {
                       <Label className="text-xs">Opened Date</Label>
                       <Input type="date" className="h-9 text-sm" value={line.opened_date ?? ""} onChange={(e) => updateLine(idx, { opened_date: e.target.value })} />
                     </div>
+                  )}
+                </div>
+
+                {/* Restock toggle — now available in edit too */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id={`edit-restock-${idx}`}
+                    checked={line.restock}
+                    onCheckedChange={(v) => updateLine(idx, { restock: !!v })}
+                  />
+                  <label htmlFor={`edit-restock-${idx}`} className="text-xs text-muted-foreground cursor-pointer">
+                    Add to pantry inventory
+                  </label>
+                  {line.restock && (
+                    <Select value={line.storage_location ?? ""} onValueChange={(v) => updateLine(idx, { storage_location: v })}>
+                      <SelectTrigger className="h-7 w-28 text-xs ml-auto"><SelectValue placeholder="Location" /></SelectTrigger>
+                      <SelectContent>
+                        {STORAGE_LOCATIONS.map((l) => (
+                          <SelectItem key={l} value={l}>{l}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
               </div>

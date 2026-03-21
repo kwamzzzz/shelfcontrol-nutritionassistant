@@ -19,6 +19,7 @@ interface Props {
 
 const EditItemDialog = ({ item, open, onClose }: Props) => {
   const [name, setName] = useState(item.name);
+  const [brand, setBrand] = useState(item.brand ?? "");
   const [category, setCategory] = useState(item.category ?? "");
   const [defaultUnit, setDefaultUnit] = useState(item.default_unit ?? "Unit");
   const [calories, setCalories] = useState(String(item.calories_per_unit ?? 0));
@@ -35,6 +36,7 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
       await updateItem.mutateAsync({
         id: item.id,
         name,
+        brand: brand || null,
         category: category || null,
         default_unit: defaultUnit,
         calories_per_unit: calories ? Number(calories) : 0,
@@ -73,9 +75,15 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
           <DialogTitle className="font-display">Edit: {item.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Name *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Brand</Label>
+              <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Tamrah" />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

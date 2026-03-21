@@ -26,7 +26,7 @@ const ItemCatalogSection = () => {
     return counts;
   }, [inventory]);
 
-  const handleInlineBlur = async () => {
+  const handleInlineSave = async () => {
     if (!inlineEdit) return;
     const { id, field, value } = inlineEdit;
     try {
@@ -50,22 +50,27 @@ const ItemCatalogSection = () => {
           className="h-7 w-16 text-xs text-right tabular-nums"
           value={inlineEdit.value}
           onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-          onBlur={handleInlineBlur}
-          onKeyDown={(e) => { if (e.key === "Enter") handleInlineBlur(); if (e.key === "Escape") setInlineEdit(null); }}
+          onBlur={handleInlineSave}
+          onKeyDown={(e) => { if (e.key === "Enter") handleInlineSave(); if (e.key === "Escape") setInlineEdit(null); }}
           autoFocus
         />
       );
     }
 
     return (
-      <span
-        className="cursor-pointer hover:text-foreground hover:underline underline-offset-2 transition-colors"
-        onClick={(e) => {
-          e.stopPropagation();
-          setInlineEdit({ id: item.id, field, value: String(val) });
-        }}
-      >
-        {val}{suffix}
+      <span className="inline-flex items-center gap-1 group/cell">
+        <span>{val}{suffix}</span>
+        <button
+          type="button"
+          className="opacity-0 group-hover/cell:opacity-60 hover:!opacity-100 transition-opacity h-4 w-4 inline-flex items-center justify-center rounded"
+          onClick={(e) => {
+            e.stopPropagation();
+            setInlineEdit({ id: item.id, field, value: String(val) });
+          }}
+          title="Edit"
+        >
+          <Pencil className="h-2.5 w-2.5" />
+        </button>
       </span>
     );
   };
@@ -105,6 +110,7 @@ const ItemCatalogSection = () => {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Name</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Brand</th>
                       <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Category</th>
                       <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Unit</th>
                       <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Cal</th>
@@ -122,6 +128,9 @@ const ItemCatalogSection = () => {
                         className="border-b last:border-b-0 hover:bg-accent/30 transition-colors"
                       >
                         <td className="px-4 py-2.5 font-medium text-foreground">{item.name}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">
+                          {item.brand ?? <span className="text-muted-foreground/40">—</span>}
+                        </td>
                         <td className="px-4 py-2.5 text-muted-foreground">
                           {item.category ?? <span className="text-muted-foreground/40">—</span>}
                         </td>
