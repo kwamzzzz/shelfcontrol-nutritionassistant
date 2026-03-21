@@ -26,18 +26,19 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
         value={spending.monthTotal > 0 ? formatCurrencyAlways(spending.monthTotal) : "—"}
         sub={`${spending.monthTrips} trip(s) · avg ${formatCurrencyAlways(spending.avgPerTrip)} per trip`}
         variant="dominant"
+        cta={{ label: "View Purchases", to: "/purchases" }}
       />
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <HeroStatCard icon={Package} label="Items in Stock" value={pantry.total} />
-        <HeroStatCard icon={AlertTriangle} label="Expiring Soon" value={pantry.expiring} sub="≤ 3 days" />
-        <HeroStatCard icon={Flame} label="Calories Today" value={todayNutrition.calories > 0 ? todayNutrition.calories.toFixed(0) : "—"} />
+        <HeroStatCard icon={Package} label="Items in Stock" value={pantry.total} cta={{ label: "Open Pantry", to: "/pantry" }} />
+        <HeroStatCard icon={AlertTriangle} label="Expiring Soon" value={pantry.expiring} sub="≤ 3 days" cta={{ label: "Review", to: "/pantry" }} />
+        <HeroStatCard icon={Flame} label="Calories Today" value={todayNutrition.calories > 0 ? todayNutrition.calories.toFixed(0) : "—"} cta={{ label: "Log More", to: "/consumption" }} />
       </div>
 
       {/* Spending Trend + Macro Donut */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <AnalyticsModule title="Spending Trend (7 days)" icon={ShoppingBag}>
+        <AnalyticsModule title="Spending Trend (7 days)" icon={ShoppingBag} cta={{ label: "View Purchases", to: "/purchases" }}>
           {spendingTrend.every((d) => d.value === 0) ? (
             <p className="text-sm text-muted-foreground font-analytics">No spending data this week.</p>
           ) : (
@@ -63,7 +64,7 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
           )}
         </AnalyticsModule>
 
-        <AnalyticsModule title="Pantry Macro Split" icon={Package}>
+        <AnalyticsModule title="Pantry Macro Split" icon={Package} cta={{ label: "Open Pantry", to: "/pantry" }}>
           {macroDistribution.length === 0 ? (
             <p className="text-sm text-muted-foreground font-analytics">No inventory data yet.</p>
           ) : (
@@ -71,14 +72,7 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
               <div className="h-36 w-36 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={macroDistribution}
-                      cx="50%" cy="50%"
-                      innerRadius={36} outerRadius={56}
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="none"
-                    >
+                    <Pie data={macroDistribution} cx="50%" cy="50%" innerRadius={36} outerRadius={56} paddingAngle={3} dataKey="value" stroke="none">
                       {macroDistribution.map((_, i) => (
                         <Cell key={i} fill={MACRO_COLORS[i]} />
                       ))}
@@ -95,10 +89,10 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
                   <div key={d.name} className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: MACRO_COLORS[i] }} />
                     <span className="text-muted-foreground">{d.name}</span>
-                    <span className="font-medium text-foreground tabular-nums">{d.value}g</span>
+                    <span className="font-semibold text-foreground tabular-nums">{d.value}g</span>
                   </div>
                 ))}
-                <p className="text-xs text-muted-foreground mt-1">{pantryMacros.calories.toFixed(0)} cal total</p>
+                <p className="text-xs text-muted-foreground mt-1 font-semibold">{pantryMacros.calories.toFixed(0)} cal total</p>
               </div>
             </div>
           )}
@@ -107,34 +101,30 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
 
       {/* Supporting Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Shopping Footprint */}
-        <AnalyticsModule title="Shopping Footprint" icon={MapPin}>
+        <AnalyticsModule title="Shopping Footprint" icon={MapPin} cta={{ label: "View Purchases", to: "/purchases" }}>
           <div className="space-y-2.5 text-sm font-analytics">
-            <div className="flex justify-between"><span className="text-muted-foreground">Trips this month</span><span className="font-medium tabular-nums">{spending.monthTrips}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Stores visited</span><span className="font-medium tabular-nums">{spending.uniqueStores}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Most visited</span><span className="font-medium truncate ml-2">{spending.mostVisited || "—"}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Last shopped</span><span className="font-medium truncate ml-2">{spending.lastStore ? `${spending.lastStore} · ${spending.lastDate}` : "—"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Trips this month</span><span className="font-semibold tabular-nums text-foreground">{spending.monthTrips}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Stores visited</span><span className="font-semibold tabular-nums text-foreground">{spending.uniqueStores}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Most visited</span><span className="font-semibold truncate ml-2 text-foreground">{spending.mostVisited || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Last shopped</span><span className="font-semibold truncate ml-2 text-foreground">{spending.lastStore ? `${spending.lastStore} · ${spending.lastDate}` : "—"}</span></div>
           </div>
         </AnalyticsModule>
 
-        {/* Expiry Risk */}
-        <AnalyticsModule title="Expiry Risk" icon={AlertTriangle} accentColor="border-l-warning">
+        <AnalyticsModule title="Expiry Risk" icon={AlertTriangle} accentColor="border-l-warning" cta={{ label: "Review Pantry", to: "/pantry" }}>
           <div className="space-y-2.5 text-sm font-analytics">
-            <div className="flex justify-between"><span className="text-muted-foreground">Expiring soon</span><span className="font-semibold text-warning tabular-nums">{pantry.expiring}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Already expired</span><span className="font-semibold text-destructive tabular-nums">{pantry.expired}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">No expiry set</span><span className="font-medium tabular-nums">{pantry.noExpiry}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Expiring soon</span><span className="font-bold text-warning tabular-nums">{pantry.expiring}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Already expired</span><span className="font-bold text-destructive tabular-nums">{pantry.expired}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">No expiry set</span><span className="font-semibold tabular-nums text-foreground">{pantry.noExpiry}</span></div>
           </div>
         </AnalyticsModule>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Waste Summary */}
         <AnalyticsModule title="Waste Summary" icon={Trash2} accentColor="border-l-destructive">
           <p className="text-sm text-muted-foreground font-analytics">No waste data yet. Discard items from Pantry to start tracking waste.</p>
         </AnalyticsModule>
 
-        {/* Recent Activity */}
-        <AnalyticsModule title="Recent Food Activity" icon={Activity}>
+        <AnalyticsModule title="Recent Food Activity" icon={Activity} cta={{ label: "Open Consumption", to: "/consumption" }}>
           {recentActivity.length === 0 ? (
             <p className="text-sm text-muted-foreground font-analytics">No recent consumption logged.</p>
           ) : (
@@ -142,9 +132,9 @@ const OverviewTab = ({ data }: { data: Analytics }) => {
               {recentActivity.map((a) => (
                 <div key={a.id} className="flex items-center justify-between text-sm font-analytics">
                   <div className="truncate">
-                    <span className="text-foreground font-medium">{a.itemName}</span>
+                    <span className="text-foreground font-semibold">{a.itemName}</span>
                     <span className="text-muted-foreground ml-1.5">{a.quantity} {a.unit}</span>
-                    {a.recipeName && <span className="ml-1.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">{a.recipeName}</span>}
+                    {a.recipeName && <span className="ml-1.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">{a.recipeName}</span>}
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0 ml-2">{a.timeAgo}</span>
                 </div>

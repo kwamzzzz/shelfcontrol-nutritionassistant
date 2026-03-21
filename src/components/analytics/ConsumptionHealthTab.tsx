@@ -15,13 +15,12 @@ const SpeedBadge = ({ speed }: { speed: "fast" | "medium" | "slow" }) => {
     : speed === "medium"
     ? "bg-warning/10 text-warning"
     : "bg-muted text-muted-foreground";
-  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold font-analytics ${cls}`}>{speed}</span>;
+  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-analytics ${cls}`}>{speed}</span>;
 };
 
 const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
   const { weekConsumption, consumptionVelocity, consumptionTrend, insights, logs } = data;
 
-  // Group logs by day
   const grouped = (() => {
     if (!logs) return [];
     const groups: { label: string; items: typeof logs }[] = [];
@@ -37,7 +36,7 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
   return (
     <AnalyticsLayout rail={<InsightsRail insights={insights} tab="consumption" />}>
       {/* Calorie Trend Chart */}
-      <AnalyticsModule title="Calorie Intake (7 days)" icon={Flame} className="!p-8">
+      <AnalyticsModule title="Calorie Intake (7 days)" icon={Flame} className="!p-8" cta={{ label: "Log Consumption", to: "/consumption" }}>
         {consumptionTrend.every((d) => d.value === 0) ? (
           <p className="text-sm text-muted-foreground font-analytics">No consumption data this week.</p>
         ) : (
@@ -65,13 +64,13 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <HeroStatCard icon={Utensils} label="Logs This Week" value={weekConsumption.weekLogs} />
+        <HeroStatCard icon={Utensils} label="Logs This Week" value={weekConsumption.weekLogs} cta={{ label: "View All", to: "/consumption" }} />
         <HeroStatCard icon={Flame} label="Avg Daily Cal" value={weekConsumption.avgCalories > 0 ? weekConsumption.avgCalories.toFixed(0) : "—"} sub="cal/day" />
         <HeroStatCard icon={Beef} label="Avg Daily Protein" value={weekConsumption.avgProtein > 0 ? `${weekConsumption.avgProtein.toFixed(0)}g` : "—"} sub="per day" />
       </div>
 
       {/* Consumption Timeline — Journal Style */}
-      <AnalyticsModule title="Consumption Journal" icon={Utensils} className="!p-8">
+      <AnalyticsModule title="Consumption Journal" icon={Utensils} className="!p-8" cta={{ label: "Open Consumption", to: "/consumption" }}>
         {(!logs || logs.length === 0) ? (
           <p className="text-sm text-muted-foreground font-analytics">No consumption data yet. Log meals from the Consumption page.</p>
         ) : (
@@ -90,13 +89,13 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
                       <div key={log.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg hover:bg-muted/40 transition-colors">
                         <div className="flex items-center gap-2.5 truncate">
                           <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                          <span className="font-medium text-foreground">{item?.name ?? "Unknown"}</span>
+                          <span className="font-semibold text-foreground">{item?.name ?? "Unknown"}</span>
                           <span className="text-muted-foreground">{Number(log.quantity)} {(log as any).unit || item?.default_unit || "unit"}</span>
-                          {log.recipes && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">{log.recipes.name}</span>}
-                          {!log.recipe_id && <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium">manual</span>}
+                          {log.recipes && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">{log.recipes.name}</span>}
+                          {!log.recipe_id && <span className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-semibold">manual</span>}
                         </div>
                         <div className="shrink-0 text-xs text-muted-foreground ml-2 flex items-center gap-3">
-                          {cal > 0 && <span className="tabular-nums font-medium text-foreground/70">{cal.toFixed(0)} cal</span>}
+                          {cal > 0 && <span className="tabular-nums font-semibold text-foreground/70">{cal.toFixed(0)} cal</span>}
                           <span>{format(parseISO(log.consumed_at), "h:mm a")}</span>
                         </div>
                       </div>
@@ -110,17 +109,16 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
       </AnalyticsModule>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Velocity */}
-        <AnalyticsModule title="Consumption Velocity" icon={Zap}>
+        <AnalyticsModule title="Consumption Velocity" icon={Zap} cta={{ label: "Open Consumption", to: "/consumption" }}>
           {consumptionVelocity.length === 0 ? (
             <p className="text-sm text-muted-foreground font-analytics">Not enough data yet.</p>
           ) : (
             <div className="space-y-2.5 font-analytics">
               {consumptionVelocity.slice(0, 5).map((item) => (
                 <div key={item.name} className="flex items-center justify-between text-sm">
-                  <span className="text-foreground truncate">{item.name}</span>
+                  <span className="text-foreground font-medium truncate">{item.name}</span>
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <span className="text-muted-foreground tabular-nums">{item.count}×/mo</span>
+                    <span className="text-muted-foreground tabular-nums font-semibold">{item.count}×/mo</span>
                     <SpeedBadge speed={item.speed} />
                   </div>
                 </div>
@@ -129,7 +127,6 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
           )}
         </AnalyticsModule>
 
-        {/* Phase 2 placeholders */}
         <AnalyticsModule title="Nutrient Diversity" icon={BarChart3}>
           <p className="text-sm text-muted-foreground font-analytics">Coming in Phase 2 — diversity scoring across food categories.</p>
         </AnalyticsModule>
