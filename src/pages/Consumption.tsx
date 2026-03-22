@@ -92,8 +92,12 @@ const ConsumptionRow = ({ log, onDelete, loggedBy }: { log: ConsumptionLog; onDe
 
 const Consumption = () => {
   const { data: logs, isLoading } = useConsumptionLogs();
+  const { activeGroupId } = useGroupContext();
   const deleteLog = useDeleteConsumptionLog();
   const { toast } = useToast();
+
+  const userIds = useMemo(() => (logs ?? []).map((l) => l.user_id), [logs]);
+  const { data: profileMap } = useProfileNames(userIds);
 
   const handleDelete = async (id: string) => {
     try {
@@ -187,7 +191,7 @@ const Consumption = () => {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Today</p>
                 <div className="space-y-2">
                   {todayLogs.map((log) => (
-                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} />
+                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} loggedBy={activeGroupId ? profileMap?.get(log.user_id) : undefined} />
                   ))}
                 </div>
               </div>
