@@ -8,8 +8,11 @@ import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
-import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle } from "lucide-react";
+import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useGroups } from "@/hooks/useGroups";
+import { Badge } from "@/components/ui/badge";
 
 const LOCATION_TABS = ["All", ...STORAGE_LOCATIONS] as const;
 
@@ -29,6 +32,10 @@ const STATUS_GROUPS: StatusGroup[] = [
 
 const Pantry = () => {
   const { data: inventory, isLoading } = useInventory();
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const contextLabel = isPersonalMode ? "Personal Pantry" : `${activeGroup?.name ?? "Group"} Pantry`;
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("All");
@@ -68,8 +75,18 @@ const Pantry = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
-          <p className="mt-1 text-muted-foreground">{inventory?.length ?? 0} items in stock</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
+            {!isPersonalMode && (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <Users className="h-3 w-3" />
+                Shared
+              </Badge>
+            )}
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            Viewing: {contextLabel} · {inventory?.length ?? 0} items in stock
+          </p>
         </div>
         <AddInventoryDialog />
       </div>
@@ -127,7 +144,11 @@ const Pantry = () => {
         <div className="rounded-2xl bg-card p-10 text-center shadow-sm">
           <Package className="mx-auto h-10 w-10 text-muted-foreground/50" />
           <p className="mt-3 text-muted-foreground">
-            {inventory?.length === 0 ? "Your pantry is empty. Add a catalog item first, then add it to your pantry." : "No items match your filters."}
+            {inventory?.length === 0
+              ? isPersonalMode
+                ? "Your pantry is empty. Add a catalog item first, then add it to your pantry."
+                : "This shared pantry is empty. Add items here for this group."
+              : "No items match your filters."}
           </p>
         </div>
       ) : (

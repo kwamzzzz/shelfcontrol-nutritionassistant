@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import { PackagePlus } from "lucide-react";
+import { PackagePlus, Users, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useGroups } from "@/hooks/useGroups";
 
 const AddInventoryDialog = () => {
   const [open, setOpen] = useState(false);
@@ -66,6 +68,7 @@ const AddInventoryDialog = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display">Add to Pantry</DialogTitle>
+          <ContextBanner />
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
