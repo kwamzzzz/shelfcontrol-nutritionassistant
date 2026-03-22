@@ -19,6 +19,7 @@ import {
   Settings,
   Apple,
   Mail,
+  Lightbulb,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ const navSections = [
     label: "INTELLIGENCE",
     items: [
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/nutrition", label: "Nutrition", icon: Apple, comingSoon: true },
     ],
   },
