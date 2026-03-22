@@ -112,6 +112,14 @@ const Pantry = () => {
           </div>
           <p className="mt-1 text-muted-foreground">
             Viewing: {contextLabel} · {inventory?.length ?? 0} items in stock
+            {expiryFilter && (
+              <button
+                onClick={() => setExpiryFilter(null)}
+                className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+              >
+                Filter: {expiryFilter.replace("_", " ")} ✕
+              </button>
+            )}
           </p>
         </div>
         <AddInventoryDialog />

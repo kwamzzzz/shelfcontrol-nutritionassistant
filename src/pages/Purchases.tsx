@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { usePurchases } from "@/hooks/usePurchases";
 import { formatCurrency, formatCurrencyAlways } from "@/lib/currency";
 import AddPurchaseDialog from "@/components/purchases/AddPurchaseDialog";
@@ -7,11 +8,18 @@ import ReceiptDetail from "@/components/purchases/ReceiptDetail";
 import { Receipt, DollarSign, Store, TrendingUp, Star } from "lucide-react";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useProfileNames } from "@/hooks/useProfileNames";
+import { isThisWeek, parseISO } from "date-fns";
 
 const Purchases = () => {
   const { data: purchases, isLoading } = usePurchases();
   const { activeGroupId } = useGroupContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+
+  // Deep-link filters from Intelligence
+  const storeFilter = searchParams.get("store");
+  const periodFilter = searchParams.get("period");
+  const searchFilter = searchParams.get("search");
 
   const userIds = useMemo(() => (purchases ?? []).map((p) => p.user_id), [purchases]);
   const { data: profileMap } = useProfileNames(userIds);
@@ -23,9 +31,24 @@ const Purchases = () => {
     }
   }, [purchases, selectedId]);
 
+  const filteredPurchases = useMemo(() => {
+    if (!purchases) return [];
+    return purchases.filter((p) => {
+      if (storeFilter && p.store_name !== storeFilter) return false;
+      if (periodFilter === "week" && !isThisWeek(parseISO(p.purchased_at), { weekStartsOn: 1 })) return false;
+      if (searchFilter) {
+        const q = searchFilter.toLowerCase();
+        const matchesStore = p.store_name?.toLowerCase().includes(q);
+        const matchesItem = p.purchase_items?.some((pi) => pi.items?.name?.toLowerCase().includes(q));
+        if (!matchesStore && !matchesItem) return false;
+      }
+      return true;
+    });
+  }, [purchases, storeFilter, periodFilter, searchFilter]);
+
   const selectedPurchase = useMemo(
-    () => purchases?.find((p) => p.id === selectedId) ?? null,
-    [purchases, selectedId]
+    () => filteredPurchases?.find((p) => p.id === selectedId) ?? null,
+    [filteredPurchases, selectedId]
   );
 
   // Summary computations
