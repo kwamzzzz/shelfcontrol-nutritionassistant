@@ -20,6 +20,7 @@ import {
   Apple,
   Mail,
   Lightbulb,
+  Newspaper,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ const navSections = [
     items: [
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
+      { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
       { to: "/nutrition", label: "Nutrition", icon: Apple, comingSoon: true },
     ],
   },
