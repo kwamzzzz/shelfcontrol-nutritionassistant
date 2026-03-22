@@ -10,6 +10,8 @@ import {
 import { Utensils, Trash2, Flame, Beef, Wheat, Droplets, Info } from "lucide-react";
 import { format, parseISO, isToday } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useProfileNames } from "@/hooks/useProfileNames";
 
 const NutritionCard = ({ icon: Icon, label, value, unit }: { icon: any; label: string; value: number; unit: string }) => (
   <div className="rounded-xl border bg-card p-4 shadow-sm">
@@ -24,7 +26,7 @@ const NutritionCard = ({ icon: Icon, label, value, unit }: { icon: any; label: s
   </div>
 );
 
-const ConsumptionRow = ({ log, onDelete }: { log: ConsumptionLog; onDelete: () => void }) => {
+const ConsumptionRow = ({ log, onDelete, loggedBy }: { log: ConsumptionLog; onDelete: () => void; loggedBy?: string }) => {
   const cal = Number(log.items?.calories_per_unit ?? 0) * Number(log.quantity);
   const hasNutrition = Number(log.items?.calories_per_unit ?? 0) > 0 || Number(log.items?.protein_g ?? 0) > 0;
 
@@ -59,6 +61,12 @@ const ConsumptionRow = ({ log, onDelete }: { log: ConsumptionLog; onDelete: () =
               <span className="italic">no nutrition data</span>
             </>
           )}
+          {loggedBy && (
+            <>
+              <span>·</span>
+              <span>by {loggedBy}</span>
+            </>
+          )}
         </div>
       </div>
       <AlertDialog>
@@ -84,8 +92,12 @@ const ConsumptionRow = ({ log, onDelete }: { log: ConsumptionLog; onDelete: () =
 
 const Consumption = () => {
   const { data: logs, isLoading } = useConsumptionLogs();
+  const { activeGroupId } = useGroupContext();
   const deleteLog = useDeleteConsumptionLog();
   const { toast } = useToast();
+
+  const userIds = useMemo(() => (logs ?? []).map((l) => l.user_id), [logs]);
+  const { data: profileMap } = useProfileNames(userIds);
 
   const handleDelete = async (id: string) => {
     try {
@@ -179,7 +191,7 @@ const Consumption = () => {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Today</p>
                 <div className="space-y-2">
                   {todayLogs.map((log) => (
-                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} />
+                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} loggedBy={activeGroupId ? profileMap?.get(log.user_id) : undefined} />
                   ))}
                 </div>
               </div>
@@ -191,7 +203,7 @@ const Consumption = () => {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Earlier</p>
                 <div className="space-y-2">
                   {earlierLogs.map((log) => (
-                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} />
+                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} loggedBy={activeGroupId ? profileMap?.get(log.user_id) : undefined} />
                   ))}
                 </div>
               </div>

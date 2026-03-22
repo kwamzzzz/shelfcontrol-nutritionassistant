@@ -5,10 +5,16 @@ import AddPurchaseDialog from "@/components/purchases/AddPurchaseDialog";
 import TripCard from "@/components/purchases/TripCard";
 import ReceiptDetail from "@/components/purchases/ReceiptDetail";
 import { Receipt, DollarSign, Store, TrendingUp, Star } from "lucide-react";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useProfileNames } from "@/hooks/useProfileNames";
 
 const Purchases = () => {
   const { data: purchases, isLoading } = usePurchases();
+  const { activeGroupId } = useGroupContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const userIds = useMemo(() => (purchases ?? []).map((p) => p.user_id), [purchases]);
+  const { data: profileMap } = useProfileNames(userIds);
 
   // Auto-select first purchase
   useEffect(() => {
@@ -114,6 +120,7 @@ const Purchases = () => {
                     purchase={p}
                     isActive={selectedId === p.id}
                     onClick={() => setSelectedId(p.id)}
+                    loggedBy={activeGroupId ? profileMap?.get(p.user_id) : undefined}
                   />
                 ))}
               </div>
