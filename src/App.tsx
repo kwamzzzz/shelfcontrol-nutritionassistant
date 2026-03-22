@@ -22,6 +22,7 @@ import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 import AcceptInvite from "@/pages/AcceptInvite";
 import Invitations from "@/pages/Invitations";
+import Intelligence from "@/pages/Intelligence";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/consumption" element={<Consumption />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/intelligence" element={<Intelligence />} />
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/:id" element={<GroupDetail />} />
             <Route path="/invitations" element={<Invitations />} />

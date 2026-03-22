@@ -11,6 +11,7 @@ import {
   ShoppingBag, UtensilsCrossed, Info,
 } from "lucide-react";
 import { isToday, isThisWeek, parseISO, format } from "date-fns";
+import IntelligenceWidget from "@/components/dashboard/IntelligenceWidget";
 
 /* ── Stat Card ──────────────────────────────────────── */
 const StatCard = ({
@@ -159,6 +160,11 @@ const Dashboard = () => {
           </span>
         </div>
       )}
+
+      {/* ── Intelligence Widget ── */}
+      <div className="mt-6">
+        <IntelligenceWidget />
+      </div>
 
       {/* ── Two-column activity section ── */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
