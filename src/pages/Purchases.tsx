@@ -134,10 +134,10 @@ const Purchases = () => {
             {/* Left: Trips list */}
             <div className="lg:col-span-5 space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                Recent Trips
+                {storeFilter || periodFilter || searchFilter ? "Filtered Trips" : "Recent Trips"}
               </h2>
               <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
-                {purchases.map((p) => (
+                {filteredPurchases.map((p) => (
                   <TripCard
                     key={p.id}
                     purchase={p}

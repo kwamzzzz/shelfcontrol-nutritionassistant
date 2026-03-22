@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
