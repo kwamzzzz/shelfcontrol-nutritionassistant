@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useIntelligenceFeed, FeedCategory, FeedSeverity } from "@/hooks/useIntelligenceFeed";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -7,8 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Lightbulb, AlertTriangle, TrendingUp, Salad, Leaf, BarChart3,
-  X, Bookmark, Users, Search,
+  X, Bookmark, Users, Search, ArrowRight,
 } from "lucide-react";
+
+const ACTION_MAP: Record<string, { label: string; path: string }> = {
+  "alert-expired": { label: "Review Pantry", path: "/pantry" },
+  "alert-expiring": { label: "Review Pantry", path: "/pantry" },
+  "nutrition-low-protein": { label: "Open Shopping List", path: "/shopping-list" },
+  "nutrition-missing-data": { label: "Fix Catalog", path: "/pantry" },
+  "nutrition-low-diversity": { label: "Open Shopping List", path: "/shopping-list" },
+  "spending-week-spike": { label: "View Purchases", path: "/purchases" },
+  "pattern-no-expiry": { label: "Review Pantry", path: "/pantry" },
+  "seasonal-tip": { label: "Add to Shopping List", path: "/shopping-list" },
+};
+
+const getAction = (id: string) => {
+  if (ACTION_MAP[id]) return ACTION_MAP[id];
+  if (id.startsWith("spending-")) return { label: "View Purchases", path: "/purchases" };
+  if (id.startsWith("pattern-running-low")) return { label: "Review Pantry", path: "/pantry" };
+  return null;
+};
 
 const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; gradient: string }> = {
   alerts: { label: "Alerts", icon: AlertTriangle, gradient: "from-red-500/80 to-orange-400/60" },
@@ -34,7 +53,7 @@ const Intelligence = () => {
   const { feedItems } = useIntelligenceFeed();
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
-  const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const navigate = useNavigate();
 
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<FeedCategory | "all">("all");
@@ -168,30 +187,46 @@ const Intelligence = () => {
                     {item.description}
                   </p>
 
-                  {/* Tags — push to bottom */}
+                  {/* Spacer + Action + Tags */}
                   <div className="flex-1" />
-                  <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                    {item.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Save">
-                      <Bookmark className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      title="Dismiss"
-                      onClick={() => setDismissed((prev) => new Set(prev).add(item.id))}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+                  {(() => {
+                    const action = getAction(item.id);
+                    return action ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full justify-between text-xs font-medium rounded-xl h-8"
+                        onClick={() => navigate(action.path)}
+                      >
+                        {action.label}
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    ) : null;
+                  })()}
+
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {item.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Save">
+                        <Bookmark className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        title="Dismiss"
+                        onClick={() => setDismissed((prev) => new Set(prev).add(item.id))}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
