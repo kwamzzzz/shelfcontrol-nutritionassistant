@@ -26,8 +26,8 @@ const Purchases = () => {
 
   // Auto-select first purchase
   useEffect(() => {
-    if (!selectedId && purchases?.length) {
-      setSelectedId(purchases[0].id);
+    if (!selectedId && filteredPurchases?.length) {
+      setSelectedId(filteredPurchases[0].id);
     }
   }, [purchases, selectedId]);
 
