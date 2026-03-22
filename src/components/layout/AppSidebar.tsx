@@ -13,17 +13,48 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Users,
+  Trophy,
+  UserCircle,
+  Settings,
+  Apple,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
-const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/pantry", label: "Pantry", icon: Package },
-  { to: "/shopping", label: "Shopping List", icon: ShoppingCart },
-  { to: "/purchases", label: "Purchases", icon: Receipt },
-  { to: "/recipes", label: "Recipes", icon: UtensilsCrossed },
-  { to: "/consumption", label: "Consumption", icon: Heart },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+const navSections = [
+  {
+    label: "MAIN",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/pantry", label: "Pantry", icon: Package },
+      { to: "/purchases", label: "Purchases", icon: Receipt },
+      { to: "/consumption", label: "Consumption", icon: Heart },
+      { to: "/shopping", label: "Shopping List", icon: ShoppingCart },
+      { to: "/recipes", label: "Recipes", icon: UtensilsCrossed },
+    ],
+  },
+  {
+    label: "INTELLIGENCE",
+    items: [
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/nutrition", label: "Nutrition", icon: Apple, comingSoon: true },
+    ],
+  },
+  {
+    label: "GROUP",
+    items: [
+      { to: "/groups", label: "Groups", icon: Users },
+      { to: "/challenges", label: "Challenges", icon: Trophy, comingSoon: true },
+    ],
+  },
+  {
+    label: "SYSTEM",
+    items: [
+      { to: "/profile", label: "Profile", icon: UserCircle },
+      { to: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 const AppSidebar = () => {
@@ -67,25 +98,47 @@ const AppSidebar = () => {
           </span>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </NavLink>
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {navSections.map((section) => (
+            <div key={section.label}>
+              <p className="px-3 mb-1.5 text-[10px] font-bold tracking-widest uppercase text-sidebar-foreground/40">
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.comingSoon ? "#" : item.to}
+                    end={item.to === "/"}
+                    onClick={(e) => {
+                      if (item.comingSoon) {
+                        e.preventDefault();
+                        return;
+                      }
+                      setMobileOpen(false);
+                    }}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        item.comingSoon
+                          ? "text-sidebar-foreground/30 cursor-default"
+                          : isActive
+                          ? "bg-sidebar-accent text-sidebar-primary"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )
+                    }
+                  >
+                    <item.icon className="h-4.5 w-4.5" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.comingSoon && (
+                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">
+                        Soon
+                      </Badge>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
