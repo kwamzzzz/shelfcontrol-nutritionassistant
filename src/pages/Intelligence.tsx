@@ -7,6 +7,7 @@ import { useGroups } from "@/hooks/useGroups";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AISummaryCard } from "@/components/intelligence/AISummaryCard";
 import {
   Lightbulb, AlertTriangle, TrendingUp, Salad, Leaf, BarChart3,
   X, Bookmark, Users, Search, ArrowRight, Flame, Eye, Sparkles,
