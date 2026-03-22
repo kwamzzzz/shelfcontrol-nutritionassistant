@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGroups, useGroupMembers } from "@/hooks/useGroups";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { useGroupContext } from "@/contexts/GroupContext";
+import InviteMemberDialog from "@/components/groups/InviteMemberDialog";
+import PendingInvites from "@/components/groups/PendingInvites";
 
 /* ─── tiny helpers ─── */
 const StatCard = ({ icon: Icon, label, value, accent }: {
@@ -46,6 +48,7 @@ const GroupDetail = () => {
   const { setActiveGroupId } = useGroupContext();
   const { data: members = [], isLoading: membersLoading } = useGroupMembers(id ?? null);
   const group = groups.find((g) => g.id === id);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   /* ─── fetch group data for summary + activity ─── */
   const { data: groupData } = useQuery({
@@ -174,7 +177,7 @@ const GroupDetail = () => {
         <Button variant="outline" className="rounded-xl gap-2" onClick={() => goToGroupPage("/purchases")}>
           <Receipt className="h-4 w-4" /> View Purchases
         </Button>
-        <Button variant="outline" className="rounded-xl gap-2" disabled>
+        <Button variant="outline" className="rounded-xl gap-2" onClick={() => setInviteOpen(true)}>
           <UserPlus className="h-4 w-4" /> Invite Member
         </Button>
       </div>
@@ -260,13 +263,26 @@ const GroupDetail = () => {
                 </div>
               ))
             )}
-            <Button variant="outline" className="w-full rounded-xl gap-2 mt-2" disabled>
+            <Button variant="outline" className="w-full rounded-xl gap-2 mt-2" onClick={() => setInviteOpen(true)}>
               <UserPlus className="h-4 w-4" />
               Invite Member
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Invites */}
+      {id && <PendingInvites groupId={id} />}
+
+      {/* Invite Dialog */}
+      {id && group && (
+        <InviteMemberDialog
+          groupId={id}
+          groupName={group.name}
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+        />
+      )}
     </div>
   );
 };
