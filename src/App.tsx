@@ -75,6 +75,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/:id" element={<GroupDetail />} />
+            <Route path="/invitations" element={<Invitations />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
