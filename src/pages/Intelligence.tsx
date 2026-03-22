@@ -11,28 +11,6 @@ import {
   X, Bookmark, Users, Search, ArrowRight,
 } from "lucide-react";
 
-const ACTION_MAP: Record<string, { label: string; path: string }> = {
-  "alert-expired": { label: "Review Pantry", path: "/pantry" },
-  "alert-expiring": { label: "Review Pantry", path: "/pantry" },
-  "nutrition-low-protein": { label: "Open Shopping List", path: "/shopping-list" },
-  "nutrition-missing-data": { label: "Fix Catalog", path: "/pantry" },
-  "nutrition-low-diversity": { label: "Open Shopping List", path: "/shopping-list" },
-  "spending-week-spike": { label: "View Purchases", path: "/purchases" },
-  "pattern-no-expiry": { label: "Review Pantry", path: "/pantry" },
-  "seasonal-tip": { label: "Add to Shopping List", path: "/shopping-list" },
-  "waste-week-spike": { label: "Review Pantry", path: "/pantry" },
-  "waste-expired-pattern": { label: "View Purchases", path: "/purchases" },
-};
-
-const getAction = (id: string) => {
-  if (ACTION_MAP[id]) return ACTION_MAP[id];
-  if (id.startsWith("spending-")) return { label: "View Purchases", path: "/purchases" };
-  if (id.startsWith("pattern-running-low")) return { label: "Review Pantry", path: "/pantry" };
-  if (id.startsWith("waste-repeated-") || id.startsWith("waste-most-")) return { label: "Review Pantry", path: "/pantry" };
-  if (id.startsWith("waste-category-")) return { label: "Open Shopping List", path: "/shopping-list" };
-  return null;
-};
-
 const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; gradient: string }> = {
   alerts: { label: "Alerts", icon: AlertTriangle, gradient: "from-red-500/80 to-orange-400/60" },
   nutrition: { label: "Nutrition", icon: Salad, gradient: "from-emerald-500/80 to-teal-400/60" },
@@ -195,20 +173,17 @@ const Intelligence = () => {
                   {/* Spacer + Action + Tags */}
                   <div className="flex-1" />
 
-                  {(() => {
-                    const action = getAction(item.id);
-                    return action ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 w-full justify-between text-xs font-medium rounded-xl h-8"
-                        onClick={() => navigate(action.path)}
-                      >
-                        {action.label}
-                        <ArrowRight className="h-3 w-3" />
-                      </Button>
-                    ) : null;
-                  })()}
+                  {item.actionPath && item.actionLabel && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 w-full justify-between text-xs font-medium rounded-xl h-8"
+                      onClick={() => navigate(item.actionPath!)}
+                    >
+                      {item.actionLabel}
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  )}
 
                   <div className="mt-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 flex-wrap">
