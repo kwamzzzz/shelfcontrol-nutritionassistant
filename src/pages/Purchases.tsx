@@ -29,7 +29,7 @@ const Purchases = () => {
     if (!selectedId && filteredPurchases?.length) {
       setSelectedId(filteredPurchases[0].id);
     }
-  }, [purchases, selectedId]);
+  }, [filteredPurchases, selectedId]);
 
   const filteredPurchases = useMemo(() => {
     if (!purchases) return [];
