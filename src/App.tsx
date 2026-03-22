@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { GroupProvider } from "@/contexts/GroupContext";
 import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Pantry from "@/pages/Pantry";
@@ -12,6 +13,11 @@ import Recipes from "@/pages/Recipes";
 import Consumption from "@/pages/Consumption";
 import Analytics from "@/pages/Analytics";
 import Purchases from "@/pages/Purchases";
+import Groups from "@/pages/Groups";
+import GroupDetail from "@/pages/GroupDetail";
+import Challenges from "@/pages/Challenges";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 
@@ -32,7 +38,11 @@ const ProtectedRoutes = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <AppLayout />;
+  return (
+    <GroupProvider>
+      <AppLayout />
+    </GroupProvider>
+  );
 };
 
 const AuthRoute = () => {
@@ -60,6 +70,11 @@ const App = () => (
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/consumption" element={<Consumption />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/:id" element={<GroupDetail />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
