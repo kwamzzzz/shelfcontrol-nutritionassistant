@@ -10,6 +10,8 @@ import {
 import { Utensils, Trash2, Flame, Beef, Wheat, Droplets, Info } from "lucide-react";
 import { format, parseISO, isToday } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useProfileNames } from "@/hooks/useProfileNames";
 
 const NutritionCard = ({ icon: Icon, label, value, unit }: { icon: any; label: string; value: number; unit: string }) => (
   <div className="rounded-xl border bg-card p-4 shadow-sm">
@@ -24,7 +26,7 @@ const NutritionCard = ({ icon: Icon, label, value, unit }: { icon: any; label: s
   </div>
 );
 
-const ConsumptionRow = ({ log, onDelete }: { log: ConsumptionLog; onDelete: () => void }) => {
+const ConsumptionRow = ({ log, onDelete, loggedBy }: { log: ConsumptionLog; onDelete: () => void; loggedBy?: string }) => {
   const cal = Number(log.items?.calories_per_unit ?? 0) * Number(log.quantity);
   const hasNutrition = Number(log.items?.calories_per_unit ?? 0) > 0 || Number(log.items?.protein_g ?? 0) > 0;
 
@@ -57,6 +59,12 @@ const ConsumptionRow = ({ log, onDelete }: { log: ConsumptionLog; onDelete: () =
             <>
               <span>·</span>
               <span className="italic">no nutrition data</span>
+            </>
+          )}
+          {loggedBy && (
+            <>
+              <span>·</span>
+              <span>by {loggedBy}</span>
             </>
           )}
         </div>
