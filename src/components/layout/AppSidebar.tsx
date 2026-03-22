@@ -136,12 +136,6 @@ const AppSidebar = () => {
                       </Badge>
                     )}
                   </NavLink>
-                    {item.hasBadge && pendingCount > 0 && (
-                      <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-destructive text-destructive-foreground">
-                        {pendingCount}
-                      </Badge>
-                    )}
-                  </NavLink>
                 ))}
               </div>
             </div>
