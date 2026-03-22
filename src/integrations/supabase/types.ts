@@ -17,6 +17,7 @@ export type Database = {
       consumption_logs: {
         Row: {
           consumed_at: string
+          group_id: string | null
           id: string
           item_id: string
           meal_type: string | null
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           consumed_at?: string
+          group_id?: string | null
           id?: string
           item_id: string
           meal_type?: string | null
@@ -39,6 +41,7 @@ export type Database = {
         }
         Update: {
           consumed_at?: string
+          group_id?: string | null
           id?: string
           item_id?: string
           meal_type?: string | null
@@ -49,6 +52,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "consumption_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "consumption_logs_item_id_fkey"
             columns: ["item_id"]
@@ -65,10 +75,67 @@ export type Database = {
           },
         ]
       }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           added_at: string
           expiry_date: string | null
+          group_id: string | null
           id: string
           item_id: string
           opened_date: string | null
@@ -82,6 +149,7 @@ export type Database = {
         Insert: {
           added_at?: string
           expiry_date?: string | null
+          group_id?: string | null
           id?: string
           item_id: string
           opened_date?: string | null
@@ -95,6 +163,7 @@ export type Database = {
         Update: {
           added_at?: string
           expiry_date?: string | null
+          group_id?: string | null
           id?: string
           item_id?: string
           opened_date?: string | null
@@ -106,6 +175,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_item_id_fkey"
             columns: ["item_id"]
@@ -256,6 +332,7 @@ export type Database = {
       }
       purchases: {
         Row: {
+          group_id: string | null
           id: string
           notes: string | null
           purchased_at: string
@@ -264,6 +341,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          group_id?: string | null
           id?: string
           notes?: string | null
           purchased_at?: string
@@ -272,6 +350,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          group_id?: string | null
           id?: string
           notes?: string | null
           purchased_at?: string
@@ -279,7 +358,15 @@ export type Database = {
           total_cost?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchases_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipe_ingredients: {
         Row: {
@@ -355,6 +442,7 @@ export type Database = {
           category: string | null
           created_at: string
           estimated_cost: number | null
+          group_id: string | null
           id: string
           is_purchased: boolean
           item_id: string | null
@@ -366,6 +454,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           estimated_cost?: number | null
+          group_id?: string | null
           id?: string
           is_purchased?: boolean
           item_id?: string | null
@@ -377,6 +466,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           estimated_cost?: number | null
+          group_id?: string | null
           id?: string
           is_purchased?: boolean
           item_id?: string | null
@@ -385,6 +475,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shopping_list_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shopping_list_item_id_fkey"
             columns: ["item_id"]
@@ -397,6 +494,7 @@ export type Database = {
       waste_logs: {
         Row: {
           discarded_at: string
+          group_id: string | null
           id: string
           inventory_id: string | null
           item_id: string
@@ -409,6 +507,7 @@ export type Database = {
         }
         Insert: {
           discarded_at?: string
+          group_id?: string | null
           id?: string
           inventory_id?: string | null
           item_id: string
@@ -421,6 +520,7 @@ export type Database = {
         }
         Update: {
           discarded_at?: string
+          group_id?: string | null
           id?: string
           inventory_id?: string | null
           item_id?: string
@@ -432,6 +532,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "waste_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "waste_logs_inventory_id_fkey"
             columns: ["inventory_id"]
@@ -460,7 +567,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
