@@ -12,7 +12,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 
-const AddInventoryDialog = () => {
+const ContextBanner = () => {
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
+  const group = groups.find((g) => g.id === activeGroupId);
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+      {isPersonalMode ? (
+        <><User className="h-3.5 w-3.5" /> Adding to: <span className="font-medium text-foreground">Personal</span></>
+      ) : (
+        <><Users className="h-3.5 w-3.5" /> Adding to: <span className="font-medium text-foreground">{group?.name ?? "Group"}</span></>
+      )}
+    </div>
+  );
+};
+
   const [open, setOpen] = useState(false);
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
