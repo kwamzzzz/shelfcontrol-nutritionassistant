@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { useFoodNews, FoodNewsCategory, FOOD_NEWS_CATEGORY_CONFIG } from "@/hooks/useFoodNews";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Apple, HeartPulse, TrendingUp, FlaskConical, Newspaper,
-  ExternalLink,
+  ExternalLink, Bookmark,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -25,7 +25,7 @@ const CATEGORY_BADGE_STYLE: Record<FoodNewsCategory, string> = {
 type FilterCategory = FoodNewsCategory | "all";
 
 const FoodIntelligence = () => {
-  const { articles } = useFoodNews();
+  const { articles, isLoading } = useFoodNews();
   const [activeCategory, setActiveCategory] = useState<FilterCategory>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(8);
@@ -47,11 +47,9 @@ const FoodIntelligence = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold text-foreground">Food Intelligence</h1>
-          </div>
+          <h1 className="text-3xl font-display font-bold text-foreground">Food Intelligence</h1>
           <p className="mt-1 text-muted-foreground">
-            Relevant insights from the world of food and health · {articles.length} articles
+            Live insights from the world of food and health · {articles.length} articles
           </p>
         </div>
         <div className="relative w-full sm:w-72">
@@ -88,8 +86,23 @@ const FoodIntelligence = () => {
         })}
       </div>
 
-      {/* Grid */}
-      {visible.length === 0 ? (
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-2xl bg-card shadow-sm overflow-hidden">
+              <Skeleton className="h-44 w-full" />
+              <div className="p-5 space-y-3">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : visible.length === 0 ? (
         <div className="mt-6 rounded-2xl bg-card p-12 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
           <Newspaper className="h-12 w-12 mx-auto text-muted-foreground/40" />
           <p className="mt-4 font-semibold text-foreground text-lg">No articles found</p>
@@ -103,31 +116,66 @@ const FoodIntelligence = () => {
             {visible.map((article) => {
               const config = FOOD_NEWS_CATEGORY_CONFIG[article.category];
               const CatIcon = CATEGORY_ICON[article.category];
+              const hasImage = !!article.imageUrl;
+
               return (
-                <div
+                <a
                   key={article.id}
-                  className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col cursor-pointer"
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col focus-visible:ring-2 focus-visible:ring-ring outline-none"
                 >
-                  {/* Image area */}
-                  <div className={`relative h-32 bg-gradient-to-br ${config.gradient} flex items-center justify-center shrink-0`}>
-                    <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
+                  {/* Image / gradient area */}
+                  <div className="relative h-44 shrink-0 overflow-hidden">
+                    {hasImage ? (
+                      <>
+                        <img
+                          src={article.imageUrl}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Fallback to gradient on broken image
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${config.gradient} items-center justify-center hidden`}
+                        >
+                          <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
+                        </div>
+                      </>
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
+                        <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
+                      </div>
+                    )}
+
+                    {/* Overlay badges */}
                     <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${CATEGORY_BADGE_STYLE[article.category]}`}>
                       {config.label}
                     </span>
-                    <span className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/30 text-white">
-                      ↑ {article.relevanceScore}
+
+                    {/* Bottom gradient overlay for readability */}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
+
+                    {/* Source on image */}
+                    <span className="absolute bottom-2 left-3 text-[10px] font-medium text-white/90">
+                      {article.source}
                     </span>
                   </div>
 
+                  {/* Content */}
                   <div className="p-5 flex flex-col flex-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
-                      {config.label}
-                    </p>
-                    <h3 className="text-lg font-semibold text-foreground leading-snug line-clamp-2">
+                    <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                       {article.title}
                     </h3>
-                    <p className="mt-1 text-xs text-muted-foreground/70">
-                      {article.source} · {formatDistanceToNow(article.publishedAt, { addSuffix: true })}
+                    <p className="mt-1 text-[11px] text-muted-foreground/60">
+                      {formatDistanceToNow(article.publishedAt, { addSuffix: true })}
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
                       {article.summary}
@@ -136,13 +184,13 @@ const FoodIntelligence = () => {
                     <div className="flex-1" />
 
                     <div className="mt-3 flex items-center justify-between">
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                        {article.source}
-                      </Badge>
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="text-[10px] text-muted-foreground/50 italic">
+                        Based on your interests
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
-                </div>
+                </a>
               );
             })}
           </div>
@@ -150,7 +198,7 @@ const FoodIntelligence = () => {
           {hasMore && (
             <div className="mt-8 flex justify-center">
               <button
-                onClick={() => setVisibleCount((c) => c + 8)}
+                onClick={(e) => { e.preventDefault(); setVisibleCount((c) => c + 8); }}
                 className="rounded-full px-6 py-2.5 text-sm font-medium bg-secondary text-muted-foreground hover:bg-secondary/80 transition-colors"
               >
                 Load more articles
