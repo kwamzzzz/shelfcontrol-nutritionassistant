@@ -23,6 +23,7 @@ import NotFound from "@/pages/NotFound";
 import AcceptInvite from "@/pages/AcceptInvite";
 import Invitations from "@/pages/Invitations";
 import Intelligence from "@/pages/Intelligence";
+import Nutrition from "@/pages/Nutrition";
 import FoodIntelligence from "@/pages/FoodIntelligence";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/intelligence" element={<Intelligence />} />
             <Route path="/food-intelligence" element={<FoodIntelligence />} />
+            <Route path="/nutrition" element={<Nutrition />} />
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/:id" element={<GroupDetail />} />
             <Route path="/invitations" element={<Invitations />} />

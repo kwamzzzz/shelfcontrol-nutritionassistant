@@ -44,7 +44,7 @@ const navSections = [
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
-      { to: "/nutrition", label: "Nutrition", icon: Apple, comingSoon: true },
+      { to: "/nutrition", label: "Nutrition", icon: Apple },
     ],
   },
   {
