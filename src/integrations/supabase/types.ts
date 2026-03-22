@@ -437,6 +437,42 @@ export type Database = {
         }
         Relationships: []
       }
+      nutrition_goals: {
+        Row: {
+          calorie_goal: number
+          carbs_goal: number
+          created_at: string
+          fat_goal: number
+          id: string
+          protein_goal: number
+          updated_at: string
+          user_id: string
+          water_goal_ml: number
+        }
+        Insert: {
+          calorie_goal?: number
+          carbs_goal?: number
+          created_at?: string
+          fat_goal?: number
+          id?: string
+          protein_goal?: number
+          updated_at?: string
+          user_id: string
+          water_goal_ml?: number
+        }
+        Update: {
+          calorie_goal?: number
+          carbs_goal?: number
+          created_at?: string
+          fat_goal?: number
+          id?: string
+          protein_goal?: number
+          updated_at?: string
+          user_id?: string
+          water_goal_ml?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -746,6 +782,38 @@ export type Database = {
             columns: ["purchase_id"]
             isOneToOne: false
             referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      water_logs: {
+        Row: {
+          amount_ml: number
+          group_id: string | null
+          id: string
+          logged_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_ml?: number
+          group_id?: string | null
+          id?: string
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_ml?: number
+          group_id?: string | null
+          id?: string
+          logged_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "water_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
         ]

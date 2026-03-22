@@ -44,7 +44,7 @@ const navSections = [
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
-      { to: "/nutrition", label: "Nutrition", icon: Apple, comingSoon: true },
+      { to: "/nutrition", label: "Nutrition", icon: Apple },
     ],
   },
   {
@@ -116,21 +116,13 @@ const AppSidebar = () => {
                 {section.items.map((item) => (
                   <NavLink
                     key={item.to}
-                    to={item.comingSoon ? "#" : item.to}
+                    to={item.to}
                     end={item.to === "/"}
-                    onClick={(e) => {
-                      if (item.comingSoon) {
-                        e.preventDefault();
-                        return;
-                      }
-                      setMobileOpen(false);
-                    }}
+                    onClick={() => setMobileOpen(false)}
                     className={({ isActive }) =>
                       cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        item.comingSoon
-                          ? "text-sidebar-foreground/30 cursor-default"
-                          : isActive
+                        isActive
                           ? "bg-sidebar-accent text-sidebar-primary"
                           : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )
@@ -138,11 +130,6 @@ const AppSidebar = () => {
                   >
                     <item.icon className="h-4.5 w-4.5" />
                     <span className="flex-1">{item.label}</span>
-                    {item.comingSoon && (
-                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">
-                        Soon
-                      </Badge>
-                    )}
                     {item.hasBadge && pendingCount > 0 && (
                       <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-destructive text-destructive-foreground">
                         {pendingCount}
