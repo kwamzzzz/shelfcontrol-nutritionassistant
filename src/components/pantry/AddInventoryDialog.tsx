@@ -27,6 +27,7 @@ const ContextBanner = () => {
   );
 };
 
+const AddInventoryDialog = () => {
   const [open, setOpen] = useState(false);
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
