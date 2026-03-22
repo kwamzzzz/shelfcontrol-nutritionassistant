@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useInventory, type InventoryRow } from "@/hooks/usePantry";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,10 +38,22 @@ const Pantry = () => {
   const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
   const contextLabel = isPersonalMode ? "Personal Pantry" : `${activeGroup?.name ?? "Group"} Pantry`;
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("All");
   const [editing, setEditing] = useState<InventoryRow | null>(null);
+  const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
+
+  // Deep-link from Intelligence cards
+  useEffect(() => {
+    const filter = searchParams.get("filter");
+    const searchParam = searchParams.get("search");
+    if (filter === "expired" || filter === "expiring" || filter === "no_expiry" || filter === "missing_nutrition") {
+      setExpiryFilter(filter);
+    }
+    if (searchParam) setSearch(searchParam);
+  }, [searchParams]);
 
   // Attribution
   const userIds = useMemo(() => (inventory ?? []).map((e) => e.user_id), [inventory]);
@@ -52,9 +65,17 @@ const Pantry = () => {
       const matchesSearch = entry.items.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = filterCategory === "all" || entry.items.category === filterCategory;
       const matchesLocation = filterLocation === "All" || entry.storage_location === filterLocation;
+      // Deep-link expiry/nutrition filters
+      if (expiryFilter === "expired" && getExpiryStatus(entry.expiry_date) !== "expired") return false;
+      if (expiryFilter === "expiring" && getExpiryStatus(entry.expiry_date) !== "expiring") return false;
+      if (expiryFilter === "no_expiry" && entry.expiry_date) return false;
+      if (expiryFilter === "missing_nutrition") {
+        const hasData = Number(entry.items?.calories_per_unit ?? 0) > 0 || Number(entry.items?.protein_g ?? 0) > 0;
+        if (hasData) return false;
+      }
       return matchesSearch && matchesCategory && matchesLocation;
     });
-  }, [inventory, search, filterCategory, filterLocation]);
+  }, [inventory, search, filterCategory, filterLocation, expiryFilter]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<ExpiryStatus, number> = { expired: 0, expiring: 0, fresh: 0, "no-date": 0 };
@@ -91,6 +112,14 @@ const Pantry = () => {
           </div>
           <p className="mt-1 text-muted-foreground">
             Viewing: {contextLabel} · {inventory?.length ?? 0} items in stock
+            {expiryFilter && (
+              <button
+                onClick={() => setExpiryFilter(null)}
+                className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+              >
+                Filter: {expiryFilter.replace("_", " ")} ✕
+              </button>
+            )}
           </p>
         </div>
         <AddInventoryDialog />

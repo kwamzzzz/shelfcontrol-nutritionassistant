@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
@@ -23,6 +24,8 @@ const ShoppingList = () => {
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const [searchParams] = useSearchParams();
+  const prefill = searchParams.get("prefill");
 
   // Collect user IDs for attribution
   const userIds = useMemo(() => {
@@ -96,6 +99,11 @@ const ShoppingList = () => {
           </div>
           <p className="mt-1 text-muted-foreground">
             Viewing: {contextLabel} · {toBuyCount} item{toBuyCount !== 1 ? "s" : ""} to buy
+            {prefill && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                Suggested: {prefill}
+              </span>
+            )}
           </p>
         </div>
         <AddShoppingItemDialog />

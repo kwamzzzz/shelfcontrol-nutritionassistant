@@ -21,10 +21,12 @@ export interface FeedItem {
   category: FeedCategory;
   tags: string[];
   dismissed?: boolean;
+  /** Deep-link path with optional query params */
+  actionPath?: string;
+  actionLabel?: string;
 }
 
 export const useIntelligenceFeed = () => {
-  console.log("[useIntelligenceFeed] hook called");
   const { data: inventory } = useInventory();
   const { data: purchases } = usePurchases();
   const { data: logs } = useConsumptionLogs();
@@ -45,6 +47,8 @@ export const useIntelligenceFeed = () => {
         severity: "high",
         category: "alerts",
         tags: ["Pantry", "Waste"],
+        actionPath: "/pantry?filter=expired",
+        actionLabel: "Review Expired",
       });
     }
 
@@ -60,6 +64,8 @@ export const useIntelligenceFeed = () => {
         severity: "high",
         category: "alerts",
         tags: ["Pantry", "Urgency"],
+        actionPath: "/pantry?filter=expiring",
+        actionLabel: "Review Expiring",
       });
     }
 
@@ -79,6 +85,8 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "nutrition",
           tags: ["Protein", "Pantry"],
+          actionPath: "/shopping?prefill=protein",
+          actionLabel: "Open Shopping List",
         });
       }
     }
@@ -97,6 +105,8 @@ export const useIntelligenceFeed = () => {
         severity: "low",
         category: "nutrition",
         tags: ["Data Quality", "Nutrition"],
+        actionPath: "/pantry?filter=missing_nutrition",
+        actionLabel: "Fix Catalog",
       });
     }
 
@@ -113,6 +123,8 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "nutrition",
           tags: ["Diversity", "Health"],
+          actionPath: "/shopping?prefill=variety",
+          actionLabel: "Open Shopping List",
         });
       }
     }
@@ -139,6 +151,8 @@ export const useIntelligenceFeed = () => {
             severity: "medium",
             category: "spending",
             tags: [store, "Budget"],
+            actionPath: `/purchases?store=${encodeURIComponent(store)}`,
+            actionLabel: `View ${store} Trips`,
           });
           break;
         }
@@ -167,6 +181,8 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "spending",
           tags: ["Budget", "Weekly"],
+          actionPath: "/purchases?period=week",
+          actionLabel: "View This Week",
         });
       }
     }
@@ -197,6 +213,8 @@ export const useIntelligenceFeed = () => {
             severity: "high",
             category: "patterns",
             tags: [name, "Restock"],
+            actionPath: `/pantry?search=${encodeURIComponent(name)}`,
+            actionLabel: "Review in Pantry",
           });
           break;
         }
@@ -215,16 +233,16 @@ export const useIntelligenceFeed = () => {
         severity: "low",
         category: "patterns",
         tags: ["Data Quality", "Pantry"],
+        actionPath: "/pantry?filter=no_expiry",
+        actionLabel: "Review Pantry",
       });
     }
 
     // ── WASTE: Patterns from waste_logs ──
     if (wasteLogs && wasteLogs.length > 0) {
-      // Most wasted item (by count of discard events)
       const itemWasteCounts = new Map<string, { count: number; qty: number; category: string | null }>();
       const categoryWasteCounts = new Map<string, number>();
       let weekWaste = 0;
-      let monthWaste = 0;
 
       for (const w of wasteLogs) {
         const name = (w as any).items?.name ?? "Unknown";
@@ -237,7 +255,6 @@ export const useIntelligenceFeed = () => {
 
         const d = parseISO(w.discarded_at);
         if (isThisWeek(d, { weekStartsOn: 1 })) weekWaste++;
-        if (isThisMonth(d)) monthWaste++;
       }
 
       // Repeated waste of same item (≥3 times)
@@ -253,6 +270,8 @@ export const useIntelligenceFeed = () => {
           severity: "high",
           category: "patterns",
           tags: [topItem, "Waste", "Recurring"],
+          actionPath: `/pantry?search=${encodeURIComponent(topItem)}`,
+          actionLabel: "Review in Pantry",
         });
       } else if (topItem && topData && topData.count >= 2) {
         items.push({
@@ -264,6 +283,8 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "patterns",
           tags: [topItem, "Waste"],
+          actionPath: `/pantry?search=${encodeURIComponent(topItem)}`,
+          actionLabel: "Review in Pantry",
         });
       }
 
@@ -280,6 +301,8 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "patterns",
           tags: [topCat, "Waste", "Category"],
+          actionPath: `/shopping?prefill=${encodeURIComponent(topCat)}`,
+          actionLabel: "Open Shopping List",
         });
       }
 
@@ -294,6 +317,8 @@ export const useIntelligenceFeed = () => {
           severity: "high",
           category: "alerts",
           tags: ["Waste", "Weekly"],
+          actionPath: "/pantry?filter=expiring",
+          actionLabel: "Review Pantry",
         });
       }
 
@@ -309,7 +334,66 @@ export const useIntelligenceFeed = () => {
           severity: "medium",
           category: "patterns",
           tags: ["Expiry", "Waste", "Overbuying"],
+          actionPath: "/purchases",
+          actionLabel: "View Purchases",
         });
+      }
+
+      // ── NEW: Purchase-to-Waste Mismatch ──
+      if (purchases && purchases.length > 0) {
+        const purchasedItemCounts = new Map<string, number>();
+        for (const p of purchases) {
+          for (const pi of p.purchase_items ?? []) {
+            const name = pi.items?.name ?? "";
+            if (name) purchasedItemCounts.set(name, (purchasedItemCounts.get(name) ?? 0) + 1);
+          }
+        }
+        for (const [itemName, wasteData] of itemWasteCounts) {
+          const purchaseCount = purchasedItemCounts.get(itemName) ?? 0;
+          if (purchaseCount >= 2 && wasteData.count >= 2) {
+            items.push({
+              id: `waste-purchase-mismatch-${itemName}`,
+              title: `You buy ${itemName} often but also waste it`,
+              description: `Purchased ${purchaseCount} times and discarded ${wasteData.count} times. This may indicate overbuying or poor storage fit.`,
+              reason: "Recurring buy-and-waste cycle detected",
+              source: "Based on your purchases & waste",
+              severity: "high",
+              category: "spending",
+              tags: [itemName, "Overbuying", "Waste"],
+              actionPath: `/purchases?search=${encodeURIComponent(itemName)}`,
+              actionLabel: "View Purchases",
+            });
+            break; // Only surface the top mismatch
+          }
+        }
+      }
+    }
+
+    // ── NEW: Category Over-Reliance ──
+    if (inventory && inventory.length >= 5) {
+      const catCounts = new Map<string, number>();
+      for (const r of inventory) {
+        const cat = r.items?.category;
+        if (cat) catCounts.set(cat, (catCounts.get(cat) ?? 0) + 1);
+      }
+      const totalCatItems = Array.from(catCounts.values()).reduce((a, b) => a + b, 0);
+      for (const [cat, count] of catCounts) {
+        const ratio = count / totalCatItems;
+        if (ratio >= 0.5 && catCounts.size > 1) {
+          items.push({
+            id: `pattern-overreliance-${cat}`,
+            title: `${Math.round(ratio * 100)}% of your pantry is ${cat}`,
+            description: `You rely heavily on ${cat}. Diversifying your food categories supports better nutrition and reduces monotony.`,
+            reason: "One food category dominates pantry composition",
+            source: "Based on your pantry",
+            severity: "medium",
+            category: "patterns",
+            tags: [cat, "Diversity", "Balance"],
+            actionPath: `/shopping?prefill=${encodeURIComponent(cat === "Snacks" ? "vegetables" : "variety")}`,
+            actionLabel: "Open Shopping List",
+          });
+          break;
+        }
       }
     }
 
@@ -338,6 +422,8 @@ export const useIntelligenceFeed = () => {
       severity: "low",
       category: "seasonality",
       tags: ["Seasonal", "Shopping"],
+      actionPath: "/shopping",
+      actionLabel: "Add to Shopping List",
     });
 
     // Sort: high first
