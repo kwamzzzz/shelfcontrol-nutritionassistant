@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { usePantry } from "@/hooks/usePantry";
+import { useMemo } from "react";
+import { useInventory } from "@/hooks/usePantry";
 
 export type FoodNewsCategory = "nutrition" | "health" | "trends" | "science";
 
