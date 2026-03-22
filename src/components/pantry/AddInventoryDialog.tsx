@@ -7,8 +7,25 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import { PackagePlus } from "lucide-react";
+import { PackagePlus, Users, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useGroups } from "@/hooks/useGroups";
+
+const ContextBanner = () => {
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
+  const group = groups.find((g) => g.id === activeGroupId);
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+      {isPersonalMode ? (
+        <><User className="h-3.5 w-3.5" /> Adding to: <span className="font-medium text-foreground">Personal</span></>
+      ) : (
+        <><Users className="h-3.5 w-3.5" /> Adding to: <span className="font-medium text-foreground">{group?.name ?? "Group"}</span></>
+      )}
+    </div>
+  );
+};
 
 const AddInventoryDialog = () => {
   const [open, setOpen] = useState(false);
@@ -66,6 +83,7 @@ const AddInventoryDialog = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display">Add to Pantry</DialogTitle>
+          <ContextBanner />
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
