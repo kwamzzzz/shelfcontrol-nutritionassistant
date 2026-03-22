@@ -24,13 +24,6 @@ const Purchases = () => {
   const userIds = useMemo(() => (purchases ?? []).map((p) => p.user_id), [purchases]);
   const { data: profileMap } = useProfileNames(userIds);
 
-  // Auto-select first purchase
-  useEffect(() => {
-    if (!selectedId && filteredPurchases?.length) {
-      setSelectedId(filteredPurchases[0].id);
-    }
-  }, [filteredPurchases, selectedId]);
-
   const filteredPurchases = useMemo(() => {
     if (!purchases) return [];
     return purchases.filter((p) => {
@@ -45,6 +38,13 @@ const Purchases = () => {
       return true;
     });
   }, [purchases, storeFilter, periodFilter, searchFilter]);
+
+  // Auto-select first purchase
+  useEffect(() => {
+    if (!selectedId && filteredPurchases?.length) {
+      setSelectedId(filteredPurchases[0].id);
+    }
+  }, [filteredPurchases, selectedId]);
 
   const selectedPurchase = useMemo(
     () => filteredPurchases?.find((p) => p.id === selectedId) ?? null,
