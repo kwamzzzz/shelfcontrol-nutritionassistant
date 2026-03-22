@@ -5,12 +5,12 @@ import { Lightbulb, ArrowRight, AlertTriangle, Salad, TrendingUp, BarChart3, Lea
 import { useNavigate } from "react-router-dom";
 import type { FeedCategory } from "@/hooks/useIntelligenceFeed";
 
-const CATEGORY_ICON: Record<FeedCategory, typeof Lightbulb> = {
-  alerts: AlertTriangle,
-  nutrition: Salad,
-  spending: TrendingUp,
-  patterns: BarChart3,
-  seasonality: Leaf,
+const CATEGORY_META: Record<FeedCategory, { icon: typeof Lightbulb; gradient: string }> = {
+  alerts: { icon: AlertTriangle, gradient: "from-red-500/80 to-orange-400/60" },
+  nutrition: { icon: Salad, gradient: "from-emerald-500/80 to-teal-400/60" },
+  spending: { icon: TrendingUp, gradient: "from-blue-500/80 to-indigo-400/60" },
+  patterns: { icon: BarChart3, gradient: "from-purple-500/80 to-violet-400/60" },
+  seasonality: { icon: Leaf, gradient: "from-amber-500/80 to-lime-400/60" },
 };
 
 const IntelligenceWidget = () => {
@@ -40,31 +40,17 @@ const IntelligenceWidget = () => {
       </div>
       <div className="space-y-2.5">
         {topItems.map((item) => {
-          const Icon = CATEGORY_ICON[item.category];
+          const meta = CATEGORY_META[item.category];
+          const Icon = meta.icon;
           return (
             <div
               key={item.id}
               className="flex items-start gap-2.5 cursor-pointer hover:bg-secondary/50 rounded-lg p-2 -mx-2 transition-colors"
               onClick={() => navigate("/intelligence")}
             >
-              <div
-                className={`mt-0.5 rounded-lg p-1.5 shrink-0 ${
-                  item.severity === "high"
-                    ? "bg-destructive/10"
-                    : item.severity === "medium"
-                    ? "bg-warning/10"
-                    : "bg-primary/10"
-                }`}
-              >
-                <Icon
-                  className={`h-3.5 w-3.5 ${
-                    item.severity === "high"
-                      ? "text-destructive"
-                      : item.severity === "medium"
-                      ? "text-accent"
-                      : "text-primary"
-                  }`}
-                />
+              {/* Gradient strip */}
+              <div className={`mt-0.5 w-8 h-8 rounded-lg bg-gradient-to-br ${meta.gradient} flex items-center justify-center shrink-0`}>
+                <Icon className="h-3.5 w-3.5 text-white/90" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
@@ -76,7 +62,7 @@ const IntelligenceWidget = () => {
                   item.severity === "high"
                     ? "bg-destructive/10 text-destructive border-destructive/20"
                     : item.severity === "medium"
-                    ? "bg-warning/10 text-warning border-warning/20"
+                    ? "bg-accent/10 text-accent border-accent/20"
                     : "bg-primary/10 text-primary border-primary/20"
                 }`}
               >
