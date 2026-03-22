@@ -52,7 +52,7 @@ const navSections = [
     items: [
       { to: "/groups", label: "Groups", icon: Users },
       { to: "/invitations", label: "Invitations", icon: Mail, hasBadge: true },
-      { to: "/challenges", label: "Challenges", icon: Trophy, comingSoon: true },
+      { to: "/challenges", label: "Challenges", icon: Trophy },
     ],
   },
   {
