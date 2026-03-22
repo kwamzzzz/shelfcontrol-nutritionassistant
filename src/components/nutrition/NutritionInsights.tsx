@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { useNutritionData } from "@/hooks/useNutrition";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, TrendingUp, AlertTriangle, Lightbulb, Utensils, ShoppingCart } from "lucide-react";
+import { Brain, TrendingUp, AlertTriangle, Lightbulb, Utensils, ShoppingCart, Shield } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Insight {
   title: string;
@@ -13,10 +14,10 @@ interface Insight {
   icon: any;
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  high: "bg-destructive/10 text-destructive border-destructive/20",
-  medium: "bg-warning/10 text-warning border-warning/20",
-  low: "bg-primary/10 text-primary border-primary/20",
+const SEVERITY_STYLES: Record<string, { icon: string; badge: string; border: string }> = {
+  high: { icon: "bg-destructive/10 text-destructive", badge: "bg-destructive text-destructive-foreground", border: "border-l-destructive" },
+  medium: { icon: "bg-amber-500/10 text-amber-600", badge: "bg-amber-500/10 text-amber-600", border: "border-l-amber-500" },
+  low: { icon: "bg-emerald-500/10 text-emerald-600", badge: "bg-emerald-500/10 text-emerald-600", border: "border-l-emerald-500" },
 };
 
 const NutritionInsights = () => {
@@ -28,7 +29,7 @@ const NutritionInsights = () => {
     const calGoal = goals?.calorie_goal ?? 2000;
     const protGoal = goals?.protein_goal ?? 50;
 
-    // Eating pattern: most calories at which meal
+    // Eating pattern
     if (allLogs && allLogs.length > 5) {
       const mealCals: Record<string, number> = { morning: 0, afternoon: 0, evening: 0, night: 0 };
       for (const log of allLogs) {
@@ -52,38 +53,40 @@ const NutritionInsights = () => {
       }
     }
 
-    // Low protein days
+    // Low protein
     const lowProtDays = weeklyTotals.filter((d) => d.protein > 0 && d.protein < protGoal * 0.6).length;
     if (lowProtDays >= 3) {
       result.push({
-        title: `Low protein intake across ${lowProtDays} days`,
-        description: "You're consistently below your protein target. Add protein-rich items to your pantry and meals.",
+        title: `Low protein across ${lowProtDays} days`,
+        description: "Consistently below your protein target. Add protein-rich items to meals.",
         severity: "high",
         category: "Nutrient Gap",
         icon: AlertTriangle,
       });
     }
 
-    // High carb reliance
+    // High carb
     const avgCarbs = weeklyTotals.reduce((s, d) => s + d.carbs, 0) / Math.max(weeklyTotals.filter(d => d.carbs > 0).length, 1);
     const avgProt = weeklyTotals.reduce((s, d) => s + d.protein, 0) / Math.max(weeklyTotals.filter(d => d.protein > 0).length, 1);
-    if (avgCarbs > 0 && avgProt > 0 && (avgCarbs * 4) / ((avgCarbs * 4) + (avgProt * 4) + (weeklyTotals.reduce((s, d) => s + d.fat, 0) / 7 * 9)) > 0.65) {
+    const avgFat = weeklyTotals.reduce((s, d) => s + d.fat, 0) / Math.max(weeklyTotals.filter(d => d.fat > 0).length, 1);
+    const totalMacroCal = (avgCarbs * 4) + (avgProt * 4) + (avgFat * 9);
+    if (totalMacroCal > 0 && (avgCarbs * 4 / totalMacroCal) > 0.65) {
       result.push({
-        title: "High carbohydrate reliance detected",
-        description: "Over 65% of your calories come from carbs. Consider balancing with more protein and healthy fats.",
+        title: "High carb reliance detected",
+        description: "Over 65% of calories from carbs. Balance with more protein and healthy fats.",
         severity: "medium",
         category: "Nutrient Gap",
         icon: TrendingUp,
       });
     }
 
-    // Weekend logging drop
-    const weekdayLogs = weeklyConsistency.filter((d, i) => i < 5).filter((d) => d.count > 0).length;
-    const weekendLogs = weeklyConsistency.filter((d, i) => i >= 5).filter((d) => d.count > 0).length;
+    // Weekend drop
+    const weekdayLogs = weeklyConsistency.filter((_, i) => i < 5).filter((d) => d.count > 0).length;
+    const weekendLogs = weeklyConsistency.filter((_, i) => i >= 5).filter((d) => d.count > 0).length;
     if (weekdayLogs >= 4 && weekendLogs === 0) {
       result.push({
-        title: "You log less on weekends",
-        description: "Great consistency during the week, but weekends are untracked. Try logging at least one meal each weekend day.",
+        title: "Weekend logging drops off",
+        description: "Great weekday consistency but weekends untracked. Try logging at least one meal.",
         severity: "medium",
         category: "Behaviour",
         icon: Brain,
@@ -105,8 +108,8 @@ const NutritionInsights = () => {
         const top3Share = (sorted.slice(0, 3).reduce((s, e) => s + e.total, 0) / totalCal) * 100;
         if (top3Share > 70) {
           result.push({
-            title: "Most calories come from 3 items",
-            description: `${sorted[0].name}, ${sorted[1].name}, and ${sorted[2].name} account for ${top3Share.toFixed(0)}% of your calories. Consider diversifying.`,
+            title: "Most calories from 3 items",
+            description: `${sorted[0].name}, ${sorted[1].name}, and ${sorted[2].name} make up ${top3Share.toFixed(0)}% of calories.`,
             severity: "medium",
             category: "Eating Pattern",
             icon: Lightbulb,
@@ -115,13 +118,13 @@ const NutritionInsights = () => {
       }
     }
 
-    // Pantry connection: low protein items
-    if (allLogs && allLogs.length > 0) {
+    // Low variety
+    if (allLogs && allLogs.length > 5) {
       const uniqueItems = new Set(allLogs.map((l) => l.items?.name)).size;
-      if (uniqueItems <= 3 && allLogs.length > 5) {
+      if (uniqueItems <= 3) {
         result.push({
           title: "Low food variety",
-          description: `You've been eating only ${uniqueItems} different items. Consider adding variety for better nutrition.`,
+          description: `Only ${uniqueItems} different items logged. Diversify for better nutrition.`,
           severity: "medium",
           category: "Pantry Connection",
           icon: ShoppingCart,
@@ -129,15 +132,15 @@ const NutritionInsights = () => {
       }
     }
 
-    // Good patterns
+    // Good
     const daysLogged = weeklyConsistency.filter((d) => d.count > 0).length;
     if (daysLogged >= 6) {
       result.push({
         title: "Excellent logging consistency! 🎯",
-        description: `You've logged ${daysLogged}/7 days this week. Keep up the great habit.`,
+        description: `${daysLogged}/7 days logged this week. Keep it up!`,
         severity: "low",
         category: "Achievement",
-        icon: TrendingUp,
+        icon: Shield,
       });
     }
 
@@ -145,42 +148,35 @@ const NutritionInsights = () => {
   }, [allLogs, weeklyTotals, weeklyConsistency, goals]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="space-y-5">
+      <div className="flex items-center gap-2">
         <Brain className="h-5 w-5 text-primary" />
         <p className="text-sm text-muted-foreground">Pattern analysis based on your nutrition data</p>
       </div>
 
       {insights.length === 0 ? (
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-2xl border-none shadow-sm">
           <CardContent className="p-8 text-center">
-            <Brain className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">Not enough data for insights yet. Keep logging to unlock patterns.</p>
+            <Brain className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">Not enough data for insights. Keep logging!</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-3">
           {insights.map((insight, i) => {
             const Icon = insight.icon;
+            const style = SEVERITY_STYLES[insight.severity];
             return (
-              <Card key={i} className="rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-5">
+              <Card key={i} className={cn("rounded-2xl border-none shadow-sm border-l-4", style.border)}>
+                <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-xl ${SEVERITY_COLORS[insight.severity]}`}>
+                    <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", style.icon)}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-[9px]">{insight.category}</Badge>
-                        <Badge
-                          className={`text-[9px] ${
-                            insight.severity === "high" ? "bg-destructive text-destructive-foreground" :
-                            insight.severity === "medium" ? "bg-warning text-warning-foreground" :
-                            "bg-primary/10 text-primary"
-                          }`}
-                        >
-                          {insight.severity}
-                        </Badge>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Badge variant="secondary" className="text-[9px] rounded-full">{insight.category}</Badge>
+                        <Badge className={cn("text-[9px] rounded-full border-none", style.badge)}>{insight.severity}</Badge>
                       </div>
                       <p className="font-semibold text-sm text-foreground">{insight.title}</p>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
