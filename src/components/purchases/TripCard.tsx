@@ -9,9 +9,10 @@ interface Props {
   purchase: PurchaseWithItems;
   isActive: boolean;
   onClick: () => void;
+  loggedBy?: string;
 }
 
-const TripCard = ({ purchase, isActive, onClick }: Props) => {
+const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
   const itemCount = purchase.purchase_items?.length ?? 0;
   const totalCost = Number(purchase.total_cost ?? 0);
   const previewItems = purchase.purchase_items?.slice(0, 3) ?? [];
@@ -79,11 +80,14 @@ const TripCard = ({ purchase, isActive, onClick }: Props) => {
       )}
 
       {/* Footer */}
-      <div className="mt-3 flex items-center gap-2 pl-10">
+      <div className="mt-3 flex items-center gap-2 pl-10 flex-wrap">
         <Badge variant="secondary" className="text-[10px] font-normal px-2 py-0 h-5">
           <ShoppingBag className="mr-1 h-2.5 w-2.5" />
           {itemCount} item{itemCount !== 1 ? "s" : ""}
         </Badge>
+        {loggedBy && (
+          <span className="text-[10px] text-muted-foreground">Logged by {loggedBy}</span>
+        )}
       </div>
     </button>
   );
