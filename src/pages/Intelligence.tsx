@@ -4,27 +4,28 @@ import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Lightbulb, AlertTriangle, TrendingUp, Salad, Leaf, BarChart3,
-  X, Bookmark, Users, Filter,
+  X, Bookmark, Users, Search,
 } from "lucide-react";
 
-const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; color: string }> = {
-  alerts: { label: "Alerts", icon: AlertTriangle, color: "text-destructive" },
-  nutrition: { label: "Nutrition", icon: Salad, color: "text-primary" },
-  spending: { label: "Spending", icon: TrendingUp, color: "text-accent" },
-  patterns: { label: "Patterns", icon: BarChart3, color: "text-muted-foreground" },
-  seasonality: { label: "Seasonal", icon: Leaf, color: "text-primary" },
+const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; gradient: string }> = {
+  alerts: { label: "Alerts", icon: AlertTriangle, gradient: "from-red-500/80 to-orange-400/60" },
+  nutrition: { label: "Nutrition", icon: Salad, gradient: "from-emerald-500/80 to-teal-400/60" },
+  spending: { label: "Spending", icon: TrendingUp, gradient: "from-blue-500/80 to-indigo-400/60" },
+  patterns: { label: "Patterns", icon: BarChart3, gradient: "from-purple-500/80 to-violet-400/60" },
+  seasonality: { label: "Seasonal", icon: Leaf, gradient: "from-amber-500/80 to-lime-400/60" },
 };
 
 const SEVERITY_STYLE: Record<FeedSeverity, string> = {
-  high: "bg-destructive/10 text-destructive border-destructive/20",
-  medium: "bg-warning/10 text-warning border-warning/20",
-  low: "bg-primary/10 text-primary border-primary/20",
+  high: "bg-destructive text-destructive-foreground",
+  medium: "bg-accent text-accent-foreground",
+  low: "bg-secondary text-secondary-foreground",
 };
 
 const SEVERITY_LABEL: Record<FeedSeverity, string> = {
-  high: "High Priority",
+  high: "High",
   medium: "Medium",
   low: "Info",
 };
@@ -37,12 +38,15 @@ const Intelligence = () => {
 
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<FeedCategory | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const visibleItems = useMemo(() => {
+    const q = searchQuery.toLowerCase();
     return feedItems
       .filter((item) => !dismissed.has(item.id))
-      .filter((item) => activeCategory === "all" || item.category === activeCategory);
-  }, [feedItems, dismissed, activeCategory]);
+      .filter((item) => activeCategory === "all" || item.category === activeCategory)
+      .filter((item) => !q || item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q));
+  }, [feedItems, dismissed, activeCategory, searchQuery]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
@@ -54,10 +58,12 @@ const Intelligence = () => {
     return counts;
   }, [feedItems, dismissed]);
 
+  const categories: (FeedCategory | "all")[] = ["all", "alerts", "nutrition", "spending", "patterns", "seasonality"];
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-display font-bold text-foreground">Pantry Intelligence</h1>
@@ -69,24 +75,32 @@ const Intelligence = () => {
             )}
           </div>
           <p className="mt-1 text-muted-foreground">
-            Smart insights based on your pantry, purchases, and consumption patterns.
+            Personalized insights for your kitchen
           </p>
         </div>
-        <Lightbulb className="h-8 w-8 text-accent shrink-0 mt-1" />
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search insights..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 rounded-xl bg-secondary/50 border-0 focus-visible:ring-1"
+          />
+        </div>
       </div>
 
       {/* Category tabs */}
-      <div className="mt-6 flex flex-wrap gap-2">
-        {(["all", ...Object.keys(CATEGORY_CONFIG)] as (FeedCategory | "all")[]).map((cat) => {
+      <div className="mt-6 flex flex-wrap gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-2 -mx-1 px-1">
+        {categories.map((cat) => {
           const count = categoryCounts[cat] ?? 0;
           const isActive = activeCategory === cat;
           const config = cat !== "all" ? CATEGORY_CONFIG[cat] : null;
-          const Icon = config?.icon ?? Filter;
+          const Icon = config?.icon ?? Lightbulb;
           return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 isActive
                   ? "bg-foreground text-background shadow-sm"
                   : "bg-secondary text-muted-foreground hover:bg-secondary/80"
@@ -104,12 +118,12 @@ const Intelligence = () => {
         })}
       </div>
 
-      {/* Feed */}
-      <div className="mt-6 space-y-3">
+      {/* Card Grid */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {visibleItems.length === 0 ? (
-          <div className="rounded-2xl bg-card p-8 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
-            <Lightbulb className="h-10 w-10 mx-auto text-muted-foreground/40" />
-            <p className="mt-3 font-semibold text-foreground">All clear</p>
+          <div className="col-span-full rounded-2xl bg-card p-12 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
+            <Lightbulb className="h-12 w-12 mx-auto text-muted-foreground/40" />
+            <p className="mt-4 font-semibold text-foreground text-lg">All clear</p>
             <p className="mt-1 text-sm text-muted-foreground">
               No insights right now. Keep tracking your food and we'll surface what matters.
             </p>
@@ -121,48 +135,51 @@ const Intelligence = () => {
             return (
               <div
                 key={item.id}
-                className="group rounded-2xl bg-card p-5 shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] hover:shadow-[0_4px_24px_-4px_hsl(var(--foreground)/0.1)] transition-shadow"
+                className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden"
               >
-                <div className="flex items-start gap-3">
-                  {/* Icon */}
-                  <div className={`mt-0.5 rounded-xl p-2 ${item.severity === "high" ? "bg-destructive/10" : item.severity === "medium" ? "bg-warning/10" : "bg-primary/10"}`}>
-                    <CatIcon className={`h-4.5 w-4.5 ${catConfig.color}`} />
-                  </div>
+                {/* Gradient image area */}
+                <div className={`relative aspect-[16/10] bg-gradient-to-br ${catConfig.gradient} flex items-center justify-center`}>
+                  <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
+                  {/* Severity badge */}
+                  <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${SEVERITY_STYLE[item.severity]}`}>
+                    {SEVERITY_LABEL[item.severity]}
+                  </span>
+                </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-foreground">{item.title}</h3>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 h-4 border ${SEVERITY_STYLE[item.severity]}`}
-                      >
-                        {SEVERITY_LABEL[item.severity]}
+                {/* Content */}
+                <div className="p-4">
+                  {/* Category label */}
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                    {catConfig.label}
+                  </p>
+
+                  {/* Title */}
+                  <h3 className="text-lg font-semibold text-foreground leading-snug line-clamp-2">
+                    {item.title}
+                  </h3>
+
+                  {/* Source + time */}
+                  <p className="mt-1 text-xs text-muted-foreground/70">
+                    {item.source} · Just now
+                  </p>
+
+                  {/* Description */}
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    {item.description}
+                  </p>
+
+                  {/* Tags */}
+                  <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                    {item.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                        {tag}
                       </Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                      {item.description}
-                    </p>
-                    <p className="mt-1.5 text-xs text-muted-foreground/70 italic">
-                      {item.reason}
-                    </p>
-                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                      {item.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+                    ))}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      title="Save"
-                    >
+                  <div className="mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Save">
                       <Bookmark className="h-3.5 w-3.5" />
                     </Button>
                     <Button

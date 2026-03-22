@@ -14,6 +14,7 @@ export interface FeedItem {
   title: string;
   description: string;
   reason: string;
+  source: string;
   severity: FeedSeverity;
   category: FeedCategory;
   tags: string[];
@@ -36,6 +37,7 @@ export const useIntelligenceFeed = () => {
         title: `${expired.length} item(s) have expired`,
         description: `${expired.slice(0, 3).map((r) => r.items?.name).join(", ")}${expired.length > 3 ? ` and ${expired.length - 3} more` : ""} are past their expiry date. Consider discarding or using immediately.`,
         reason: "Based on expiry dates in your pantry",
+        source: "Based on your pantry",
         severity: "high",
         category: "alerts",
         tags: ["Pantry", "Waste"],
@@ -50,6 +52,7 @@ export const useIntelligenceFeed = () => {
         title: `${expiring.length} item(s) expiring within 3 days`,
         description: `Use ${expiring.slice(0, 3).map((r) => r.items?.name).join(", ")} soon to avoid waste.`,
         reason: "Items expiring in the next 72 hours",
+        source: "Based on your pantry",
         severity: "high",
         category: "alerts",
         tags: ["Pantry", "Urgency"],
@@ -68,6 +71,7 @@ export const useIntelligenceFeed = () => {
           title: "Low protein supply in your pantry",
           description: `Your pantry has only ${totalProtein.toFixed(0)}g of protein available. Consider stocking up on protein-rich foods.`,
           reason: "Total protein across all pantry items is below 100g",
+          source: "Based on your pantry",
           severity: "medium",
           category: "nutrition",
           tags: ["Protein", "Pantry"],
@@ -85,6 +89,7 @@ export const useIntelligenceFeed = () => {
         title: `${missingNutrition.length} items missing nutrition data`,
         description: `Items like ${missingNutrition.slice(0, 2).map((r) => r.items?.name).join(", ")} have no calorie or macro info. Update them in the Pantry catalog for accurate tracking.`,
         reason: "Items without nutrition data reduce accuracy of analytics",
+        source: "Based on your pantry",
         severity: "low",
         category: "nutrition",
         tags: ["Data Quality", "Nutrition"],
@@ -100,6 +105,7 @@ export const useIntelligenceFeed = () => {
           title: "Low food category diversity",
           description: `Your pantry only spans ${categories.size} food categor${categories.size === 1 ? "y" : "ies"}. A diverse diet supports better health outcomes.`,
           reason: "Fewer than 3 distinct food categories detected",
+          source: "Based on your pantry",
           severity: "medium",
           category: "nutrition",
           tags: ["Diversity", "Health"],
@@ -125,6 +131,7 @@ export const useIntelligenceFeed = () => {
             title: `${Math.round((spend / totalSpend) * 100)}% of spend at ${store}`,
             description: `You've spent ${formatCurrency(spend)} at ${store} this month out of ${formatCurrency(totalSpend)} total. Comparing prices across stores could save money.`,
             reason: "High spending concentration at a single retailer",
+            source: "Based on your purchases",
             severity: "medium",
             category: "spending",
             tags: [store, "Budget"],
@@ -152,15 +159,13 @@ export const useIntelligenceFeed = () => {
           title: "This week's spending is above average",
           description: `You've spent ${formatCurrency(weekSpend)} this week compared to your monthly average of ~${formatCurrency(avgWeekly)}/week.`,
           reason: "Weekly spend exceeds 150% of monthly weekly average",
+          source: "Based on your purchases",
           severity: "medium",
           category: "spending",
           tags: ["Budget", "Weekly"],
         });
       }
     }
-
-    // ── PATTERNS: Repeated waste category ──
-    // (placeholder — waste_logs not queried here but could be added)
 
     // ── PATTERNS: Heavily consumed items running low ──
     if (logs && inventory) {
@@ -184,11 +189,12 @@ export const useIntelligenceFeed = () => {
             title: `${name} is running low`,
             description: `You've consumed ${name} ${count} times in the last 2 weeks but only have ${inStock.quantity} ${inStock.unit} left. Consider restocking.`,
             reason: "High consumption rate vs low remaining stock",
+            source: "Based on your consumption",
             severity: "high",
             category: "patterns",
             tags: [name, "Restock"],
           });
-          break; // only show top one
+          break;
         }
       }
     }
@@ -201,13 +207,14 @@ export const useIntelligenceFeed = () => {
         title: `${noExpiry.length} items have no expiry date`,
         description: "Setting expiry dates helps you track freshness and reduces waste. Update them in the Pantry.",
         reason: "Many items are missing expiry information",
+        source: "Based on your pantry",
         severity: "low",
         category: "patterns",
         tags: ["Data Quality", "Pantry"],
       });
     }
 
-    // ── SEASONALITY: Placeholder ──
+    // ── SEASONALITY ──
     const month = new Date().getMonth();
     const seasonal: Record<number, string[]> = {
       0: ["citrus fruits", "root vegetables"],
@@ -228,12 +235,13 @@ export const useIntelligenceFeed = () => {
       title: "Seasonal picks this month",
       description: `Consider adding ${seasonal[month]?.join(" and ")} to your shopping list — they're in season and at their best right now.`,
       reason: "Seasonal produce is fresher, cheaper, and more nutritious",
+      source: "Seasonal recommendation",
       severity: "low",
       category: "seasonality",
       tags: ["Seasonal", "Shopping"],
     });
 
-    // Sort: high first, then medium, then low
+    // Sort: high first
     const order: Record<FeedSeverity, number> = { high: 0, medium: 1, low: 2 };
     items.sort((a, b) => order[a.severity] - order[b.severity]);
 
