@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type Item = Tables<"items">;
@@ -69,13 +70,22 @@ export const useDeleteItem = () => {
 
 export const useInventory = () => {
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useQuery({
-    queryKey: ["inventory", user?.id],
+    queryKey: ["inventory", user?.id, activeGroupId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("inventory")
         .select("*, items(*)")
         .order("added_at", { ascending: false });
+
+      if (activeGroupId) {
+        query = query.eq("group_id", activeGroupId);
+      } else {
+        query = query.is("group_id", null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as InventoryRow[];
     },
@@ -86,11 +96,12 @@ export const useInventory = () => {
 export const useCreateInventory = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useMutation({
     mutationFn: async (entry: Omit<TablesInsert<"inventory">, "user_id">) => {
       const { data, error } = await supabase
         .from("inventory")
-        .insert({ ...entry, user_id: user!.id })
+        .insert({ ...entry, user_id: user!.id, group_id: activeGroupId })
         .select("*, items(*)")
         .single();
       if (error) throw error;

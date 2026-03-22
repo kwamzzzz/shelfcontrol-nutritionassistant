@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,12 +27,12 @@ const Profile = () => {
   });
 
   const [fullName, setFullName] = useState("");
-  const [initialized, setInitialized] = useState(false);
 
-  if (profile && !initialized) {
-    setFullName(profile.full_name ?? "");
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name ?? "");
+    }
+  }, [profile]);
 
   const updateProfile = useMutation({
     mutationFn: async () => {

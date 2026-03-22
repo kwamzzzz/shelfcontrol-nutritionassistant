@@ -54,10 +54,12 @@ const GroupDetail = () => {
               members.map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
-                      {m.role === "admin" ? "A" : "M"}
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                      {(m.profile?.full_name ?? "?").charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm font-medium">{m.user_id.slice(0, 8)}…</span>
+                    <span className="text-sm font-medium">
+                      {m.profile?.full_name || `User ${m.user_id.slice(0, 8)}…`}
+                    </span>
                   </div>
                   <Badge variant="outline" className="text-xs capitalize">{m.role}</Badge>
                 </div>

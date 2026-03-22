@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import type { ItemOverrides } from "@/components/purchases/ItemDetailsSection";
 
@@ -10,13 +11,22 @@ export type PurchaseWithItems = Purchase & { purchase_items: PurchaseItem[] };
 
 export const usePurchases = () => {
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useQuery({
-    queryKey: ["purchases", user?.id],
+    queryKey: ["purchases", user?.id, activeGroupId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("purchases")
         .select("*, purchase_items(*, items(*))")
         .order("purchased_at", { ascending: false });
+
+      if (activeGroupId) {
+        query = query.eq("group_id", activeGroupId);
+      } else {
+        query = query.is("group_id", null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as PurchaseWithItems[];
     },
@@ -59,6 +69,7 @@ const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
 export const useCreatePurchase = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useMutation({
     mutationFn: async (input: {
       store_name: string | null;
@@ -71,6 +82,7 @@ export const useCreatePurchase = () => {
         .from("purchases")
         .insert({
           user_id: user!.id,
+          group_id: activeGroupId,
           store_name: input.store_name,
           purchased_at: input.purchased_at,
           notes: input.notes,
@@ -95,7 +107,6 @@ export const useCreatePurchase = () => {
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        // Restock — add to inventory with purchase_id for reconciliation
         const restockItems = input.line_items.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
@@ -106,11 +117,11 @@ export const useCreatePurchase = () => {
             storage_location: li.storage_location || null,
             expiry_date: li.expiry_date || null,
             purchase_id: purchase.id,
+            group_id: activeGroupId,
           }));
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
-        // Update catalog item overrides (brand, nutrition)
         await updateItemOverrides(input.line_items);
       }
 
@@ -127,6 +138,7 @@ export const useCreatePurchase = () => {
 export const useUpdatePurchase = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useMutation({
     mutationFn: async (input: {
       id: string;
@@ -136,7 +148,6 @@ export const useUpdatePurchase = () => {
       total_cost: number | null;
       line_items: NewPurchaseLineItem[];
     }) => {
-      // 1. Update the purchase record
       const { error: pErr } = await supabase
         .from("purchases")
         .update({
@@ -148,15 +159,12 @@ export const useUpdatePurchase = () => {
         .eq("id", input.id);
       if (pErr) throw pErr;
 
-      // 2. Delete old line items and insert new ones
       const { error: dErr } = await supabase.from("purchase_items").delete().eq("purchase_id", input.id);
       if (dErr) throw dErr;
 
-      // 3. Delete old inventory entries linked to this purchase (reconciliation)
       const { error: invDelErr } = await supabase.from("inventory").delete().eq("purchase_id", input.id);
       if (invDelErr) throw invDelErr;
 
-      // 4. Insert updated line items
       if (input.line_items.length > 0) {
         const lineRows = input.line_items.map((li) => ({
           user_id: user!.id,
@@ -172,7 +180,6 @@ export const useUpdatePurchase = () => {
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        // 5. Re-create inventory for restocked items
         const restockItems = input.line_items.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
@@ -183,12 +190,12 @@ export const useUpdatePurchase = () => {
             storage_location: li.storage_location || null,
             expiry_date: li.expiry_date || null,
             purchase_id: input.id,
+            group_id: activeGroupId,
           }));
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
 
-        // 6. Update catalog item overrides (brand, nutrition)
         await updateItemOverrides(input.line_items);
       }
     },
