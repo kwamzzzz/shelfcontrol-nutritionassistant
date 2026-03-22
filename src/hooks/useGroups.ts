@@ -18,6 +18,10 @@ export interface GroupMember {
   joined_at: string;
 }
 
+export interface GroupMemberWithProfile extends GroupMember {
+  profile?: { full_name: string | null; email?: string } | null;
+}
+
 export const useGroups = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -38,7 +42,6 @@ export const useGroups = () => {
   const createGroup = useMutation({
     mutationFn: async ({ name, type }: { name: string; type?: string }) => {
       if (!user) throw new Error("Not authenticated");
-      // Create the group
       const { data: group, error: groupError } = await supabase
         .from("groups")
         .insert({ name, type: type || null, created_by: user.id })
@@ -46,7 +49,6 @@ export const useGroups = () => {
         .single();
       if (groupError) throw groupError;
 
-      // Add creator as member with 'admin' role
       const { error: memberError } = await supabase
         .from("group_members")
         .insert({ group_id: group.id, user_id: user.id, role: "admin" });
@@ -82,12 +84,28 @@ export const useGroupMembers = (groupId: string | null) => {
     queryKey: ["group_members", groupId],
     queryFn: async () => {
       if (!groupId) return [];
-      const { data, error } = await supabase
+      // Fetch members
+      const { data: members, error } = await supabase
         .from("group_members")
         .select("*")
         .eq("group_id", groupId);
       if (error) throw error;
-      return data as GroupMember[];
+
+      // Fetch profiles for all member user_ids
+      const userIds = (members as GroupMember[]).map((m) => m.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      const profileMap = new Map(
+        (profiles ?? []).map((p) => [p.id, p])
+      );
+
+      return (members as GroupMember[]).map((m) => ({
+        ...m,
+        profile: profileMap.get(m.user_id) ?? null,
+      })) as GroupMemberWithProfile[];
     },
     enabled: !!groupId,
   });
