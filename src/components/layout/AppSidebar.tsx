@@ -18,9 +18,11 @@ import {
   UserCircle,
   Settings,
   Apple,
+  Mail,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useMyInvites } from "@/hooks/useMyInvites";
 
 const navSections = [
   {
@@ -45,6 +47,7 @@ const navSections = [
     label: "GROUP",
     items: [
       { to: "/groups", label: "Groups", icon: Users },
+      { to: "/invitations", label: "Invitations", icon: Mail, hasBadge: true },
       { to: "/challenges", label: "Challenges", icon: Trophy, comingSoon: true },
     ],
   },
@@ -60,6 +63,7 @@ const navSections = [
 const AppSidebar = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { pendingCount } = useMyInvites();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -133,6 +137,11 @@ const AppSidebar = () => {
                     {item.comingSoon && (
                       <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">
                         Soon
+                      </Badge>
+                    )}
+                    {item.hasBadge && pendingCount > 0 && (
+                      <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-destructive text-destructive-foreground">
+                        {pendingCount}
                       </Badge>
                     )}
                   </NavLink>

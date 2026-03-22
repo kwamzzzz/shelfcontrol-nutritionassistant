@@ -21,6 +21,7 @@ import Settings from "@/pages/Settings";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
 import AcceptInvite from "@/pages/AcceptInvite";
+import Invitations from "@/pages/Invitations";
 
 const queryClient = new QueryClient();
 
