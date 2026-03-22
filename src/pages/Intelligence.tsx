@@ -119,7 +119,7 @@ const Intelligence = () => {
       </div>
 
       {/* Card Grid */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {visibleItems.length === 0 ? (
           <div className="col-span-full rounded-2xl bg-card p-12 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
             <Lightbulb className="h-12 w-12 mx-auto text-muted-foreground/40" />
@@ -135,10 +135,10 @@ const Intelligence = () => {
             return (
               <div
                 key={item.id}
-                className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden"
+                className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col"
               >
                 {/* Gradient image area */}
-                <div className={`relative aspect-[16/10] bg-gradient-to-br ${catConfig.gradient} flex items-center justify-center`}>
+                <div className={`relative h-32 bg-gradient-to-br ${catConfig.gradient} flex items-center justify-center shrink-0`}>
                   <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
                   {/* Severity badge */}
                   <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${SEVERITY_STYLE[item.severity]}`}>
@@ -147,7 +147,7 @@ const Intelligence = () => {
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
+                <div className="p-5 flex flex-col flex-1">
                   {/* Category label */}
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
                     {catConfig.label}
@@ -168,7 +168,8 @@ const Intelligence = () => {
                     {item.description}
                   </p>
 
-                  {/* Tags */}
+                  {/* Tags — push to bottom */}
+                  <div className="flex-1" />
                   <div className="mt-3 flex items-center gap-1.5 flex-wrap">
                     {item.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
