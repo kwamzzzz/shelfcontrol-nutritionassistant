@@ -42,17 +42,28 @@ export const useGroups = () => {
   const createGroup = useMutation({
     mutationFn: async ({ name, type }: { name: string; type?: string }) => {
       if (!user) throw new Error("Not authenticated");
+      
+      // Step 1: Create the group
       const { data: group, error: groupError } = await supabase
         .from("groups")
         .insert({ name, type: type || null, created_by: user.id })
         .select()
         .single();
-      if (groupError) throw groupError;
+      if (groupError) {
+        console.error("Failed to insert group:", groupError);
+        throw new Error(`Group creation failed: ${groupError.message}`);
+      }
 
+      // Step 2: Add creator as admin member
       const { error: memberError } = await supabase
         .from("group_members")
         .insert({ group_id: group.id, user_id: user.id, role: "admin" });
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Failed to insert group_member:", memberError);
+        // Clean up the orphaned group
+        await supabase.from("groups").delete().eq("id", group.id);
+        throw new Error(`Member creation failed: ${memberError.message}`);
+      }
 
       return group as Group;
     },
