@@ -20,12 +20,16 @@ const ACTION_MAP: Record<string, { label: string; path: string }> = {
   "spending-week-spike": { label: "View Purchases", path: "/purchases" },
   "pattern-no-expiry": { label: "Review Pantry", path: "/pantry" },
   "seasonal-tip": { label: "Add to Shopping List", path: "/shopping-list" },
+  "waste-week-spike": { label: "Review Pantry", path: "/pantry" },
+  "waste-expired-pattern": { label: "View Purchases", path: "/purchases" },
 };
 
 const getAction = (id: string) => {
   if (ACTION_MAP[id]) return ACTION_MAP[id];
   if (id.startsWith("spending-")) return { label: "View Purchases", path: "/purchases" };
   if (id.startsWith("pattern-running-low")) return { label: "Review Pantry", path: "/pantry" };
+  if (id.startsWith("waste-repeated-") || id.startsWith("waste-most-")) return { label: "Review Pantry", path: "/pantry" };
+  if (id.startsWith("waste-category-")) return { label: "Open Shopping List", path: "/shopping-list" };
   return null;
 };
 
