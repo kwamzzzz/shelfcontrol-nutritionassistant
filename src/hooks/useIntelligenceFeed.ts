@@ -1,3 +1,4 @@
+// Intelligence feed — rules-based insights from pantry, purchases, consumption & waste
 import { useMemo } from "react";
 import { useInventory } from "@/hooks/usePantry";
 import { usePurchases } from "@/hooks/usePurchases";
