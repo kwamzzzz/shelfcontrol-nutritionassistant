@@ -24,6 +24,8 @@ const ShoppingList = () => {
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const [searchParams] = useSearchParams();
+  const prefill = searchParams.get("prefill");
 
   // Collect user IDs for attribution
   const userIds = useMemo(() => {
