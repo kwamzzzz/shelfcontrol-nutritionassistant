@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useInventory } from "@/hooks/usePantry";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useConsumptionLogs } from "@/hooks/useConsumption";
+import { useWasteLogs } from "@/hooks/useWasteLogs";
 import { getExpiryStatus } from "@/lib/pantry-utils";
 import { formatCurrency } from "@/lib/currency";
 import { differenceInDays, parseISO, isThisMonth, isThisWeek } from "date-fns";
@@ -25,6 +26,7 @@ export const useIntelligenceFeed = () => {
   const { data: inventory } = useInventory();
   const { data: purchases } = usePurchases();
   const { data: logs } = useConsumptionLogs();
+  const { data: wasteLogs } = useWasteLogs();
 
   const feedItems = useMemo((): FeedItem[] => {
     const items: FeedItem[] = [];
@@ -214,6 +216,101 @@ export const useIntelligenceFeed = () => {
       });
     }
 
+    // ── WASTE: Patterns from waste_logs ──
+    if (wasteLogs && wasteLogs.length > 0) {
+      // Most wasted item (by count of discard events)
+      const itemWasteCounts = new Map<string, { count: number; qty: number; category: string | null }>();
+      const categoryWasteCounts = new Map<string, number>();
+      let weekWaste = 0;
+      let monthWaste = 0;
+
+      for (const w of wasteLogs) {
+        const name = (w as any).items?.name ?? "Unknown";
+        const cat = (w as any).items?.category ?? null;
+        const prev = itemWasteCounts.get(name) ?? { count: 0, qty: 0, category: cat };
+        prev.count += 1;
+        prev.qty += Number(w.quantity);
+        itemWasteCounts.set(name, prev);
+        if (cat) categoryWasteCounts.set(cat, (categoryWasteCounts.get(cat) ?? 0) + 1);
+
+        const d = parseISO(w.discarded_at);
+        if (isThisWeek(d, { weekStartsOn: 1 })) weekWaste++;
+        if (isThisMonth(d)) monthWaste++;
+      }
+
+      // Repeated waste of same item (≥3 times)
+      const sorted = Array.from(itemWasteCounts.entries()).sort((a, b) => b[1].count - a[1].count);
+      const [topItem, topData] = sorted[0] ?? [];
+      if (topItem && topData && topData.count >= 3) {
+        items.push({
+          id: `waste-repeated-${topItem}`,
+          title: `You've discarded ${topItem} ${topData.count} times`,
+          description: `Consider buying smaller quantities of ${topItem} or finding recipes to use it before it goes to waste.`,
+          reason: "Same item discarded multiple times",
+          source: "Based on your waste pattern",
+          severity: "high",
+          category: "patterns",
+          tags: [topItem, "Waste", "Recurring"],
+        });
+      } else if (topItem && topData && topData.count >= 2) {
+        items.push({
+          id: `waste-most-${topItem}`,
+          title: `${topItem} is your most wasted item`,
+          description: `You've discarded ${topItem} ${topData.count} times. Review your purchasing and storage habits for this item.`,
+          reason: "Highest discard frequency",
+          source: "Based on your waste pattern",
+          severity: "medium",
+          category: "patterns",
+          tags: [topItem, "Waste"],
+        });
+      }
+
+      // Most wasted category
+      const sortedCats = Array.from(categoryWasteCounts.entries()).sort((a, b) => b[1] - a[1]);
+      const [topCat, topCatCount] = sortedCats[0] ?? [];
+      if (topCat && topCatCount && topCatCount >= 3) {
+        items.push({
+          id: `waste-category-${topCat}`,
+          title: `${topCat} is your most wasted food category`,
+          description: `You've discarded ${topCatCount} ${topCat} items. Consider adjusting what you buy in this category.`,
+          reason: "High waste concentration in one food category",
+          source: "Based on your waste pattern",
+          severity: "medium",
+          category: "patterns",
+          tags: [topCat, "Waste", "Category"],
+        });
+      }
+
+      // Week waste spike
+      if (weekWaste >= 4) {
+        items.push({
+          id: "waste-week-spike",
+          title: "Waste spike this week",
+          description: `You've discarded ${weekWaste} items this week. Check your pantry for items at risk and plan meals to use them.`,
+          reason: "Unusually high discard count this week",
+          source: "Based on your waste pattern",
+          severity: "high",
+          category: "alerts",
+          tags: ["Waste", "Weekly"],
+        });
+      }
+
+      // Items discarded with expired reason
+      const expiredDiscards = wasteLogs.filter((w) => w.reason === "expired");
+      if (expiredDiscards.length >= 3) {
+        items.push({
+          id: "waste-expired-pattern",
+          title: `${expiredDiscards.length} items discarded due to expiry`,
+          description: "Multiple items are expiring before you can use them. Try buying smaller quantities or setting reminders.",
+          reason: "Recurring expiry-based waste",
+          source: "Based on your waste pattern",
+          severity: "medium",
+          category: "patterns",
+          tags: ["Expiry", "Waste", "Overbuying"],
+        });
+      }
+    }
+
     // ── SEASONALITY ──
     const month = new Date().getMonth();
     const seasonal: Record<number, string[]> = {
@@ -246,7 +343,7 @@ export const useIntelligenceFeed = () => {
     items.sort((a, b) => order[a.severity] - order[b.severity]);
 
     return items;
-  }, [inventory, purchases, logs]);
+  }, [inventory, purchases, logs, wasteLogs]);
 
   return { feedItems };
 };
