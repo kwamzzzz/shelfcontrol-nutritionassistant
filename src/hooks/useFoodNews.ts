@@ -140,7 +140,7 @@ export const FOOD_NEWS_CATEGORY_CONFIG: Record<FoodNewsCategory, { label: string
 };
 
 export function useFoodNews() {
-  const { items: pantryItems } = usePantry();
+  const { data: pantryItems } = useInventory();
 
   const articles = useMemo(() => {
     const pantryNames = new Set(
