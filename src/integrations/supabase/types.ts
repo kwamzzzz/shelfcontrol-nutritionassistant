@@ -172,6 +172,68 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_actions: {
+        Row: {
+          action_taken: string
+          created_at: string
+          id: string
+          insight_id: string
+          user_id: string
+        }
+        Insert: {
+          action_taken: string
+          created_at?: string
+          id?: string
+          insight_id: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string
+          created_at?: string
+          id?: string
+          insight_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insight_state: {
+        Row: {
+          created_at: string
+          group_id: string | null
+          id: string
+          insight_id: string
+          resolved_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          insight_id: string
+          resolved_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          insight_id?: string
+          resolved_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insight_state_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           added_at: string

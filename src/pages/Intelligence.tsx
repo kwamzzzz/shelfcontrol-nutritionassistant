@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useIntelligenceFeed, FeedCategory, FeedSeverity } from "@/hooks/useIntelligenceFeed";
+import { useIntelligenceFeed, FeedCategory, FeedSeverity, UrgencyTier } from "@/hooks/useIntelligenceFeed";
+import { useDismissInsight, useTrackInsightAction } from "@/hooks/useInsightState";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Lightbulb, AlertTriangle, TrendingUp, Salad, Leaf, BarChart3,
-  X, Bookmark, Users, Search, ArrowRight,
+  X, Bookmark, Users, Search, ArrowRight, Flame, Eye, Sparkles,
 } from "lucide-react";
 
 const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; gradient: string }> = {
@@ -31,36 +32,64 @@ const SEVERITY_LABEL: Record<FeedSeverity, string> = {
   low: "Info",
 };
 
+const URGENCY_CONFIG: Record<UrgencyTier, { label: string; icon: typeof Flame; color: string }> = {
+  act_now: { label: "Act Now", icon: Flame, color: "text-destructive" },
+  watch: { label: "Watch", icon: Eye, color: "text-warning" },
+  opportunities: { label: "Opportunities", icon: Sparkles, color: "text-muted-foreground" },
+};
+
+const URGENCY_ORDER: UrgencyTier[] = ["act_now", "watch", "opportunities"];
+
 const Intelligence = () => {
   const { feedItems } = useIntelligenceFeed();
+  const dismissMutation = useDismissInsight();
+  const trackAction = useTrackInsightAction();
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
   const navigate = useNavigate();
 
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<FeedCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const visibleItems = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return feedItems
-      .filter((item) => !dismissed.has(item.id))
       .filter((item) => activeCategory === "all" || item.category === activeCategory)
       .filter((item) => !q || item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q));
-  }, [feedItems, dismissed, activeCategory, searchQuery]);
+  }, [feedItems, activeCategory, searchQuery]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
     for (const item of feedItems) {
-      if (dismissed.has(item.id)) continue;
       counts.all = (counts.all ?? 0) + 1;
       counts[item.category] = (counts[item.category] ?? 0) + 1;
     }
     return counts;
-  }, [feedItems, dismissed]);
+  }, [feedItems]);
+
+  const groupedByUrgency = useMemo(() => {
+    const grouped: Record<UrgencyTier, typeof visibleItems> = {
+      act_now: [],
+      watch: [],
+      opportunities: [],
+    };
+    for (const item of visibleItems) {
+      grouped[item.urgency].push(item);
+    }
+    return grouped;
+  }, [visibleItems]);
 
   const categories: (FeedCategory | "all")[] = ["all", "alerts", "nutrition", "spending", "patterns", "seasonality"];
+
+  const handleAction = (insightId: string, actionLabel: string, path: string) => {
+    trackAction.mutate({ insightId, action: actionLabel });
+    navigate(path);
+  };
+
+  const handleDismiss = (insightId: string) => {
+    dismissMutation.mutate(insightId);
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -77,7 +106,7 @@ const Intelligence = () => {
             )}
           </div>
           <p className="mt-1 text-muted-foreground">
-            Personalized insights for your kitchen
+            Personalized insights for your kitchen · {feedItems.length} active
           </p>
         </div>
         <div className="relative w-full sm:w-72">
@@ -120,100 +149,120 @@ const Intelligence = () => {
         })}
       </div>
 
-      {/* Card Grid */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {visibleItems.length === 0 ? (
-          <div className="col-span-full rounded-2xl bg-card p-12 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
-            <Lightbulb className="h-12 w-12 mx-auto text-muted-foreground/40" />
-            <p className="mt-4 font-semibold text-foreground text-lg">All clear</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              No insights right now. Keep tracking your food and we'll surface what matters.
-            </p>
-          </div>
-        ) : (
-          visibleItems.map((item) => {
-            const catConfig = CATEGORY_CONFIG[item.category];
-            const CatIcon = catConfig.icon;
+      {/* Urgency-grouped sections */}
+      {visibleItems.length === 0 ? (
+        <div className="mt-6 rounded-2xl bg-card p-12 text-center shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
+          <Lightbulb className="h-12 w-12 mx-auto text-muted-foreground/40" />
+          <p className="mt-4 font-semibold text-foreground text-lg">All clear</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            No insights right now. Keep tracking your food and we'll surface what matters.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-10">
+          {URGENCY_ORDER.map((tier) => {
+            const tierItems = groupedByUrgency[tier];
+            if (tierItems.length === 0) return null;
+            const config = URGENCY_CONFIG[tier];
+            const TierIcon = config.icon;
             return (
-              <div
-                key={item.id}
-                className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col"
-              >
-                {/* Gradient image area */}
-                <div className={`relative h-32 bg-gradient-to-br ${catConfig.gradient} flex items-center justify-center shrink-0`}>
-                  <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
-                  {/* Severity badge */}
-                  <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${SEVERITY_STYLE[item.severity]}`}>
-                    {SEVERITY_LABEL[item.severity]}
+              <section key={tier}>
+                <div className={`mb-4 flex items-center gap-2 ${config.color}`}>
+                  <TierIcon className="h-4 w-4" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wide">
+                    {config.label}
+                  </h2>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {tierItems.length}
                   </span>
                 </div>
-
-                {/* Content */}
-                <div className="p-5 flex flex-col flex-1">
-                  {/* Category label */}
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
-                    {catConfig.label}
-                  </p>
-
-                  {/* Title */}
-                  <h3 className="text-lg font-semibold text-foreground leading-snug line-clamp-2">
-                    {item.title}
-                  </h3>
-
-                  {/* Source + time */}
-                  <p className="mt-1 text-xs text-muted-foreground/70">
-                    {item.source} · Just now
-                  </p>
-
-                  {/* Description */}
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                    {item.description}
-                  </p>
-
-                  {/* Spacer + Action + Tags */}
-                  <div className="flex-1" />
-
-                  {item.actionPath && item.actionLabel && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 w-full justify-between text-xs font-medium rounded-xl h-8"
-                      onClick={() => navigate(item.actionPath!)}
-                    >
-                      {item.actionLabel}
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  )}
-
-                  <div className="mt-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {item.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Save">
-                        <Bookmark className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        title="Dismiss"
-                        onClick={() => setDismissed((prev) => new Set(prev).add(item.id))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {tierItems.map((item) => {
+                    const catConfig = CATEGORY_CONFIG[item.category];
+                    const CatIcon = catConfig.icon;
+                    return (
+                      <div
+                        key={item.id}
+                        className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col"
                       >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
+                        <div className={`relative h-32 bg-gradient-to-br ${catConfig.gradient} flex items-center justify-center shrink-0`}>
+                          <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
+                          <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${SEVERITY_STYLE[item.severity]}`}>
+                            {SEVERITY_LABEL[item.severity]}
+                          </span>
+                          {/* Priority score pill */}
+                          <span className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/30 text-white">
+                            ↑ {item.priorityScore}
+                          </span>
+                        </div>
+
+                        <div className="p-5 flex flex-col flex-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                            {catConfig.label}
+                          </p>
+                          <h3 className="text-lg font-semibold text-foreground leading-snug line-clamp-2">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 text-xs text-muted-foreground/70">
+                            {item.source} · Just now
+                          </p>
+                          <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                            {item.description}
+                          </p>
+
+                          <div className="flex-1" />
+
+                          {/* Multi-action buttons */}
+                          {item.actions.length > 0 && (
+                            <div className="mt-3 flex flex-col gap-1.5">
+                              {item.actions.map((action, idx) => (
+                                <Button
+                                  key={idx}
+                                  variant={idx === 0 ? "outline" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-between text-xs font-medium rounded-xl h-8"
+                                  onClick={() => handleAction(item.id, action.label, action.path)}
+                                >
+                                  {action.label}
+                                  <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="mt-2.5 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {item.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Save">
+                                <Bookmark className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                title="Dismiss"
+                                onClick={() => handleDismiss(item.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              </section>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 };
