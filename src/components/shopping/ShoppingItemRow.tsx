@@ -1,21 +1,24 @@
-import { type ShoppingItem, useUpdateShoppingItem } from "@/hooks/useShoppingList";
+import { type ShoppingItem, useToggleShoppingItem } from "@/hooks/useShoppingList";
 import { formatCurrency } from "@/lib/currency";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Link2, ShoppingBag } from "lucide-react";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
 interface Props {
   item: ShoppingItem;
   onClick: () => void;
+  addedBy?: string;
+  completedBy?: string;
 }
 
-const ShoppingItemRow = ({ item, onClick }: Props) => {
-  const updateItem = useUpdateShoppingItem();
+const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
+  const toggleItem = useToggleShoppingItem();
 
   const togglePurchased = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await updateItem.mutateAsync({ id: item.id, is_purchased: !item.is_purchased });
+    await toggleItem.mutateAsync({ id: item.id, is_purchased: !item.is_purchased });
   };
 
   return (
@@ -70,6 +73,25 @@ const ShoppingItemRow = ({ item, onClick }: Props) => {
               <Link2 className="h-2.5 w-2.5" />
               Linked
             </span>
+          )}
+        </div>
+
+        {/* Attribution */}
+        <div className="mt-1.5 space-y-0.5">
+          {addedBy && (
+            <p className="text-[0.6rem] text-muted-foreground truncate">
+              Added by {addedBy}
+            </p>
+          )}
+          {item.is_purchased && completedBy && (
+            <p className="text-[0.6rem] text-success truncate">
+              ✓ Completed by {completedBy}
+              {item.completed_at && (
+                <span className="text-muted-foreground ml-1">
+                  {formatDistanceToNow(parseISO(item.completed_at), { addSuffix: true })}
+                </span>
+              )}
+            </p>
           )}
         </div>
 

@@ -481,6 +481,8 @@ export type Database = {
       shopping_list: {
         Row: {
           category: string | null
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
           estimated_cost: number | null
           group_id: string | null
@@ -493,6 +495,8 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           estimated_cost?: number | null
           group_id?: string | null
@@ -505,6 +509,8 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           estimated_cost?: number | null
           group_id?: string | null

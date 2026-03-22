@@ -4,15 +4,33 @@ import OverviewTab from "@/components/analytics/OverviewTab";
 import FoodPantryTab from "@/components/analytics/FoodPantryTab";
 import ConsumptionHealthTab from "@/components/analytics/ConsumptionHealthTab";
 import SpendValueTab from "@/components/analytics/SpendValueTab";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useGroups } from "@/hooks/useGroups";
+import { Badge } from "@/components/ui/badge";
+import { Users } from "lucide-react";
 
 const Analytics = () => {
   const data = useAnalytics();
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
+  const contextLabel = isPersonalMode ? "Personal" : activeGroup?.name ?? "Group";
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-analytics font-semibold text-foreground tracking-tight">Analytics</h1>
-        <p className="mt-1 text-muted-foreground font-analytics font-medium">Intelligence workspace for your household.</p>
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-analytics font-semibold text-foreground tracking-tight">Analytics</h1>
+          {!isPersonalMode && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Users className="h-3 w-3" />
+              Shared
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1 text-muted-foreground font-analytics font-medium">
+          {contextLabel} intelligence workspace{!isPersonalMode ? " — shared data from all members" : ""}.
+        </p>
       </div>
 
       <Tabs defaultValue="overview">
