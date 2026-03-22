@@ -1,117 +1,118 @@
 
 
-# Purchases Page — Premium Receipt-Style Redesign
+# Group System & Sidebar Restructure (Revised)
 
-## Overview
+## Adjustments Incorporated
 
-Transform the flat list-style Purchases page into a premium "financial + behavioral intelligence layer" with a receipt-inspired visual metaphor, split-panel layout, and summary intelligence cards — consistent with the Pantry and Analytics visual system.
+1. **FK constraints**: All `group_id` columns get proper `REFERENCES groups(id) ON DELETE SET NULL` — nullable but referentially enforced.
+2. **Recipes stays in sidebar**: Kept under MAIN section.
+3. **LocalStorage persistence**: Group context reads/writes `localStorage` so selection survives refresh.
+4. **Future-ready personal mode**: `GroupContext` uses `activeGroupId: string | null` with a helper `isPersonalMode`. Code structured so a future migration to a "private group" row is a single-point change in the context provider.
 
-## Files to Change
+## Schema Migration
+
+```sql
+-- New tables
+CREATE TABLE public.groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  type text, -- household, couple, roommates, fitness, other
+  created_by uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.group_members (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL,
+  role text NOT NULL DEFAULT 'member',
+  joined_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(group_id, user_id)
+);
+ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+
+-- Security definer for membership checks
+CREATE OR REPLACE FUNCTION public.is_group_member(_user_id uuid, _group_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.group_members WHERE user_id = _user_id AND group_id = _group_id);
+$$;
+
+-- RLS for groups: members can read, creator can update/delete
+CREATE POLICY "Members can view groups" ON public.groups FOR SELECT TO authenticated
+  USING (public.is_group_member(auth.uid(), id));
+CREATE POLICY "Creator can update group" ON public.groups FOR UPDATE TO authenticated
+  USING (created_by = auth.uid());
+CREATE POLICY "Creator can delete group" ON public.groups FOR DELETE TO authenticated
+  USING (created_by = auth.uid());
+CREATE POLICY "Authenticated can create groups" ON public.groups FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = created_by);
+
+-- RLS for group_members
+CREATE POLICY "Members can view memberships" ON public.group_members FOR SELECT TO authenticated
+  USING (public.is_group_member(auth.uid(), group_id));
+CREATE POLICY "Group creator can manage members" ON public.group_members FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (SELECT 1 FROM public.groups WHERE id = group_id AND created_by = auth.uid()));
+CREATE POLICY "Members can leave" ON public.group_members FOR DELETE TO authenticated
+  USING (user_id = auth.uid());
+
+-- Add nullable group_id with FK constraints to existing tables
+ALTER TABLE public.inventory ADD COLUMN group_id uuid REFERENCES public.groups(id) ON DELETE SET NULL;
+ALTER TABLE public.purchases ADD COLUMN group_id uuid REFERENCES public.groups(id) ON DELETE SET NULL;
+ALTER TABLE public.shopping_list ADD COLUMN group_id uuid REFERENCES public.groups(id) ON DELETE SET NULL;
+ALTER TABLE public.consumption_logs ADD COLUMN group_id uuid REFERENCES public.groups(id) ON DELETE SET NULL;
+ALTER TABLE public.waste_logs ADD COLUMN group_id uuid REFERENCES public.groups(id) ON DELETE SET NULL;
+```
+
+## Files to Create/Change
 
 | File | Change |
 |---|---|
-| `src/pages/Purchases.tsx` | Full redesign: summary cards, split layout (trips list + receipt detail panel), intelligence strip |
-| `src/components/purchases/PurchaseCard.tsx` | Replace with `TripCard` — compact receipt-style trip card for the left panel |
-| `src/components/purchases/ReceiptDetail.tsx` | **New** — right panel receipt detail view with torn-edge effect, dashed separators, monospace alignment |
+| `src/contexts/GroupContext.tsx` | **New** — `activeGroupId: string | null`, `isPersonalMode`, localStorage persistence |
+| `src/hooks/useGroups.ts` | **New** — fetch user groups, create group, add self as member on create |
+| `src/components/layout/GroupSwitcher.tsx` | **New** — dropdown in header: Personal + groups list |
+| `src/components/layout/AppSidebar.tsx` | Sectioned nav (MAIN incl. Recipes, INTELLIGENCE, GROUP, SYSTEM) |
+| `src/components/layout/AppLayout.tsx` | Add GroupSwitcher in header, wrap with GroupProvider |
+| `src/App.tsx` | Add routes: `/groups`, `/groups/:id`, `/challenges`, `/profile`, `/settings` |
+| `src/pages/Groups.tsx` | **New** — group list + create dialog |
+| `src/pages/GroupDetail.tsx` | **New** — members + activity placeholder |
+| `src/pages/Challenges.tsx` | **New** — coming soon placeholder |
+| `src/pages/Profile.tsx` | **New** — view/edit name |
+| `src/pages/Settings.tsx` | **New** — placeholder |
+| `src/components/groups/CreateGroupDialog.tsx` | **New** — name + type form |
 
-No backend changes. No changes to other pages. Existing hooks and dialogs (Add/Edit/Delete) remain untouched.
+## GroupContext Design (Future-Ready)
 
-## Page Structure
+```typescript
+// activeGroupId = null means Personal mode
+// Later: can assign a real "private group" UUID without changing consumers
+const GroupContext = createContext<{
+  activeGroupId: string | null;
+  setActiveGroupId: (id: string | null) => void;
+  isPersonalMode: boolean;
+}>();
 
-```text
-┌──────────────────────────────────────────────────────┐
-│  Purchases                              [+ Log Purchase] │
-│  Track your household shopping history                    │
-├──────────────────────────────────────────────────────┤
-│  SUMMARY CARDS (4)                                        │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-│  │Total Spend│ │  Stores  │ │Avg/Trip  │ │Best Value│    │
-│  │ AED 961  │ │    4     │ │ AED 96   │ │Chickpeas │    │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘    │
-├──────────────────────────────────────────────────────┤
-│  LEFT (5/12)            │  RIGHT (7/12)                  │
-│  ┌─────────────────┐    │  ┌────────────────────────┐    │
-│  │ RECENT TRIPS     │    │  │ ~~~ torn edge ~~~      │    │
-│  │                  │    │  │  RECEIPT DETAIL         │    │
-│  │ ┌──────────────┐ │    │  │                        │    │
-│  │ │ Careem Quik  │ │    │  │  Store: Careem Quik    │    │
-│  │ │ Apr 14       │ │◄──│  │  Date: Apr 14, 2024    │    │
-│  │ │ AED 96.11    │ │    │  │  ─ ─ ─ ─ ─ ─ ─ ─ ─   │    │
-│  │ │ 3 items      │ │    │  │  Choc Tea Cake  18.75  │    │
-│  │ └──────────────┘ │    │  │  Marble Cake    16.90  │    │
-│  │                  │    │  │  ─ ─ ─ ─ ─ ─ ─ ─ ─   │    │
-│  │ ┌──────────────┐ │    │  │  TOTAL      AED 96.11  │    │
-│  │ │ Lulu         │ │    │  │  ~~~ torn edge ~~~     │    │
-│  │ └──────────────┘ │    │  │                        │    │
-│  └─────────────────┘    │  │  [Edit] [Delete]        │    │
-│                         │  └────────────────────────┘    │
-└──────────────────────────────────────────────────────┘
+// Provider reads from localStorage('shelf-control-active-group')
+// setActiveGroupId writes to localStorage + state
 ```
 
-On **mobile**: stacks vertically — trips list on top, receipt detail below when a trip is tapped.
+All data hooks will later filter by `activeGroupId` — for now they continue working as-is (user_id scoped).
 
-## Key Design Details
+## Sidebar Structure
 
-### 1. Summary Cards (4 across)
-Computed from purchases data:
-- **Total Spend**: sum of all purchase totals
-- **Total Stores**: count of distinct store names
-- **Avg Spend/Trip**: total / trip count
-- **Best Value Item**: item with best protein-per-AED (reuse logic from analytics)
+```text
+MAIN: Dashboard, Pantry, Purchases, Consumption, Shopping List, Recipes
+INTELLIGENCE: Analytics, Nutrition (coming soon badge)
+GROUP: Groups, Challenges (coming soon badge)
+SYSTEM: Profile, Settings, Sign Out
+```
 
-Style: `rounded-2xl`, soft shadow, icon-led, Outfit font, consistent with Pantry/Analytics cards.
+## Build Order
 
-### 2. Trip Cards (Left Panel)
-Each purchase becomes a compact card showing:
-- Store name (bold) or "No store" (muted italic)
-- Date + time
-- Total spend (large, right-aligned)
-- Item count badge
-- First 2-3 item names as preview text
-- **Active state**: primary-colored left border + slight elevation when selected
-
-Clicking a trip card selects it and shows its receipt detail on the right.
-
-### 3. Receipt Detail Panel (Right, NEW component)
-The signature visual element. Styled like a real receipt:
-- **Off-white background** (`bg-[#FCFBF9]` or similar warm tone)
-- **Torn/zigzag edge** at top via CSS `clip-path` or SVG — subtle, not cartoonish
-- **Dashed separators** between sections (`border-dashed`)
-- **Content sections**:
-  - Store header (centered, receipt-style)
-  - Date
-  - Dashed line
-  - Item rows: name left-aligned, price right-aligned, monospace-feel alignment using `tabular-nums`
-  - Quantity + unit shown subtly under each item name
-  - Expiry badge if set
-  - Dashed line
-  - **Total** line: bold, larger
-  - Notes section if present
-- **Bottom**: Edit + Delete buttons (existing logic preserved)
-- **Empty state**: "Select a trip to view the receipt" placeholder
-
-### 4. State Management
-- `selectedPurchaseId` state in `Purchases.tsx`
-- Default: first purchase selected (or none if empty)
-- Clicking a trip card updates selection
-- Receipt panel reads from the selected purchase object
-
-### 5. Visual Style
-- **Font**: `Outfit` (consistent with Pantry/Analytics)
-- **Cards**: `rounded-2xl`, `shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]`
-- **Receipt**: warmer off-white, `rounded-2xl`, dashed internal lines
-- **Numbers**: `tabular-nums font-semibold` for all monetary values
-- **Active trip**: `border-l-4 border-primary shadow-md`
-
-### 6. Mobile Layout
-- Grid collapses to single column
-- Trip cards stack vertically
-- Tapping a trip expands the receipt detail inline (or scrolls to it below)
-- Summary cards: 2x2 grid on mobile
-
-## Assumptions
-- No new data hooks needed — all data comes from existing `usePurchases()`
-- Add/Edit/Delete dialogs remain unchanged (triggered from receipt panel buttons)
-- "Best Value" card reuses simple computation from purchase items with nutrition data
-- Torn edge is CSS-only (clip-path zigzag), no image assets
+1. Schema migration
+2. GroupContext + useGroups hook
+3. GroupSwitcher component
+4. Sidebar restructure
+5. New pages (Groups, GroupDetail, Challenges, Profile, Settings)
+6. Route updates in App.tsx + AppLayout.tsx
 
