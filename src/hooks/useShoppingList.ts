@@ -4,7 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
-export type ShoppingItem = Tables<"shopping_list">;
+export type ShoppingItem = Tables<"shopping_list"> & {
+  completed_by?: string | null;
+  completed_at?: string | null;
+};
 
 export const useShoppingList = () => {
   const { user } = useAuth();
@@ -54,6 +57,23 @@ export const useUpdateShoppingItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ShoppingItem> & { id: string }) => {
+      const { error } = await supabase.from("shopping_list").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["shopping_list"] }),
+  });
+};
+
+export const useToggleShoppingItem = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, is_purchased }: { id: string; is_purchased: boolean }) => {
+      const updates: Record<string, any> = {
+        is_purchased,
+        completed_by: is_purchased ? user!.id : null,
+        completed_at: is_purchased ? new Date().toISOString() : null,
+      };
       const { error } = await supabase.from("shopping_list").update(updates).eq("id", id);
       if (error) throw error;
     },

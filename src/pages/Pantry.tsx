@@ -12,6 +12,7 @@ import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users }
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
+import { useProfileNames } from "@/hooks/useProfileNames";
 import { Badge } from "@/components/ui/badge";
 
 const LOCATION_TABS = ["All", ...STORAGE_LOCATIONS] as const;
@@ -40,6 +41,10 @@ const Pantry = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("All");
   const [editing, setEditing] = useState<InventoryRow | null>(null);
+
+  // Attribution
+  const userIds = useMemo(() => (inventory ?? []).map((e) => e.user_id), [inventory]);
+  const { data: profileMap } = useProfileNames(userIds);
 
   const filtered = useMemo(() => {
     if (!inventory) return [];
@@ -169,7 +174,12 @@ const Pantry = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {items.map((entry) => (
-                    <InventoryCard key={entry.id} entry={entry} onClick={() => setEditing(entry)} />
+                    <InventoryCard
+                      key={entry.id}
+                      entry={entry}
+                      onClick={() => setEditing(entry)}
+                      addedBy={activeGroupId ? profileMap?.get(entry.user_id) : undefined}
+                    />
                   ))}
                 </div>
               </section>

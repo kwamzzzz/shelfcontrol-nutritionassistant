@@ -2,11 +2,13 @@ import { type InventoryRow } from "@/hooks/usePantry";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { MapPin, Package } from "lucide-react";
+import { MapPin, Package, PackageOpen } from "lucide-react";
+import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 
 interface Props {
   entry: InventoryRow;
   onClick: () => void;
+  addedBy?: string;
 }
 
 const statusBadge: Record<string, string> = {
@@ -16,14 +18,18 @@ const statusBadge: Record<string, string> = {
   "no-date": "bg-muted text-muted-foreground",
 };
 
-const InventoryCard = ({ entry, onClick }: Props) => {
+const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
   const status = getExpiryStatus(entry.expiry_date);
   const label = getExpiryLabel(entry.expiry_date);
+  const isOpened = entry.sealed_status === "opened";
 
   return (
-    <button
+    <div
       onClick={onClick}
-      className="group flex flex-col rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-md text-left overflow-hidden w-full"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      className="group flex flex-col rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-md text-left overflow-hidden w-full cursor-pointer"
     >
       {/* Image placeholder */}
       <div className="relative aspect-[4/3] w-full bg-secondary flex items-center justify-center">
@@ -37,6 +43,13 @@ const InventoryCard = ({ entry, onClick }: Props) => {
         >
           {label}
         </span>
+        {/* Opened indicator */}
+        {isOpened && (
+          <span className="absolute top-2.5 left-2.5 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-1">
+            <PackageOpen className="h-3 w-3" />
+            Opened
+          </span>
+        )}
       </div>
 
       {/* Content */}
@@ -63,15 +76,27 @@ const InventoryCard = ({ entry, onClick }: Props) => {
           )}
         </div>
 
+        {/* Attribution */}
+        {addedBy && (
+          <p className="mt-1 text-[0.6rem] text-muted-foreground truncate">
+            Added by {addedBy}
+          </p>
+        )}
+
         {/* Quantity */}
-        <div className="mt-auto pt-3 border-t border-border/50">
-          <span className="text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
-            {entry.quantity}
-          </span>
-          <span className="ml-1 text-sm text-muted-foreground">{entry.unit}</span>
+        <div className="mt-auto pt-3 border-t border-border/50 flex items-baseline justify-between">
+          <div>
+            <span className="text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
+              {entry.quantity}
+            </span>
+            <span className="ml-1 text-sm text-muted-foreground">{entry.unit}</span>
+          </div>
         </div>
+
+        {/* Quick Actions (visible on hover) */}
+        <QuickActionsBar entry={entry} />
       </div>
-    </button>
+    </div>
   );
 };
 
