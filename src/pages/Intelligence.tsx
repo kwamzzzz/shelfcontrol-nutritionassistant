@@ -52,6 +52,7 @@ const SEVERITY_LABEL: Record<FeedSeverity, string> = {
 const Intelligence = () => {
   const { feedItems } = useIntelligenceFeed();
   const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
   const navigate = useNavigate();
 
