@@ -7,6 +7,7 @@ import { useGroups } from "@/hooks/useGroups";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AISummaryCard } from "@/components/intelligence/AISummaryCard";
 import {
   Lightbulb, AlertTriangle, TrendingUp, Salad, Leaf, BarChart3,
   X, Bookmark, Users, Search, ArrowRight, Flame, Eye, Sparkles,
@@ -118,6 +119,11 @@ const Intelligence = () => {
             className="pl-9 rounded-xl bg-secondary/50 border-0 focus-visible:ring-1"
           />
         </div>
+      </div>
+
+      {/* AI Summary */}
+      <div className="mt-6">
+        <AISummaryCard />
       </div>
 
       {/* Category tabs */}
