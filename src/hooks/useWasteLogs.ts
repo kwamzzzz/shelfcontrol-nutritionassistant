@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGroupContext } from "@/contexts/GroupContext";
 
 export const useWasteLogs = () => {
+  console.log("[useWasteLogs] hook called");
   const { user } = useAuth();
   const { activeGroupId, isPersonalMode } = useGroupContext();
   return useQuery({

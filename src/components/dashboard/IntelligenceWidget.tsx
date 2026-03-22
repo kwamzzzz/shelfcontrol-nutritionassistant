@@ -14,6 +14,7 @@ const CATEGORY_META: Record<FeedCategory, { icon: typeof Lightbulb; gradient: st
 };
 
 const IntelligenceWidget = () => {
+  console.log("[IntelligenceWidget] render");
   const { feedItems } = useIntelligenceFeed();
   const navigate = useNavigate();
   const topItems = feedItems.slice(0, 3);

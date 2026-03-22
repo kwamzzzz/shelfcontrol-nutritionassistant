@@ -24,6 +24,7 @@ export interface FeedItem {
 }
 
 export const useIntelligenceFeed = () => {
+  console.log("[useIntelligenceFeed] hook called");
   const { data: inventory } = useInventory();
   const { data: purchases } = usePurchases();
   const { data: logs } = useConsumptionLogs();
