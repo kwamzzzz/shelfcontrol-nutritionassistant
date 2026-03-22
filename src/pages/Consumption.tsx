@@ -203,7 +203,7 @@ const Consumption = () => {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Earlier</p>
                 <div className="space-y-2">
                   {earlierLogs.map((log) => (
-                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} />
+                    <ConsumptionRow key={log.id} log={log} onDelete={() => handleDelete(log.id)} loggedBy={activeGroupId ? profileMap?.get(log.user_id) : undefined} />
                   ))}
                 </div>
               </div>
