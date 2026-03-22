@@ -1,125 +1,204 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Target, Medal, Flame, LeafyGreen, DollarSign, Beef } from "lucide-react";
+import { Trophy, Users } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useChallenges } from "@/hooks/useChallenges";
+import { useChallengeScoring } from "@/hooks/useChallengeScoring";
+import ChallengeCard from "@/components/challenges/ChallengeCard";
+import ChallengeDetail from "@/components/challenges/ChallengeDetail";
+import CreateChallengeDialog from "@/components/challenges/CreateChallengeDialog";
+import { toast } from "sonner";
 
-interface ChallengeModule {
-  icon: React.ReactNode;
+const ChallengeSection = ({
+  title,
+  challenges,
+  participantCount,
+  isParticipant,
+  participants,
+  currentUserId,
+  onJoin,
+  onView,
+  joiningId,
+}: {
   title: string;
-  description: string;
-  difficulty: string;
-  metric: string;
-  color: string;
-}
+  challenges: ReturnType<typeof useChallenges>["activeChallenges"];
+  participantCount: (id: string) => number;
+  isParticipant: (id: string) => boolean;
+  participants: ReturnType<typeof useChallenges>["participants"];
+  currentUserId: string | undefined;
+  onJoin: (id: string) => void;
+  onView: (id: string) => void;
+  joiningId: string | null;
+}) => {
+  if (!challenges.length) return null;
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground font-[Outfit,var(--font-heading),sans-serif]">
+        {title} ({challenges.length})
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {challenges.map((c) => (
+          <ChallengeCardWithScoring
+            key={c.id}
+            challenge={c}
+            participants={participants}
+            participantCount={participantCount(c.id)}
+            isParticipant={isParticipant(c.id)}
+            currentUserId={currentUserId}
+            onJoin={() => onJoin(c.id)}
+            onView={() => onView(c.id)}
+            joining={joiningId === c.id}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
-const CHALLENGE_MODULES: ChallengeModule[] = [
-  {
-    icon: <Flame className="h-6 w-6" />,
-    title: "Consistency Streak",
-    description: "Log consumption every day for 7 days straight. Build the habit of tracking what you eat.",
-    difficulty: "Easy",
-    metric: "Days logged",
-    color: "text-warning",
-  },
-  {
-    icon: <LeafyGreen className="h-6 w-6" />,
-    title: "Zero Waste Week",
-    description: "Go an entire week without discarding any food items. Plan meals, use leftovers, reduce waste.",
-    difficulty: "Medium",
-    metric: "Items wasted",
-    color: "text-success",
-  },
-  {
-    icon: <DollarSign className="h-6 w-6" />,
-    title: "Budget Champion",
-    description: "Keep your weekly grocery spend under a target amount. Track every purchase to stay on budget.",
-    difficulty: "Medium",
-    metric: "Weekly spend",
-    color: "text-primary",
-  },
-  {
-    icon: <Beef className="h-6 w-6" />,
-    title: "Protein Goal",
-    description: "Hit your daily protein target for 5 out of 7 days. Track consumption and optimize your meals.",
-    difficulty: "Hard",
-    metric: "Daily protein (g)",
-    color: "text-accent",
-  },
-];
+const ChallengeCardWithScoring = ({
+  challenge,
+  participants,
+  ...rest
+}: {
+  challenge: ReturnType<typeof useChallenges>["challenges"][0];
+  participants: ReturnType<typeof useChallenges>["participants"];
+} & Omit<React.ComponentProps<typeof ChallengeCard>, "challenge" | "scores">) => {
+  const { data: scores } = useChallengeScoring(challenge, participants);
+  return <ChallengeCard challenge={challenge} scores={scores ?? []} {...rest} />;
+};
 
 const Challenges = () => {
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <div className="flex items-center gap-3">
+  const { user } = useAuth();
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const {
+    challenges,
+    participants,
+    isLoading,
+    activeChallenges,
+    upcomingChallenges,
+    completedChallenges,
+    joinChallenge,
+    leaveChallenge,
+    isParticipant,
+    participantCount,
+  } = useChallenges();
+
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
+
+  const handleJoin = async (challengeId: string) => {
+    setJoiningId(challengeId);
+    try {
+      await joinChallenge.mutateAsync(challengeId);
+      toast.success("You joined the challenge!");
+    } catch {
+      toast.error("Could not join challenge");
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
+  const viewingChallenge = challenges.find((c) => c.id === viewingId);
+
+  // Personal mode - no challenges
+  if (isPersonalMode) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div>
           <h1 className="text-3xl font-bold tracking-tight font-[Outfit,var(--font-heading),sans-serif]">Challenges</h1>
-          <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+          <p className="text-muted-foreground mt-1">Compete with your group to build better food habits.</p>
         </div>
-        <p className="text-muted-foreground mt-1">
-          Compete with yourself or your group. Build better food habits through fun challenges.
-        </p>
+        <Card className="rounded-2xl border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold mb-2 font-[Outfit,var(--font-heading),sans-serif]">
+              Challenges work best in groups
+            </h2>
+            <p className="text-muted-foreground max-w-md text-sm">
+              Switch to a group from the header to create or join challenges with your household, roommates, or friends.
+            </p>
+          </CardContent>
+        </Card>
       </div>
+    );
+  }
 
-      {/* Hero */}
-      <Card className="rounded-2xl border-dashed bg-gradient-to-br from-primary/5 to-accent/5">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Trophy className="h-8 w-8 text-primary" />
+  // Detail view
+  if (viewingChallenge) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <ChallengeDetail
+          challenge={viewingChallenge}
+          participants={participants}
+          currentUserId={user?.id}
+          isParticipant={isParticipant(viewingChallenge.id)}
+          onBack={() => setViewingId(null)}
+          onJoin={() => handleJoin(viewingChallenge.id)}
+          onLeave={async () => {
+            await leaveChallenge.mutateAsync(viewingChallenge.id);
+            toast.success("You left the challenge");
+          }}
+        />
+      </div>
+    );
+  }
+
+  const sectionProps = {
+    participantCount,
+    isParticipant,
+    participants,
+    currentUserId: user?.id,
+    onJoin: handleJoin,
+    onView: setViewingId,
+    joiningId,
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight font-[Outfit,var(--font-heading),sans-serif]">
+              Challenges
+            </h1>
+            <Trophy className="h-6 w-6 text-primary" />
           </div>
-          <h2 className="text-xl font-bold mb-2 font-[Outfit,var(--font-heading),sans-serif]">Challenges are coming</h2>
-          <p className="text-muted-foreground max-w-md text-sm">
-            Soon you'll be able to create challenges for yourself or your group — reduce waste, hit nutrition goals,
-            stay on budget, and climb leaderboards.
+          <p className="text-muted-foreground mt-1">
+            Compete with your group. Build better food habits together.
           </p>
-          <div className="mt-6 grid grid-cols-3 gap-4 w-full max-w-xs">
-            <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card shadow-sm">
-              <Target className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[0.65rem] font-medium text-muted-foreground">Goals</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card shadow-sm">
-              <Trophy className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[0.65rem] font-medium text-muted-foreground">Compete</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-card shadow-sm">
-              <Medal className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[0.65rem] font-medium text-muted-foreground">Earn</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Challenge Modules Preview */}
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4 font-[Outfit,var(--font-heading),sans-serif]">
-          Upcoming Challenges
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {CHALLENGE_MODULES.map((challenge) => (
-            <Card key={challenge.title} className="rounded-2xl shadow-sm opacity-75 hover:opacity-100 transition-opacity">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className={`${challenge.color}`}>
-                    {challenge.icon}
-                  </div>
-                  <Badge variant="outline" className="text-[0.6rem]">
-                    {challenge.difficulty}
-                  </Badge>
-                </div>
-                <CardTitle className="text-base font-semibold font-[Outfit,var(--font-heading),sans-serif]">
-                  {challenge.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {challenge.description}
-                </p>
-                <p className="mt-3 text-[0.65rem] font-medium text-muted-foreground uppercase tracking-wide">
-                  Tracks: {challenge.metric}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
         </div>
+        <CreateChallengeDialog />
       </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading challenges…</p>
+      ) : challenges.length === 0 ? (
+        <Card className="rounded-2xl border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Trophy className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold mb-2 font-[Outfit,var(--font-heading),sans-serif]">
+              No challenges yet
+            </h2>
+            <p className="text-muted-foreground max-w-md text-sm mb-4">
+              Create your first challenge and invite your group to compete on protein goals, waste reduction, budget control, or consistency.
+            </p>
+            <CreateChallengeDialog />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <ChallengeSection title="Active" challenges={activeChallenges} {...sectionProps} />
+          <ChallengeSection title="Upcoming" challenges={upcomingChallenges} {...sectionProps} />
+          <ChallengeSection title="Completed" challenges={completedChallenges} {...sectionProps} />
+        </>
+      )}
     </div>
   );
 };
