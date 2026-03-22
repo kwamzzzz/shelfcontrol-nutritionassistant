@@ -50,7 +50,10 @@ const CreateGroupDialog = ({ open, onOpenChange }: Props) => {
           setType("");
           onOpenChange(false);
         },
-        onError: () => toast.error("Failed to create group"),
+        onError: (err: any) => {
+          console.error("Create group error:", err);
+          toast.error(err?.message || "Failed to create group");
+        },
       }
     );
   };
