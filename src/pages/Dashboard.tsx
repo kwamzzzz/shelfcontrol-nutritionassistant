@@ -97,14 +97,14 @@ const Dashboard = () => {
   const ringOffset = ringCircumference - (calPct / 100) * ringCircumference;
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-[1400px] mx-auto px-0">
       {/* 12-column grid */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 lg:gap-6">
 
         {/* ═══ BUDGET RING ═══ */}
-        <div className="col-span-12 md:col-span-4 glass-card glass-card-hover p-6 flex flex-col items-center text-center relative">
-          <h3 className="label-small absolute top-6 left-6">Monthly Budget</h3>
-          <div className="relative w-[200px] h-[200px] mt-4 mb-4">
+        <div className="col-span-1 md:col-span-4 glass-card glass-card-hover p-4 sm:p-6 flex flex-col items-center text-center relative">
+          <h3 className="label-small absolute top-4 left-4 sm:top-6 sm:left-6">Monthly Budget</h3>
+          <div className="relative w-[140px] h-[140px] sm:w-[200px] sm:h-[200px] mt-4 mb-3 sm:mb-4">
             {/* SVG gradient definition */}
             <svg width="0" height="0" className="absolute">
               <defs>
@@ -128,7 +128,7 @@ const Dashboard = () => {
               <span className="label-small">This Week</span>
             </div>
           </div>
-          <div className="w-full flex justify-between pt-4 separator-dotted" style={{ borderTopStyle: 'dotted', borderTopWidth: 1, borderTopColor: 'hsla(248, 40%, 60%, 0.3)' }}>
+          <div className="w-full flex justify-between pt-3 sm:pt-4 separator-dotted" style={{ borderTopStyle: 'dotted', borderTopWidth: 1, borderTopColor: 'hsla(248, 40%, 60%, 0.3)' }}>
             <div>
               <div className="label-small">Pantry</div>
               <div className="text-lg font-medium text-foreground">{pantryCount}</div>
@@ -141,7 +141,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ AI INSIGHT ═══ */}
-        <div className="col-span-12 md:col-span-4 rounded-3xl p-6 relative overflow-hidden gradient-cool border border-white/[0.06]">
+        <div className="col-span-1 md:col-span-4 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden gradient-cool border border-white/[0.06]">
           <div className="absolute -top-[50%] -right-[20%] w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
           <div className="relative z-10">
             <div className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center mb-4 font-bold text-base">✦</div>
@@ -161,7 +161,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ QUICK STATS ═══ */}
-        <div className="col-span-12 md:col-span-4 glass-card glass-card-hover p-6">
+        <div className="col-span-1 md:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">Quick Stats</h3>
           </div>
@@ -174,7 +174,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ ATTENTION REQUIRED ═══ */}
-        <div className="col-span-12 lg:col-span-8 glass-card glass-card-hover p-6">
+        <div className="col-span-1 lg:col-span-8 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-medium text-foreground">Attention Required</h2>
             <button onClick={() => navigate("/pantry?filter=expiring")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -219,7 +219,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ PANTRY COMPOSITION ═══ */}
-        <div className="col-span-12 lg:col-span-4 glass-card glass-card-hover p-6">
+        <div className="col-span-1 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
           <h3 className="label-small mb-4">Pantry Composition</h3>
           {composition.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No data yet</p>
@@ -241,12 +241,12 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ INTELLIGENCE ═══ */}
-        <div className="col-span-12 lg:col-span-8">
+        <div className="col-span-1 lg:col-span-8">
           <IntelligenceWidget />
         </div>
 
         {/* ═══ SPEND TREND ═══ */}
-        <div className="col-span-12 lg:col-span-4 glass-card glass-card-hover p-6">
+        <div className="col-span-1 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">Spend Trend</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -257,7 +257,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ TODAY'S LOG ═══ */}
-        <div className="col-span-12 lg:col-span-6 glass-card glass-card-hover p-6">
+        <div className="col-span-1 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🍽 Today's Food Log</h3>
             <button onClick={() => navigate("/nutrition")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -301,7 +301,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ RECENT PURCHASES ═══ */}
-        <div className="col-span-12 lg:col-span-6 glass-card glass-card-hover p-6">
+        <div className="col-span-1 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🧾 Recent Purchases</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -344,7 +344,7 @@ const Dashboard = () => {
       </div>
 
       {/* ═══ FLOATING ACTION PANEL ═══ */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 hidden sm:flex items-center gap-1 bg-[#05040D] rounded-full p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.06]">
+      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 hidden sm:flex items-center gap-1 bg-background rounded-full p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.06]">
         <FabButton onClick={() => navigate("/consumption")}>
           <Heart className="h-4 w-4" /> Consume
         </FabButton>
