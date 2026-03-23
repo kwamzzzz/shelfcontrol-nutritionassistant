@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
@@ -48,11 +47,19 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex flex-col items-center gap-2">
-          <ShieldCheck className="h-10 w-10 text-primary" />
-          <h1 className="text-2xl font-display font-bold text-foreground">Shelf Control</h1>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsla(248,100%,56%,0.12)] blur-[120px]" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[hsla(280,100%,50%,0.08)] blur-[100px]" />
+
+      <div className="w-full max-w-sm space-y-8 relative z-10">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 rounded-xl gradient-warm flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Shelf Control</h1>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Sign in to your kitchen" : "Create your account"}
           </p>
@@ -60,7 +67,7 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-muted-foreground">Email</Label>
             <Input
               id="email"
               type="email"
@@ -68,10 +75,11 @@ const Auth = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="glass-card border-white/[0.06] bg-white/[0.05] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-muted-foreground">Password</Label>
             <Input
               id="password"
               type="password"
@@ -80,9 +88,14 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              className="glass-card border-white/[0.06] bg-white/[0.05] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full rounded-xl h-11 font-medium gradient-cool border-0 hover:opacity-90 transition-opacity"
+            disabled={loading}
+          >
             {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
           </Button>
         </form>
@@ -92,7 +105,7 @@ const Auth = () => {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-[#8E84FF] hover:underline"
           >
             {isLogin ? "Sign up" : "Sign in"}
           </button>
