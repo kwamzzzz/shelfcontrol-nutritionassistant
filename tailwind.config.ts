@@ -13,9 +13,9 @@ export default {
       },
     },
     fontFamily: {
-      sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-      display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-      analytics: ['"Outfit"', 'system-ui', 'sans-serif'],
+      sans: ['"Inter"', 'system-ui', 'sans-serif'],
+      display: ['"Inter"', 'system-ui', 'sans-serif'],
+      analytics: ['"Inter"', 'system-ui', 'sans-serif'],
     },
     extend: {
       colors: {
@@ -72,26 +72,20 @@ export default {
         },
       },
       borderRadius: {
+        "3xl": "1.5rem",
+        "4xl": "2rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {

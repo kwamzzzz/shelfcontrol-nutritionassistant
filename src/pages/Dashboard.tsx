@@ -10,19 +10,13 @@ import { useWaterLogs } from "@/hooks/useWaterTracking";
 import { useNutritionData } from "@/hooks/useNutrition";
 import { formatCurrency } from "@/lib/currency";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import IntelligenceWidget from "@/components/dashboard/IntelligenceWidget";
 import {
-  Package, AlertTriangle, Flame, Beef, Wheat, Droplets,
-  ShoppingBag, ShoppingCart, UtensilsCrossed, ChefHat, GlassWater,
-  ArrowRight, TrendingUp, Apple, Receipt, Trash2, Clock, Plus,
+  Package, ShoppingCart, ChefHat, GlassWater, Heart,
+  ArrowRight, ShoppingBag, Flame, Apple, Receipt, Plus,
 } from "lucide-react";
-import { isToday, isThisWeek, parseISO, format, formatDistanceToNow } from "date-fns";
+import { isThisWeek, parseISO, format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
 /* ── helpers ──────────────────────────────────────── */
 function getCategoryEmoji(category?: string | null): string {
@@ -49,12 +43,9 @@ const Dashboard = () => {
   const { data: shoppingList } = useShoppingList();
   const { data: goals } = useNutritionGoals();
   const { data: waterLogs } = useWaterLogs();
-  const { totals, meals } = useNutritionData();
+  const { totals } = useNutritionData();
 
   const calGoal = goals?.calorie_goal ?? 2000;
-  const protGoal = goals?.protein_goal ?? 50;
-  const carbsGoal = goals?.carbs_goal ?? 250;
-  const fatGoal = goals?.fat_goal ?? 65;
   const waterGoal = goals?.water_goal_ml ?? 2000;
 
   const calPct = Math.min((totals.calories / calGoal) * 100, 100);
@@ -71,7 +62,6 @@ const Dashboard = () => {
     if (!purchases) return 0;
     return purchases.filter(p => isThisWeek(parseISO(p.purchased_at), { weekStartsOn: 1 })).reduce((sum, p) => sum + Number(p.total_cost ?? 0), 0);
   }, [purchases]);
-  const tripCount = useMemo(() => purchases?.filter(p => isThisWeek(parseISO(p.purchased_at), { weekStartsOn: 1 })).length ?? 0, [purchases]);
 
   /* shopping */
   const openItems = useMemo(() => shoppingList?.filter(i => !i.is_purchased).length ?? 0, [shoppingList]);
@@ -80,247 +70,291 @@ const Dashboard = () => {
   const waterTotal = useMemo(() => waterLogs?.reduce((s, l) => s + l.amount_ml, 0) ?? 0, [waterLogs]);
   const waterPct = Math.min((waterTotal / waterGoal) * 100, 100);
 
-  /* recent activity */
+  /* recent */
   const recentLogs = logs?.slice(0, 4) ?? [];
   const recentPurchases = purchases?.slice(0, 3) ?? [];
 
-  /* greeting */
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  /* pantry composition */
+  const composition = useMemo(() => {
+    if (!inventory || inventory.length === 0) return [];
+    const cats: Record<string, number> = {};
+    inventory.forEach(item => {
+      const cat = item.items?.category ?? "Other";
+      cats[cat] = (cats[cat] || 0) + 1;
+    });
+    const total = inventory.length;
+    return Object.entries(cats)
+      .map(([name, count]) => ({ name, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 4);
+  }, [inventory]);
+
+  const compositionColors = ["#FFE53B", "#FF5A25", "#C500FF", "#3B28FF"];
+
+  /* SVG ring calc */
+  const ringRadius = 90;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (calPct / 100) * ringCircumference;
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-display font-bold text-foreground">{greeting} 👋</h1>
-        <p className="mt-1 text-muted-foreground">Here's what's happening in your kitchen today</p>
-      </div>
+    <div className="max-w-[1400px] mx-auto">
+      {/* 12-column grid */}
+      <div className="grid grid-cols-12 gap-6">
 
-      {/* ═══ TOP ROW: Nutrition Ring + Quick Stats ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-        {/* Calorie Ring Card */}
-        <Card className="rounded-2xl border-none shadow-sm lg:col-span-1">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Today's Calories</p>
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 px-2" onClick={() => navigate("/nutrition")}>
-                Details <ArrowRight className="h-3 w-3" />
-              </Button>
+        {/* ═══ BUDGET RING ═══ */}
+        <div className="col-span-12 md:col-span-4 glass-card glass-card-hover p-6 flex flex-col items-center text-center relative">
+          <h3 className="label-small absolute top-6 left-6">Monthly Budget</h3>
+          <div className="relative w-[200px] h-[200px] mt-4 mb-4">
+            {/* SVG gradient definition */}
+            <svg width="0" height="0" className="absolute">
+              <defs>
+                <linearGradient id="ring-warm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFE53B" />
+                  <stop offset="50%" stopColor="#FF5A25" />
+                  <stop offset="100%" stopColor="#C500FF" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+              <circle cx="100" cy="100" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+              <circle
+                cx="100" cy="100" r={ringRadius} fill="none"
+                stroke="url(#ring-warm-grad)" strokeWidth="12" strokeLinecap="round"
+                strokeDasharray={ringCircumference} strokeDashoffset={ringOffset}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="metric-large text-foreground">{formatCurrency(weekSpend)}</span>
+              <span className="label-small">This Week</span>
             </div>
-            <div className="flex items-center gap-5">
-              <div className="relative w-28 h-28 shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart cx="50%" cy="50%" innerRadius="75%" outerRadius="100%" startAngle={90} endAngle={-270} data={[{ value: calPct, fill: "hsl(var(--primary))" }]}>
-                    <RadialBar background={{ fill: "hsl(var(--muted))" }} dataKey="value" cornerRadius={10} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-display font-bold tabular-nums text-foreground">{totals.calories.toFixed(0)}</span>
-                  <span className="text-[10px] text-muted-foreground">/ {calGoal}</span>
-                </div>
-              </div>
-              <div className="flex-1 space-y-2.5">
-                <MacroRow icon={Beef} label="Protein" value={totals.protein} goal={protGoal} color="text-emerald-500" bg="bg-emerald-500" />
-                <MacroRow icon={Wheat} label="Carbs" value={totals.carbs} goal={carbsGoal} color="text-amber-500" bg="bg-amber-500" />
-                <MacroRow icon={Droplets} label="Fats" value={totals.fat} goal={fatGoal} color="text-rose-500" bg="bg-rose-500" />
-              </div>
+          </div>
+          <div className="w-full flex justify-between pt-4 separator-dotted" style={{ borderTopStyle: 'dotted', borderTopWidth: 1, borderTopColor: 'hsla(248, 40%, 60%, 0.3)' }}>
+            <div>
+              <div className="label-small">Pantry</div>
+              <div className="text-lg font-medium text-foreground">{pantryCount}</div>
             </div>
-            {/* Meal status chips */}
-            <div className="flex gap-2 mt-4">
-              {meals.map(m => {
-                const logged = m.logs.length > 0;
+            <div className="text-right">
+              <div className="label-small">Expiring</div>
+              <div className="text-lg font-medium text-[#C500FF]">{expiringSoon.length}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ AI INSIGHT ═══ */}
+        <div className="col-span-12 md:col-span-4 rounded-3xl p-6 relative overflow-hidden gradient-cool border border-white/[0.06]">
+          <div className="absolute -top-[50%] -right-[20%] w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
+          <div className="relative z-10">
+            <div className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center mb-4 font-bold text-base">✦</div>
+            <h2 className="text-xl font-medium text-white mb-2">Smart Restock</h2>
+            <p className="text-white/80 text-sm leading-relaxed mb-6">
+              {expiringSoon.length > 0
+                ? `${expiringSoon.length} items need attention soon. ${openItems > 0 ? `${openItems} on your shopping list.` : "Check your pantry."}`
+                : "Your pantry looks good! All items are fresh and stocked."}
+            </p>
+            <button
+              onClick={() => navigate("/shopping")}
+              className="bg-white/20 border border-white/30 text-white px-5 py-2.5 rounded-full text-sm font-medium backdrop-blur-sm hover:bg-white/30 transition-all"
+            >
+              Review List →
+            </button>
+          </div>
+        </div>
+
+        {/* ═══ QUICK STATS ═══ */}
+        <div className="col-span-12 md:col-span-4 glass-card glass-card-hover p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="label-small">Quick Stats</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <QuickStat icon={Package} label="Pantry" value={pantryCount} onClick={() => navigate("/pantry")} />
+            <QuickStat icon={ShoppingCart} label="To Buy" value={openItems} onClick={() => navigate("/shopping")} />
+            <QuickStat icon={ChefHat} label="Recipes" value={recipes?.length ?? 0} onClick={() => navigate("/recipes")} />
+            <QuickStat icon={GlassWater} label="Water" value={`${(waterTotal / 1000).toFixed(1)}L`} sub={`${waterPct.toFixed(0)}%`} onClick={() => navigate("/nutrition")} />
+          </div>
+        </div>
+
+        {/* ═══ ATTENTION REQUIRED ═══ */}
+        <div className="col-span-12 lg:col-span-8 glass-card glass-card-hover p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-medium text-foreground">Attention Required</h2>
+            <button onClick={() => navigate("/pantry?filter=expiring")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              View All
+            </button>
+          </div>
+          {expiringSoon.length === 0 ? (
+            <div className="py-10 text-center">
+              <span className="text-3xl">✅</span>
+              <p className="text-sm text-muted-foreground mt-2">Nothing needs attention right now!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {expiringSoon.slice(0, 4).map((item, idx) => {
+                const status = getExpiryStatus(item.expiry_date);
                 return (
-                  <div key={m.key} className={cn("flex-1 rounded-lg p-2 text-center text-[10px] font-medium transition-colors", logged ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground")}>
-                    {m.label}
-                    {logged && <span className="block text-[9px] mt-0.5">{m.logs.length} item(s)</span>}
+                  <div key={item.id} className={cn("flex items-center justify-between py-4", idx < Math.min(expiringSoon.length, 4) - 1 && "separator-dotted")}>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center text-lg">
+                        {getCategoryEmoji(item.items?.category)}
+                      </div>
+                      <div>
+                        <span className="text-[15px] font-medium text-foreground">{item.items?.name ?? "Unknown"}</span>
+                        <span className="block text-[13px] text-muted-foreground">
+                          {item.storage_location ?? "Pantry"} · {item.quantity} {item.unit}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col gap-1">
+                      <span className={cn(
+                        "inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase",
+                        status === "expired" ? "bg-[hsla(280,100%,50%,0.15)] text-[#C500FF]" : "bg-[hsla(22,100%,55%,0.15)] text-[#FF5A25]"
+                      )}>
+                        {getExpiryLabel(item.expiry_date)}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats Grid */}
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <QuickStat
-            icon={Package} label="Pantry Items" value={pantryCount}
-            sub={expiringSoon.length > 0 ? `${expiringSoon.length} expiring` : "All fresh"}
-            accent={expiringSoon.length > 0 ? "warning" : undefined}
-            onClick={() => navigate("/pantry")}
-          />
-          <QuickStat
-            icon={AlertTriangle} label="Expiring Soon" value={expiringSoon.length}
-            sub={expiringSoon.length > 0 ? expiringSoon.slice(0, 2).map(r => r.items?.name).join(", ") : "Nothing urgent"}
-            accent={expiringSoon.length > 0 ? "destructive" : undefined}
-            onClick={() => navigate("/pantry?filter=expiring")}
-          />
-          <QuickStat
-            icon={ShoppingBag} label="Weekly Spend" value={weekSpend > 0 ? formatCurrency(weekSpend) : "—"}
-            sub={`${tripCount} trip(s)`}
-            onClick={() => navigate("/purchases")}
-          />
-          <QuickStat
-            icon={ShoppingCart} label="Shopping List" value={openItems}
-            sub={openItems === 0 ? "All done" : `${openItems} to buy`}
-            onClick={() => navigate("/shopping-list")}
-          />
-          <QuickStat
-            icon={ChefHat} label="Recipes" value={recipes?.length ?? 0}
-            sub="In your collection"
-            onClick={() => navigate("/recipes")}
-          />
-          {/* Water mini card */}
-          <div
-            className="rounded-2xl bg-card p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-between"
-            onClick={() => navigate("/nutrition")}
-          >
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <GlassWater className="h-4 w-4 text-blue-500" />
-              <p className="text-xs font-medium">Hydration</p>
-            </div>
-            <div className="mt-2">
-              <p className="text-xl font-display font-bold tabular-nums text-foreground">
-                {(waterTotal / 1000).toFixed(1)}<span className="text-xs font-normal text-muted-foreground">L</span>
-              </p>
-              <Progress value={waterPct} className="h-1.5 mt-2 [&>div]:bg-blue-500" />
-              <p className="text-[10px] text-muted-foreground mt-1">{waterPct.toFixed(0)}% of {(waterGoal / 1000).toFixed(1)}L goal</p>
-            </div>
-          </div>
+          )}
         </div>
-      </div>
 
-      {/* ═══ MIDDLE ROW: Intelligence + Expiring Items ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
-        <div className="lg:col-span-3">
+        {/* ═══ PANTRY COMPOSITION ═══ */}
+        <div className="col-span-12 lg:col-span-4 glass-card glass-card-hover p-6">
+          <h3 className="label-small mb-4">Pantry Composition</h3>
+          {composition.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">No data yet</p>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {composition.map((cat, i) => (
+                <div key={cat.name}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-sm text-muted-foreground">{cat.name}</span>
+                    <span className="text-sm font-medium text-foreground">{cat.pct}%</span>
+                  </div>
+                  <div className="w-full h-1 bg-white/[0.1] rounded-sm">
+                    <div className="h-full rounded-sm transition-all" style={{ width: `${cat.pct}%`, backgroundColor: compositionColors[i % compositionColors.length] }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ═══ INTELLIGENCE ═══ */}
+        <div className="col-span-12 lg:col-span-8">
           <IntelligenceWidget />
         </div>
-        <Card className="rounded-2xl border-none shadow-sm lg:col-span-2">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">⚠️ Expiring Items</p>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 px-2" onClick={() => navigate("/pantry?filter=expiring")}>
-                View all <ArrowRight className="h-3 w-3" />
-              </Button>
-            </div>
-            {expiringSoon.length === 0 ? (
-              <div className="py-8 text-center">
-                <span className="text-2xl">✅</span>
-                <p className="text-sm text-muted-foreground mt-2">Nothing expiring soon!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {expiringSoon.slice(0, 5).map(item => {
-                  const status = getExpiryStatus(item.expiry_date);
-                  return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 p-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-base">{getCategoryEmoji(item.items?.category)}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">{item.items?.name ?? "Unknown"}</p>
-                        <p className="text-[10px] text-muted-foreground">{item.quantity} {item.unit} · {item.storage_location ?? "Pantry"}</p>
-                      </div>
-                      <Badge variant="secondary" className={cn("text-[9px] rounded-full shrink-0", status === "expired" ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-600")}>
-                        {getExpiryLabel(item.expiry_date)}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* ═══ BOTTOM ROW: Recent Activity + Recent Purchases ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Recent Consumption */}
-        <Card className="rounded-2xl border-none shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">🍽 Today's Food Log</p>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 px-2" onClick={() => navigate("/nutrition")}>
-                Open diary <ArrowRight className="h-3 w-3" />
-              </Button>
+        {/* ═══ SPEND TREND ═══ */}
+        <div className="col-span-12 lg:col-span-4 glass-card glass-card-hover p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="label-small">Spend Trend</h3>
+            <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Details
+            </button>
+          </div>
+          <SpendBars purchases={purchases} />
+        </div>
+
+        {/* ═══ TODAY'S LOG ═══ */}
+        <div className="col-span-12 lg:col-span-6 glass-card glass-card-hover p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="label-small">🍽 Today's Food Log</h3>
+            <button onClick={() => navigate("/nutrition")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              Open diary <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {recentLogs.length === 0 ? (
+            <div className="py-8 text-center">
+              <Apple className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
+              <p className="text-sm text-muted-foreground">No food logged today</p>
+              <button onClick={() => navigate("/consumption")} className="mt-3 text-xs font-medium text-primary hover:underline flex items-center gap-1 mx-auto">
+                <Plus className="h-3 w-3" /> Log food
+              </button>
             </div>
-            {recentLogs.length === 0 ? (
-              <div className="py-8 text-center">
-                <Apple className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">No food logged today</p>
-                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => navigate("/consumption")}>
-                  <Plus className="h-3 w-3 mr-1" /> Log food
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {recentLogs.map(log => {
-                  const item = log.items;
-                  const cal = Number(item?.calories_per_unit ?? 0) * Number(log.quantity);
-                  return (
-                    <div key={log.id} className="flex items-center gap-3 rounded-xl bg-muted/30 p-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-base">{getCategoryEmoji(item?.category)}</span>
+          ) : (
+            <div className="flex flex-col">
+              {recentLogs.map((log, idx) => {
+                const item = log.items;
+                const cal = Number(item?.calories_per_unit ?? 0) * Number(log.quantity);
+                return (
+                  <div key={log.id} className={cn("flex items-center justify-between py-3", idx < recentLogs.length - 1 && "separator-dotted")}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center text-lg">
+                        {getCategoryEmoji(item?.category)}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">{item?.name ?? "Unknown"}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{item?.name ?? "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">
                           {log.quantity} {item?.serving_size ?? item?.default_unit ?? "serving"} · {format(parseISO(log.consumed_at), "h:mm a")}
                         </p>
                       </div>
-                      <span className="text-xs font-semibold tabular-nums text-foreground flex items-center gap-1 shrink-0">
-                        <Flame className="h-3 w-3 text-primary" /> {cal.toFixed(0)}
-                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Purchases */}
-        <Card className="rounded-2xl border-none shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">🧾 Recent Purchases</p>
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 px-2" onClick={() => navigate("/purchases")}>
-                View all <ArrowRight className="h-3 w-3" />
-              </Button>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-1">
+                      <Flame className="h-3 w-3 text-[#FF5A25]" /> {cal.toFixed(0)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            {recentPurchases.length === 0 ? (
-              <div className="py-8 text-center">
-                <Receipt className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">No purchases yet</p>
-                <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={() => navigate("/purchases")}>
-                  <Plus className="h-3 w-3 mr-1" /> Add purchase
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {recentPurchases.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 rounded-xl bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/purchases")}>
-                    <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <ShoppingBag className="h-4 w-4 text-blue-500" />
+          )}
+        </div>
+
+        {/* ═══ RECENT PURCHASES ═══ */}
+        <div className="col-span-12 lg:col-span-6 glass-card glass-card-hover p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="label-small">🧾 Recent Purchases</h3>
+            <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              View all <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {recentPurchases.length === 0 ? (
+            <div className="py-8 text-center">
+              <Receipt className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
+              <p className="text-sm text-muted-foreground">No purchases yet</p>
+              <button onClick={() => navigate("/purchases")} className="mt-3 text-xs font-medium text-primary hover:underline flex items-center gap-1 mx-auto">
+                <Plus className="h-3 w-3" /> Add purchase
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {recentPurchases.map((p, idx) => (
+                <div key={p.id} className={cn("flex items-center justify-between py-3 cursor-pointer", idx < recentPurchases.length - 1 && "separator-dotted")} onClick={() => navigate("/purchases")}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center">
+                      <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{p.store_name || "Purchase"}</p>
-                      <p className="text-[10px] text-muted-foreground">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{p.store_name || "Purchase"}</p>
+                      <p className="text-xs text-muted-foreground">
                         {format(parseISO(p.purchased_at), "MMM d, yyyy")} · {formatDistanceToNow(parseISO(p.purchased_at), { addSuffix: true })}
                       </p>
                     </div>
-                    {p.total_cost != null && Number(p.total_cost) > 0 && (
-                      <span className="text-sm font-bold tabular-nums text-foreground shrink-0">
-                        {formatCurrency(Number(p.total_cost))}
-                      </span>
-                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  {p.total_cost != null && Number(p.total_cost) > 0 && (
+                    <span className="text-sm font-medium text-foreground">
+                      {formatCurrency(Number(p.total_cost))}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ FLOATING ACTION PANEL ═══ */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 hidden sm:flex items-center gap-1 bg-[#05040D] rounded-full p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.06]">
+        <FabButton onClick={() => navigate("/consumption")}>
+          <Heart className="h-4 w-4" /> Consume
+        </FabButton>
+        <FabButton onClick={() => navigate("/pantry")}>
+          <Package className="h-4 w-4" /> Edit Item
+        </FabButton>
+        <div className="w-px h-6 bg-white/[0.06] mx-1" />
+        <FabButton primary onClick={() => navigate("/purchases")}>
+          <Plus className="h-4 w-4" /> Log Purchase
+        </FabButton>
       </div>
     </div>
   );
@@ -329,41 +363,74 @@ const Dashboard = () => {
 /* ── Sub-components ─────────────────────────────── */
 
 const QuickStat = ({
-  icon: Icon, label, value, sub, accent, onClick,
+  icon: Icon, label, value, sub, onClick,
 }: {
-  icon: any; label: string; value: string | number; sub?: string;
-  accent?: "warning" | "destructive"; onClick?: () => void;
+  icon: any; label: string; value: string | number; sub?: string; onClick?: () => void;
 }) => (
   <div
-    className="rounded-2xl bg-card p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+    className="rounded-2xl bg-white/[0.05] p-3.5 cursor-pointer hover:bg-white/[0.08] transition-all"
     onClick={onClick}
   >
-    <div className="flex items-center gap-2 text-muted-foreground">
-      <Icon className={cn("h-4 w-4", accent === "warning" ? "text-amber-500" : accent === "destructive" ? "text-destructive" : "")} />
-      <p className="text-xs font-medium">{label}</p>
-    </div>
-    <p className="mt-2 text-xl font-display font-bold text-foreground tabular-nums">{value}</p>
-    {sub && <p className="mt-0.5 text-[10px] text-muted-foreground truncate">{sub}</p>}
+    <Icon className="h-4 w-4 text-muted-foreground mb-2" />
+    <p className="text-lg font-medium text-foreground tabular-nums">{value}</p>
+    <p className="text-[11px] text-muted-foreground">{label}</p>
+    {sub && <p className="text-[10px] text-[#8E84FF]">{sub}</p>}
   </div>
 );
 
-const MacroRow = ({
-  icon: Icon, label, value, goal, color, bg,
-}: {
-  icon: any; label: string; value: number; goal: number; color: string; bg: string;
-}) => {
-  const pct = Math.min((value / goal) * 100, 100);
+const FabButton = ({ children, primary, onClick }: { children: React.ReactNode; primary?: boolean; onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-all",
+      primary
+        ? "bg-white text-[#05040D] hover:scale-[1.02] hover:bg-gray-100"
+        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+    )}
+  >
+    {children}
+  </button>
+);
+
+const SpendBars = ({ purchases }: { purchases: any[] | undefined }) => {
+  const days = ["M", "T", "W", "T", "F", "S", "S"];
+  const today = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+
+  const dailySpend = useMemo(() => {
+    const spend = Array(7).fill(0);
+    if (!purchases) return spend;
+    purchases.forEach(p => {
+      const d = parseISO(p.purchased_at);
+      if (isThisWeek(d, { weekStartsOn: 1 })) {
+        const day = d.getDay();
+        const idx = day === 0 ? 6 : day - 1;
+        spend[idx] += Number(p.total_cost ?? 0);
+      }
+    });
+    return spend;
+  }, [purchases]);
+
+  const maxSpend = Math.max(...dailySpend, 1);
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-          <Icon className={cn("h-3 w-3", color)} />
-          <span className={cn("text-[10px] font-medium", color)}>{label}</span>
-        </div>
-        <span className="text-[10px] font-medium tabular-nums text-foreground">{value.toFixed(0)}g <span className="text-muted-foreground">/ {goal}g</span></span>
+      <div className="flex items-end gap-2 h-[100px] mt-4">
+        {dailySpend.map((s, i) => (
+          <div
+            key={i}
+            className={cn(
+              "flex-1 rounded-t transition-all duration-500",
+              i === todayIdx ? "gradient-warm" : "bg-white/[0.1] hover:bg-white/[0.2]"
+            )}
+            style={{ height: `${Math.max((s / maxSpend) * 100, 4)}%` }}
+          />
+        ))}
       </div>
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className={cn("h-full rounded-full transition-all", bg)} style={{ width: `${pct}%` }} />
+      <div className="flex justify-between mt-2">
+        {days.map((d, i) => (
+          <span key={i} className="text-[10px] text-muted-foreground flex-1 text-center">{d}</span>
+        ))}
       </div>
     </div>
   );

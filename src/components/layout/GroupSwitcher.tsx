@@ -8,11 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 const GroupSwitcher = () => {
   const { activeGroupId, setActiveGroupId, isPersonalMode } = useGroupContext();
-  const { groups, isLoading } = useGroups();
+  const { groups } = useGroups();
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
   const label = isPersonalMode ? "Personal" : activeGroup?.name ?? "Personal";
@@ -20,30 +19,30 @@ const GroupSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 rounded-xl font-medium">
+        <button className="flex items-center gap-2 glass-card glass-card-hover rounded-full px-4 py-2 text-sm font-medium text-foreground">
           {isPersonalMode ? (
             <User className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <Users className="h-4 w-4 text-primary" />
+            <Users className="h-4 w-4 text-[#8E84FF]" />
           )}
           <span className="max-w-[120px] truncate">{label}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
-        </Button>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-48 glass-card border-white/[0.06] bg-[hsl(252,50%,12%)]">
         <DropdownMenuItem
           onClick={() => setActiveGroupId(null)}
-          className={isPersonalMode ? "bg-accent" : ""}
+          className={isPersonalMode ? "bg-white/[0.08]" : ""}
         >
           <User className="mr-2 h-4 w-4" />
           Personal
         </DropdownMenuItem>
-        {groups.length > 0 && <DropdownMenuSeparator />}
+        {groups.length > 0 && <DropdownMenuSeparator className="bg-white/[0.06]" />}
         {groups.map((group) => (
           <DropdownMenuItem
             key={group.id}
             onClick={() => setActiveGroupId(group.id)}
-            className={activeGroupId === group.id ? "bg-accent" : ""}
+            className={activeGroupId === group.id ? "bg-white/[0.08]" : ""}
           >
             <Users className="mr-2 h-4 w-4" />
             <span className="truncate">{group.name}</span>
