@@ -97,9 +97,9 @@ const Dashboard = () => {
   const ringOffset = ringCircumference - (calPct / 100) * ringCircumference;
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-[1400px] mx-auto px-0">
       {/* 12-column grid */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 lg:gap-6">
 
         {/* ═══ BUDGET RING ═══ */}
         <div className="col-span-12 md:col-span-4 glass-card glass-card-hover p-6 flex flex-col items-center text-center relative">
