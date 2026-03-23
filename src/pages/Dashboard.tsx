@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/currency";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import IntelligenceWidget from "@/components/dashboard/IntelligenceWidget";
 import {
-  Package, ShoppingCart, ChefHat, GlassWater,
+  Package, ShoppingCart, ChefHat, GlassWater, Heart,
   ArrowRight, ShoppingBag, Flame, Apple, Receipt, Plus,
 } from "lucide-react";
 import { isThisWeek, parseISO, format, formatDistanceToNow } from "date-fns";
