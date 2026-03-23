@@ -57,7 +57,7 @@ const AppLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 p-4 pt-20 sm:p-8 sm:pt-8">
+        <main className="flex-1 p-3 pt-16 sm:p-6 sm:pt-6 lg:p-8 lg:pt-8">
           <Outlet />
         </main>
       </div>
