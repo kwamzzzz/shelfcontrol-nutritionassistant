@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type InventoryRow, useUpdateInventory, useDeleteInventory, useUpdateItem } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,7 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
   const [protein, setProtein] = useState(String(entry.items.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(entry.items.carbs_g ?? 0));
   const [fat, setFat] = useState(String(entry.items.fat_g ?? 0));
+  const [imageUrl, setImageUrl] = useState<string | null>((entry.items as any).image_url ?? null);
 
   const updateInventory = useUpdateInventory();
   const updateItem = useUpdateItem();
@@ -60,7 +62,8 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
-      });
+        image_url: imageUrl,
+      } as any);
 
       toast({ title: "Updated", description: `${itemName} updated.` });
       onClose();
@@ -86,7 +89,12 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
           <DialogTitle className="font-display">Edit: {entry.items.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
-          {/* Item details (reclassification) */}
+          <ImageUpload
+            currentUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemoved={() => setImageUrl(null)}
+            folder="items"
+          />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Item Name</Label>
