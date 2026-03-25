@@ -391,6 +391,7 @@ export type Database = {
           fat_g: number | null
           fiber_g: number | null
           id: string
+          image_url: string | null
           name: string
           nutrition_basis: string | null
           protein_g: number | null
@@ -409,6 +410,7 @@ export type Database = {
           fat_g?: number | null
           fiber_g?: number | null
           id?: string
+          image_url?: string | null
           name: string
           nutrition_basis?: string | null
           protein_g?: number | null
@@ -427,6 +429,7 @@ export type Database = {
           fat_g?: number | null
           fiber_g?: number | null
           id?: string
+          image_url?: string | null
           name?: string
           nutrition_basis?: string | null
           protein_g?: number | null
@@ -632,6 +635,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           instructions: string | null
           name: string
           servings: number | null
@@ -640,6 +644,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           instructions?: string | null
           name: string
           servings?: number | null
@@ -648,6 +653,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           instructions?: string | null
           name?: string
           servings?: number | null
