@@ -61,7 +61,7 @@ const AppSidebar = () => {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-white/[0.06] bg-[hsl(252,45%,9%)] px-4 sm:hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-white/[0.03] bg-[hsl(252,45%,9%)] px-4 sm:hidden">
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white/70">
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -78,7 +78,7 @@ const AppSidebar = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[260px] flex-col border-r border-white/[0.06] transition-transform duration-200",
+          "fixed left-0 top-0 z-40 flex h-screen w-[260px] flex-col border-r border-white/[0.03] transition-transform duration-200",
           "bg-[hsl(252,45%,9%)]",
           mobileOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"
         )}
@@ -132,7 +132,7 @@ const AppSidebar = () => {
           ))}
         </nav>
 
-        <div className="border-t border-white/[0.06] p-3">
+        <div className="border-t border-white/[0.03] p-3">
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
