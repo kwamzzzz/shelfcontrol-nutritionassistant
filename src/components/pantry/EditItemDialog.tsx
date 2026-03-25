@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type Item, useUpdateItem, useDeleteItem } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
   const [protein, setProtein] = useState(String(item.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(item.carbs_g ?? 0));
   const [fat, setFat] = useState(String(item.fat_g ?? 0));
+  const [imageUrl, setImageUrl] = useState<string | null>((item as any).image_url ?? null);
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
   const { toast } = useToast();
@@ -43,7 +45,8 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
-      });
+        image_url: imageUrl,
+      } as any);
       toast({ title: "Updated", description: `${name} updated.` });
       onClose();
     } catch (err: any) {
@@ -75,6 +78,12 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
           <DialogTitle className="font-display">Edit: {item.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
+          <ImageUpload
+            currentUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemoved={() => setImageUrl(null)}
+            folder="items"
+          />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Name *</Label>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCreateItem } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,12 +21,14 @@ const AddItemDialog = () => {
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const createItem = useCreateItem();
   const { toast } = useToast();
 
   const reset = () => {
     setName(""); setBrand(""); setCategory(""); setDefaultUnit("Unit");
     setCalories(""); setProtein(""); setCarbs(""); setFat("");
+    setImageUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +43,7 @@ const AddItemDialog = () => {
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
+        image_url: imageUrl,
       });
       toast({ title: "Item added", description: `${name} added to catalog.` });
       reset();
@@ -62,6 +66,12 @@ const AddItemDialog = () => {
           <DialogTitle className="font-display">Add Catalog Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <ImageUpload
+            currentUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemoved={() => setImageUrl(null)}
+            folder="items"
+          />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Name *</Label>

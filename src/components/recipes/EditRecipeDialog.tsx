@@ -3,6 +3,7 @@ import { type RecipeWithIngredients, useUpdateRecipe, type NewIngredientLine } f
 import { useItems } from "@/hooks/usePantry";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ const EditRecipeDialog = ({ recipe, open, onClose }: Props) => {
   const [name, setName] = useState(recipe.name);
   const [servings, setServings] = useState(String(recipe.servings ?? 1));
   const [instructions, setInstructions] = useState(recipe.instructions ?? "");
+  const [imageUrl, setImageUrl] = useState<string | null>((recipe as any).image_url ?? null);
   const [ingredients, setIngredients] = useState<NewIngredientLine[]>(
     recipe.recipe_ingredients.map((ri) => ({
       item_id: ri.item_id,
@@ -68,6 +70,7 @@ const EditRecipeDialog = ({ recipe, open, onClose }: Props) => {
         servings: servings ? Number(servings) : null,
         instructions: instructions.trim() || null,
         ingredients: validIngredients,
+        image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
       onClose();
@@ -83,6 +86,12 @@ const EditRecipeDialog = ({ recipe, open, onClose }: Props) => {
           <DialogTitle className="font-display">Edit Recipe</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <ImageUpload
+            currentUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemoved={() => setImageUrl(null)}
+            folder="recipes"
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Name *</Label>
