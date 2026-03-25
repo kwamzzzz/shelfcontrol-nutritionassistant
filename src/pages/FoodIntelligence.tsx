@@ -127,15 +127,16 @@ const FoodIntelligence = () => {
                   className="group rounded-2xl bg-card shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 overflow-hidden min-h-[260px] flex flex-col focus-visible:ring-2 focus-visible:ring-ring outline-none"
                 >
                   {/* Image / gradient area */}
-                  <div className="relative h-48 w-full shrink-0 overflow-hidden">
+                  <div className="relative h-44 shrink-0 overflow-hidden">
                     {hasImage ? (
                       <>
                         <img
                           src={article.imageUrl}
                           alt={article.title}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                           onError={(e) => {
+                            // Fallback to gradient on broken image
                             const target = e.currentTarget;
                             target.style.display = "none";
                             const fallback = target.nextElementSibling as HTMLElement;
@@ -149,21 +150,21 @@ const FoodIntelligence = () => {
                         </div>
                       </>
                     ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
+                      <div className={`w-full h-full bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
                         <CatIcon className="h-14 w-14 text-white/30" strokeWidth={1.5} />
                       </div>
                     )}
 
                     {/* Overlay badges */}
-                    <span className={`absolute top-3 right-3 z-10 text-[10px] font-semibold px-2 py-0.5 rounded-full ${CATEGORY_BADGE_STYLE[article.category]}`}>
+                    <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${CATEGORY_BADGE_STYLE[article.category]}`}>
                       {config.label}
                     </span>
 
                     {/* Bottom gradient overlay for readability */}
-                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent z-[1]" />
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
 
                     {/* Source on image */}
-                    <span className="absolute bottom-2.5 left-3 z-10 text-[10px] font-medium text-white/90 drop-shadow-sm">
+                    <span className="absolute bottom-2 left-3 text-[10px] font-medium text-white/90">
                       {article.source}
                     </span>
                   </div>
