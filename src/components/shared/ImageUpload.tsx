@@ -1,7 +1,14 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, X, Loader2 } from "lucide-react";
+import { Camera, X, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Target aspect ratio: 4:3 (landscape) — common for product/food photos
+const TARGET_ASPECT = 4 / 3;
+const ASPECT_TOLERANCE = 0.3; // allow some variance
+const MIN_WIDTH = 400;
+const MIN_HEIGHT = 300;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface Props {
   currentUrl?: string | null;
@@ -12,6 +19,38 @@ interface Props {
   className?: string;
   size?: "sm" | "md";
 }
+
+const validateImage = (file: File): Promise<{ valid: boolean; error?: string }> => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith("image/")) {
+      return resolve({ valid: false, error: "File must be an image." });
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return resolve({ valid: false, error: "Image must be under 5 MB." });
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
+        return resolve({
+          valid: false,
+          error: `Minimum size is ${MIN_WIDTH}×${MIN_HEIGHT}px. Yours is ${img.width}×${img.height}px.`,
+        });
+      }
+      const aspect = img.width / img.height;
+      if (Math.abs(aspect - TARGET_ASPECT) > ASPECT_TOLERANCE) {
+        return resolve({
+          valid: false,
+          error: `Use a landscape photo close to 4:3 ratio. Yours is ${img.width}×${img.height}px (${aspect.toFixed(2)}:1).`,
+        });
+      }
+      resolve({ valid: true });
+    };
+    img.onerror = () => resolve({ valid: false, error: "Could not read image." });
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 const ImageUpload = ({
   currentUrl,
@@ -24,26 +63,31 @@ const ImageUpload = ({
 }: Props) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+    setError(null);
+    const validation = await validateImage(file);
+    if (!validation.valid) {
+      setError(validation.error ?? "Invalid image.");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
 
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
 
-      const { error } = await supabase.storage.from(bucket).upload(path, file, {
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
         cacheControl: "3600",
         upsert: false,
       });
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
@@ -52,6 +96,7 @@ const ImageUpload = ({
       onUploaded(publicUrl);
     } catch (err) {
       console.error("Upload failed:", err);
+      setError("Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -60,6 +105,7 @@ const ImageUpload = ({
 
   const handleRemove = () => {
     setPreview(null);
+    setError(null);
     onRemoved?.();
   };
 
@@ -104,7 +150,7 @@ const ImageUpload = ({
       ) : (
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => { setError(null); inputRef.current?.click(); }}
           disabled={uploading}
           className={cn(
             "rounded-xl border border-dashed border-border flex flex-col items-center justify-center gap-1.5 bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer",
@@ -117,9 +163,17 @@ const ImageUpload = ({
             <>
               <Camera className="h-5 w-5 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground">Add Photo</span>
+              <span className="text-[9px] text-muted-foreground/60">4:3 landscape · min 400×300</span>
             </>
           )}
         </button>
+      )}
+
+      {error && (
+        <div className="mt-1.5 flex items-start gap-1.5 text-destructive">
+          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span className="text-xs leading-tight">{error}</span>
+        </div>
       )}
     </div>
   );
