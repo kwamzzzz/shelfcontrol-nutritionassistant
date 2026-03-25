@@ -18,7 +18,7 @@ import GroupActivityFeed, { useGroupActivity } from "@/components/groups/GroupAc
 const StatCard = ({ icon: Icon, label, value, accent }: {
   icon: React.ElementType; label: string; value: string | number; accent?: string;
 }) => (
-  <div className="rounded-2xl bg-card p-5 shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] border border-border/40">
+  <div className="rounded-2xl bg-card p-5 shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)]">
     <div className="flex items-center gap-2 mb-2">
       <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-secondary ${accent ?? "text-primary"}`}>
         <Icon className="h-4 w-4" />
@@ -104,7 +104,7 @@ const GroupDetail = () => {
         </div>
 
         {/* Members */}
-        <Card className="lg:col-span-5 rounded-2xl shadow-sm border-border/40">
+        <Card className="lg:col-span-5 rounded-2xl shadow-sm border-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-display flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
@@ -120,7 +120,7 @@ const GroupDetail = () => {
               members.map((m) => {
                 const name = m.profile?.full_name || "Unknown User";
                 return (
-                  <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0">
+                  <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-border/20 last:border-0">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">

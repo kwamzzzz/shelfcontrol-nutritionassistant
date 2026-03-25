@@ -143,7 +143,7 @@ const GroupActivityFeed = ({ groupId, onNavigate }: GroupActivityFeedProps) => {
 
   if (entries.length === 0) {
     return (
-      <Card className="rounded-2xl shadow-sm border-border/40">
+      <Card className="rounded-2xl shadow-sm border-0">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-display flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
@@ -173,7 +173,7 @@ const GroupActivityFeed = ({ groupId, onNavigate }: GroupActivityFeedProps) => {
   }
 
   return (
-    <Card className="rounded-2xl shadow-sm border-border/40">
+    <Card className="rounded-2xl shadow-sm border-0">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-display flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary" />
@@ -182,7 +182,7 @@ const GroupActivityFeed = ({ groupId, onNavigate }: GroupActivityFeedProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-border/40">
+        <div className="divide-y divide-border/20">
           {entries.map((a) => {
             const cfg = TYPE_CONFIG[a.type] ?? TYPE_CONFIG.pantry;
             const Icon = cfg.icon;
