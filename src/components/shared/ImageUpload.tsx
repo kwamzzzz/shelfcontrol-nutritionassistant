@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
 interface Props {
   currentUrl?: string | null;
   onUploaded: (url: string) => void;
@@ -26,31 +24,26 @@ const ImageUpload = ({
 }: Props) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
-  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Client-side validation
     if (!file.type.startsWith("image/")) return;
-    if (file.size > MAX_FILE_SIZE) {
-      setError("Image must be under 5 MB.");
-      if (inputRef.current) inputRef.current.value = "";
-      return;
-    }
-    setError(null);
+    if (file.size > 5 * 1024 * 1024) return; // 5MB max
 
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
+      const { error } = await supabase.storage.from(bucket).upload(path, file, {
         cacheControl: "3600",
         upsert: false,
       });
-      if (uploadError) throw uploadError;
+      if (error) throw error;
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
@@ -59,7 +52,6 @@ const ImageUpload = ({
       onUploaded(publicUrl);
     } catch (err) {
       console.error("Upload failed:", err);
-      setError("Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -68,7 +60,6 @@ const ImageUpload = ({
 
   const handleRemove = () => {
     setPreview(null);
-    setError(null);
     onRemoved?.();
   };
 
@@ -113,7 +104,7 @@ const ImageUpload = ({
       ) : (
         <button
           type="button"
-          onClick={() => { setError(null); inputRef.current?.click(); }}
+          onClick={() => inputRef.current?.click()}
           disabled={uploading}
           className={cn(
             "rounded-xl border border-dashed border-border flex flex-col items-center justify-center gap-1.5 bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer",
@@ -126,16 +117,9 @@ const ImageUpload = ({
             <>
               <Camera className="h-5 w-5 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground">Add Photo</span>
-              <span className="text-[9px] text-muted-foreground/60">4:3 landscape · min 400×300</span>
             </>
           )}
         </button>
-      )}
-
-      {error && (
-        <div className="mt-1.5 text-destructive">
-          <span className="text-xs leading-tight">{error}</span>
-        </div>
       )}
     </div>
   );

@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { MapPin, Package, PackageOpen } from "lucide-react";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface Props {
   entry: InventoryRow;
@@ -33,38 +32,25 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className="group flex flex-col rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-md text-left overflow-hidden w-full cursor-pointer"
     >
-      {/* Image area — fixed 4:3 aspect ratio */}
-      <div className="relative w-full overflow-hidden bg-secondary">
-        <AspectRatio ratio={4 / 3}>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={entry.items.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center">
-              <Package className="h-10 w-10 text-muted-foreground/30" />
-            </div>
-          )}
-
-          {/* Gradient overlay for readability */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-        </AspectRatio>
-
+      {/* Image area */}
+      <div className="relative aspect-[4/3] w-full bg-secondary flex items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <img src={imageUrl} alt={entry.items.name} className="h-full w-full object-cover" />
+        ) : (
+          <Package className="h-10 w-10 text-muted-foreground/30" />
+        )}
         {/* Status badge overlay */}
         <span
           className={cn(
-            "absolute top-2.5 right-2.5 z-10 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+            "absolute top-2.5 right-2.5 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
             statusBadge[status]
           )}
         >
           {label}
         </span>
-
         {/* Opened indicator */}
         {isOpened && (
-          <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-1">
+          <span className="absolute top-2.5 left-2.5 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-1">
             <PackageOpen className="h-3 w-3" />
             Opened
           </span>
@@ -72,7 +58,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-3.5 pt-3">
+      <div className="flex flex-1 flex-col p-3.5">
         <p className="font-semibold text-[0.95rem] leading-tight text-foreground truncate font-[Outfit,var(--font-heading),sans-serif]">
           {entry.items.name}
         </p>
