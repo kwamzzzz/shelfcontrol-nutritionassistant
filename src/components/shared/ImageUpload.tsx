@@ -1,13 +1,8 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, X, Loader2, AlertCircle } from "lucide-react";
+import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Target aspect ratio: 4:3 (landscape) — common for product/food photos
-const TARGET_ASPECT = 4 / 3;
-const ASPECT_TOLERANCE = 0.3; // allow some variance
-const MIN_WIDTH = 400;
-const MIN_HEIGHT = 300;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface Props {
@@ -19,38 +14,6 @@ interface Props {
   className?: string;
   size?: "sm" | "md";
 }
-
-const validateImage = (file: File): Promise<{ valid: boolean; error?: string }> => {
-  return new Promise((resolve) => {
-    if (!file.type.startsWith("image/")) {
-      return resolve({ valid: false, error: "File must be an image." });
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return resolve({ valid: false, error: "Image must be under 5 MB." });
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(img.src);
-      if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
-        return resolve({
-          valid: false,
-          error: `Minimum size is ${MIN_WIDTH}×${MIN_HEIGHT}px. Yours is ${img.width}×${img.height}px.`,
-        });
-      }
-      const aspect = img.width / img.height;
-      if (Math.abs(aspect - TARGET_ASPECT) > ASPECT_TOLERANCE) {
-        return resolve({
-          valid: false,
-          error: `Use a landscape photo close to 4:3 ratio. Yours is ${img.width}×${img.height}px (${aspect.toFixed(2)}:1).`,
-        });
-      }
-      resolve({ valid: true });
-    };
-    img.onerror = () => resolve({ valid: false, error: "Could not read image." });
-    img.src = URL.createObjectURL(file);
-  });
-};
 
 const ImageUpload = ({
   currentUrl,
@@ -70,13 +33,13 @@ const ImageUpload = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setError(null);
-    const validation = await validateImage(file);
-    if (!validation.valid) {
-      setError(validation.error ?? "Invalid image.");
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setError("Image must be under 5 MB.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
+    setError(null);
 
     setUploading(true);
     try {
@@ -170,8 +133,7 @@ const ImageUpload = ({
       )}
 
       {error && (
-        <div className="mt-1.5 flex items-start gap-1.5 text-destructive">
-          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <div className="mt-1.5 text-destructive">
           <span className="text-xs leading-tight">{error}</span>
         </div>
       )}
