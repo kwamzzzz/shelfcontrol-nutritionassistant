@@ -38,6 +38,7 @@ export const useCreateRecipe = () => {
       servings: number | null;
       instructions: string | null;
       ingredients: NewIngredientLine[];
+      image_url?: string | null;
     }) => {
       const { data: recipe, error: rErr } = await supabase
         .from("recipes")
@@ -46,7 +47,8 @@ export const useCreateRecipe = () => {
           name: input.name,
           servings: input.servings,
           instructions: input.instructions,
-        })
+          image_url: input.image_url ?? null,
+        } as any)
         .select()
         .single();
       if (rErr) throw rErr;
@@ -79,6 +81,7 @@ export const useUpdateRecipe = () => {
       servings: number | null;
       instructions: string | null;
       ingredients: NewIngredientLine[];
+      image_url?: string | null;
     }) => {
       // Update recipe row
       const { error: rErr } = await supabase
@@ -87,7 +90,8 @@ export const useUpdateRecipe = () => {
           name: input.name,
           servings: input.servings,
           instructions: input.instructions,
-        })
+          image_url: input.image_url ?? null,
+        } as any)
         .eq("id", input.id);
       if (rErr) throw rErr;
 
