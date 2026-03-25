@@ -22,6 +22,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
   const status = getExpiryStatus(entry.expiry_date);
   const label = getExpiryLabel(entry.expiry_date);
   const isOpened = entry.sealed_status === "opened";
+  const imageUrl = (entry.items as any)?.image_url;
 
   return (
     <div
@@ -31,9 +32,13 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className="group flex flex-col rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-md text-left overflow-hidden w-full cursor-pointer"
     >
-      {/* Image placeholder */}
-      <div className="relative aspect-[4/3] w-full bg-secondary flex items-center justify-center">
-        <Package className="h-10 w-10 text-muted-foreground/30" />
+      {/* Image area */}
+      <div className="relative aspect-[4/3] w-full bg-secondary flex items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <img src={imageUrl} alt={entry.items.name} className="h-full w-full object-cover" />
+        ) : (
+          <Package className="h-10 w-10 text-muted-foreground/30" />
+        )}
         {/* Status badge overlay */}
         <span
           className={cn(

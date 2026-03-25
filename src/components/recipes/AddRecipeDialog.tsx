@@ -3,6 +3,7 @@ import { useCreateRecipe, type NewIngredientLine } from "@/hooks/useRecipes";
 import { useItems } from "@/hooks/usePantry";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ const AddRecipeDialog = () => {
   const [name, setName] = useState("");
   const [servings, setServings] = useState("1");
   const [instructions, setInstructions] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<NewIngredientLine[]>([emptyIngredient()]);
   const [openCombobox, setOpenCombobox] = useState<number | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState<number | null>(null);
@@ -42,6 +44,7 @@ const AddRecipeDialog = () => {
     setName("");
     setServings("1");
     setInstructions("");
+    setImageUrl(null);
     setIngredients([emptyIngredient()]);
   };
 
@@ -72,6 +75,7 @@ const AddRecipeDialog = () => {
         servings: servings ? Number(servings) : null,
         instructions: instructions.trim() || null,
         ingredients: validIngredients,
+        image_url: imageUrl,
       });
       toast({ title: "Recipe created", description: `${name} saved.` });
       reset();
@@ -94,6 +98,12 @@ const AddRecipeDialog = () => {
           <DialogTitle className="font-display">New Recipe</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <ImageUpload
+            currentUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemoved={() => setImageUrl(null)}
+            folder="recipes"
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Name *</Label>
