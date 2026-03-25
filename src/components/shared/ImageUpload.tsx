@@ -133,8 +133,7 @@ const ImageUpload = ({
       )}
 
       {error && (
-        <div className="mt-1.5 flex items-start gap-1.5 text-destructive">
-          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <div className="mt-1.5 text-destructive">
           <span className="text-xs leading-tight">{error}</span>
         </div>
       )}
