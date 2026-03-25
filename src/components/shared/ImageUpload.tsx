@@ -33,13 +33,13 @@ const ImageUpload = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setError(null);
-    const validation = await validateImage(file);
-    if (!validation.valid) {
-      setError(validation.error ?? "Invalid image.");
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setError("Image must be under 5 MB.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
+    setError(null);
 
     setUploading(true);
     try {
