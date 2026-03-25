@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type InventoryRow, useUpdateInventory, useDeleteInventory, useUpdateItem } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
+import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
