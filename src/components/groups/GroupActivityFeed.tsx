@@ -182,7 +182,7 @@ const GroupActivityFeed = ({ groupId, onNavigate }: GroupActivityFeedProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-border/20">
+        <div className="space-y-0">
           {entries.map((a) => {
             const cfg = TYPE_CONFIG[a.type] ?? TYPE_CONFIG.pantry;
             const Icon = cfg.icon;
