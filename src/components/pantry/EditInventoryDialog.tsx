@@ -34,6 +34,7 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
   const [protein, setProtein] = useState(String(entry.items.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(entry.items.carbs_g ?? 0));
   const [fat, setFat] = useState(String(entry.items.fat_g ?? 0));
+  const [imageUrl, setImageUrl] = useState<string | null>((entry.items as any).image_url ?? null);
 
   const updateInventory = useUpdateInventory();
   const updateItem = useUpdateItem();
