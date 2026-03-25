@@ -31,8 +31,8 @@
     --destructive: 280 100% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 100% / 0.06;
-    --input: 0 0% 100% / 0.06;
+    --border: 0 0% 100% / 0.03;
+    --input: 0 0% 100% / 0.04;
     --ring: 248 100% 56%;
 
     --radius: 0.75rem;
@@ -41,9 +41,9 @@
     --sidebar-foreground: 248 30% 75%;
     --sidebar-primary: 248 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100% / 0.05;
+    --sidebar-accent: 0 0% 100% / 0.04;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100% / 0.06;
+    --sidebar-border: 0 0% 100% / 0.03;
     --sidebar-ring: 248 100% 56%;
 
     --warning: 22 100% 55%;
@@ -78,16 +78,16 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 280 100% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.06;
-    --input: 0 0% 100% / 0.06;
+    --border: 0 0% 100% / 0.03;
+    --input: 0 0% 100% / 0.04;
     --ring: 248 100% 56%;
     --sidebar-background: 252 45% 9%;
     --sidebar-foreground: 248 30% 75%;
     --sidebar-primary: 248 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100% / 0.05;
+    --sidebar-accent: 0 0% 100% / 0.04;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100% / 0.06;
+    --sidebar-border: 0 0% 100% / 0.03;
     --sidebar-ring: 248 100% 56%;
     --warning: 22 100% 55%;
     --warning-foreground: 0 0% 100%;
@@ -113,7 +113,7 @@
 /* Lumina utility classes */
 @layer utilities {
   .glass-card {
-    @apply bg-[hsla(248,100%,56%,0.08)] backdrop-blur-xl border border-white/[0.06] rounded-3xl;
+    @apply bg-[hsla(248,100%,56%,0.08)] backdrop-blur-xl border border-white/[0.03] rounded-3xl;
   }
 
   .glass-card-hover {
