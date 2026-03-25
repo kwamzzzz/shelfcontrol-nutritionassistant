@@ -120,7 +120,7 @@ const GroupDetail = () => {
               members.map((m) => {
                 const name = m.profile?.full_name || "Unknown User";
                 return (
-                  <div key={m.id} className="flex items-center justify-between py-2.5 border-b border-border/20 last:border-0">
+                  <div key={m.id} className="flex items-center justify-between py-2.5">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">

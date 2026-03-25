@@ -58,7 +58,7 @@ const PendingInvites = ({ groupId }: Props) => {
         {invites.map((inv) => (
           <div
             key={inv.id}
-            className="flex items-center justify-between py-2.5 border-b border-border/20 last:border-0 gap-3"
+            className="flex items-center justify-between py-2.5 last:border-0 gap-3"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground truncate">{inv.email}</p>
