@@ -2,19 +2,22 @@ import { Outlet, useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import GroupSwitcher from "./GroupSwitcher";
 import { useMyInvites } from "@/hooks/useMyInvites";
-import { Button } from "@/components/ui/button";
 import { Mail, Bell, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 const AppLayout = () => {
   const navigate = useNavigate();
   const { pendingCount } = useMyInvites();
+  const { collapsed } = useSidebar();
 
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
-      <div className="flex-1 ml-0 sm:ml-[260px] flex flex-col">
+      <div className="flex-1 ml-0 flex flex-col transition-[margin] duration-200 sm:ml-[var(--sidebar-w)]"
+        style={{ "--sidebar-w": collapsed ? "68px" : "260px" } as React.CSSProperties}
+      >
+
         {/* Topbar */}
         <header className="hidden sm:flex h-20 items-center justify-between border-b border-white/[0.03] bg-transparent backdrop-blur-md px-8 sticky top-0 z-30">
           <div>

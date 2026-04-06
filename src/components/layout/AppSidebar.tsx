@@ -1,14 +1,15 @@
-import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
   BarChart3, LogOut, Menu, X, Users, Trophy, UserCircle, Settings,
-  Apple, Mail, Lightbulb, Newspaper,
+  Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMyInvites } from "@/hooks/useMyInvites";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 const navSections = [
   {
@@ -50,13 +51,17 @@ const navSections = [
 
 const AppSidebar = () => {
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { pendingCount } = useMyInvites();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  // On mobile (mobileOpen overlay), always render expanded regardless of collapsed state.
+  // collapsed only affects the persistent desktop sidebar (sm+).
+  const isCompact = collapsed && !mobileOpen;
 
   return (
     <>
@@ -78,68 +83,123 @@ const AppSidebar = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[260px] flex-col border-r border-white/[0.03] transition-transform duration-200",
+          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/[0.03] transition-all duration-200",
           "bg-[hsl(252,45%,9%)]",
+          // Mobile always 260px; desktop respects collapsed state
+          isCompact ? "w-[260px] sm:w-[68px]" : "w-[260px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center gap-2.5 px-6">
-          {/* Warm gradient logo icon */}
-          <div className="h-7 w-7 rounded-lg gradient-warm flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+        {/* Header: Logo + collapse toggle */}
+        <div className={cn(
+          "flex h-16 items-center",
+          isCompact ? "justify-center px-2" : "justify-between px-6"
+        )}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-7 w-7 shrink-0 rounded-lg gradient-warm flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            {!isCompact && (
+              <span className="text-xl font-bold tracking-tight text-white truncate">
+                Shelf Control
+              </span>
+            )}
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">
-            Shelf Control
-          </span>
+          {/* Desktop collapse toggle */}
+          <button
+            onClick={toggleCollapsed}
+            className={cn(
+              "hidden sm:flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors",
+              isCompact && "ml-0"
+            )}
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        <nav className={cn("flex-1 overflow-y-auto py-4 space-y-5", isCompact ? "px-1.5" : "px-3")}>
           {navSections.map((section) => (
             <div key={section.label}>
-              <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30">
-                {section.label}
-              </p>
+              {!isCompact && (
+                <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30">
+                  {section.label}
+                </p>
+              )}
               <div className="space-y-0.5">
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === "/"}
-                    onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-all duration-200",
-                        isActive
-                          ? "bg-primary text-white shadow-[0_4px_20px_hsla(248,100%,56%,0.4)]"
-                          : "text-[hsl(248,30%,75%)] hover:bg-white/[0.05] hover:text-white"
-                      )
-                    }
-                  >
-                    <item.icon className="h-[18px] w-[18px]" />
-                    <span className="flex-1">{item.label}</span>
-                    {item.hasBadge && pendingCount > 0 && (
-                      <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
-                        {pendingCount}
-                      </Badge>
-                    )}
-                  </NavLink>
-                ))}
+                {section.items.map((item) => {
+                  const link = (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === "/"}
+                      onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center rounded-full text-sm font-medium transition-all duration-200",
+                          isCompact ? "justify-center px-0 py-2.5 mx-auto w-11 h-11" : "gap-3 px-4 py-2.5",
+                          isActive
+                            ? "bg-primary text-white shadow-[0_4px_20px_hsla(248,100%,56%,0.4)]"
+                            : "text-[hsl(248,30%,75%)] hover:bg-white/[0.05] hover:text-white"
+                        )
+                      }
+                    >
+                      <item.icon className="h-[18px] w-[18px] shrink-0" />
+                      {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
+                      {!isCompact && item.hasBadge && pendingCount > 0 && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
+                          {pendingCount}
+                        </Badge>
+                      )}
+                    </NavLink>
+                  );
+
+                  if (isCompact) {
+                    return (
+                      <Tooltip key={item.to} delayDuration={0}>
+                        <TooltipTrigger asChild>{link}</TooltipTrigger>
+                        <TooltipContent side="right" className="flex items-center gap-2">
+                          {item.label}
+                          {item.hasBadge && pendingCount > 0 && (
+                            <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
+                              {pendingCount}
+                            </Badge>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  return link;
+                })}
               </div>
             </div>
           ))}
         </nav>
 
-        <div className="border-t border-white/[0.03] p-3">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
-          >
-            <LogOut className="h-[18px] w-[18px]" />
-            Sign Out
-          </button>
+        <div className={cn("border-t border-white/[0.03]", isCompact ? "p-1.5" : "p-3")}>
+          {isCompact ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  className="flex w-11 h-11 mx-auto items-center justify-center rounded-full text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
+                >
+                  <LogOut className="h-[18px] w-[18px]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign Out</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
+            >
+              <LogOut className="h-[18px] w-[18px]" />
+              Sign Out
+            </button>
+          )}
         </div>
       </aside>
     </>

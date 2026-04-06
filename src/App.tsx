@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { GroupProvider } from "@/contexts/GroupContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Pantry from "@/pages/Pantry";
@@ -45,7 +46,9 @@ const ProtectedRoutes = () => {
 
   return (
     <GroupProvider>
-      <AppLayout />
+      <SidebarProvider>
+        <AppLayout />
+      </SidebarProvider>
     </GroupProvider>
   );
 };
