@@ -119,7 +119,7 @@ const AppSidebar = () => {
           </button>
         </div>
 
-        <nav className={cn("flex-1 overflow-y-auto py-4 space-y-5", isCompact ? "px-1.5" : "px-3")}>
+        <nav className={cn("flex-1 overflow-y-auto py-4 space-y-5", isCompact ? "px-0" : "px-3")}>
           {navSections.map((section) => (
             <div key={section.label}>
               {!isCompact && (
@@ -127,7 +127,7 @@ const AppSidebar = () => {
                   {section.label}
                 </p>
               )}
-              <div className="space-y-0.5">
+              <div className={cn("space-y-0.5", isCompact && "flex flex-col items-center")}>
                 {section.items.map((item) => {
                   const link = (
                     <NavLink
