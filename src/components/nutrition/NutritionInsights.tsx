@@ -3,8 +3,10 @@ import { useNutritionData } from "@/hooks/useNutrition";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, TrendingUp, AlertTriangle, Lightbulb, Utensils, ShoppingCart, Shield } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Brain, TrendingUp, AlertTriangle, Lightbulb, Utensils, ShoppingCart, Shield, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import HardTruths from "@/components/nutrition/HardTruths";
 
 interface Insight {
   title: string;
@@ -148,47 +150,64 @@ const NutritionInsights = () => {
   }, [allLogs, weeklyTotals, weeklyConsistency, goals]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <Brain className="h-5 w-5 text-primary" />
-        <p className="text-sm text-muted-foreground">Pattern analysis based on your nutrition data</p>
-      </div>
+    <Tabs defaultValue="patterns" className="space-y-5">
+      <TabsList className="bg-muted/50 rounded-xl p-1 h-auto">
+        <TabsTrigger value="patterns" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm">
+          <Brain className="h-3.5 w-3.5" />
+          Patterns
+        </TabsTrigger>
+        <TabsTrigger value="hard-truths" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm text-muted-foreground data-[state=active]:text-foreground">
+          <Flame className="h-3.5 w-3.5" />
+          Hard Truths
+        </TabsTrigger>
+      </TabsList>
 
-      {insights.length === 0 ? (
-        <Card className="rounded-2xl border-none shadow-sm">
-          <CardContent className="p-8 text-center">
-            <Brain className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Not enough data for insights. Keep logging!</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {insights.map((insight, i) => {
-            const Icon = insight.icon;
-            const style = SEVERITY_STYLES[insight.severity];
-            return (
-              <Card key={i} className={cn("rounded-2xl border-none shadow-sm border-l-4", style.border)}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", style.icon)}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Badge variant="secondary" className="text-[9px] rounded-full">{insight.category}</Badge>
-                        <Badge className={cn("text-[9px] rounded-full border-none", style.badge)}>{insight.severity}</Badge>
-                      </div>
-                      <p className="font-semibold text-sm text-foreground">{insight.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+      <TabsContent value="patterns" className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <p className="text-sm text-muted-foreground">Pattern analysis based on your nutrition data</p>
         </div>
-      )}
-    </div>
+
+        {insights.length === 0 ? (
+          <Card className="rounded-2xl border-none shadow-sm">
+            <CardContent className="p-8 text-center">
+              <Brain className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground">Not enough data for insights. Keep logging!</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {insights.map((insight, i) => {
+              const Icon = insight.icon;
+              const style = SEVERITY_STYLES[insight.severity];
+              return (
+                <Card key={i} className={cn("rounded-2xl border-none shadow-sm border-l-4", style.border)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", style.icon)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <Badge variant="secondary" className="text-[9px] rounded-full">{insight.category}</Badge>
+                          <Badge className={cn("text-[9px] rounded-full border-none", style.badge)}>{insight.severity}</Badge>
+                        </div>
+                        <p className="font-semibold text-sm text-foreground">{insight.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{insight.description}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="hard-truths">
+        <HardTruths />
+      </TabsContent>
+    </Tabs>
   );
 };
 

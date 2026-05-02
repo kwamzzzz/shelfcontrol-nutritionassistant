@@ -3,6 +3,7 @@ import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
 import AddRecipeDialog from "@/components/recipes/AddRecipeDialog";
 import EditRecipeDialog from "@/components/recipes/EditRecipeDialog";
 import RecipeCard from "@/components/recipes/RecipeCard";
+import RecipeImportDialog from "@/components/recipes/RecipeImportDialog";
 import { BookOpen } from "lucide-react";
 
 const Recipes = () => {
@@ -18,7 +19,10 @@ const Recipes = () => {
             {recipes?.length ?? 0} recipe{(recipes?.length ?? 0) !== 1 ? "s" : ""} saved
           </p>
         </div>
-        <AddRecipeDialog />
+        <div className="flex flex-wrap gap-2">
+          <RecipeImportDialog />
+          <AddRecipeDialog />
+        </div>
       </div>
 
       <div className="mt-6 space-y-2">

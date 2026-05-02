@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useConsumptionLogs, useDeleteConsumptionLog, type ConsumptionLog } from "@/hooks/useConsumption";
 import AddConsumptionDialog from "@/components/consumption/AddConsumptionDialog";
+import PlatePhotoCapture from "@/components/consumption/PlatePhotoCapture";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -150,7 +151,10 @@ const Consumption = () => {
             {logs?.length ?? 0} log{(logs?.length ?? 0) !== 1 ? "s" : ""} recorded
           </p>
         </div>
-        <AddConsumptionDialog />
+        <div className="flex flex-wrap gap-2">
+          <PlatePhotoCapture triggerVariant="outline" triggerLabel="Snap a plate" />
+          <AddConsumptionDialog />
+        </div>
       </div>
 
       {/* Today's nutrition summary */}
