@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Apple, BookOpen, GlassWater, Target, Brain } from "lucide-react";
+import { Apple, BookOpen, GlassWater, Target, Brain, HeartPulse, Wallet } from "lucide-react";
 import NutritionDashboard from "@/components/nutrition/NutritionDashboard";
 import FoodDiary from "@/components/nutrition/FoodDiary";
 import WaterTracker from "@/components/nutrition/WaterTracker";
 import GoalsProgress from "@/components/nutrition/GoalsProgress";
 import NutritionInsights from "@/components/nutrition/NutritionInsights";
+import SymptomLog from "@/components/nutrition/SymptomLog";
+import CalorieBudget from "@/components/nutrition/CalorieBudget";
 
 const Nutrition = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -38,6 +40,14 @@ const Nutrition = () => {
             <Target className="h-3.5 w-3.5" />
             Goals
           </TabsTrigger>
+          <TabsTrigger value="budget" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm">
+            <Wallet className="h-3.5 w-3.5" />
+            Budget
+          </TabsTrigger>
+          <TabsTrigger value="symptoms" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm">
+            <HeartPulse className="h-3.5 w-3.5" />
+            Symptoms
+          </TabsTrigger>
           <TabsTrigger value="insights" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm">
             <Brain className="h-3.5 w-3.5" />
             Insights
@@ -55,6 +65,12 @@ const Nutrition = () => {
         </TabsContent>
         <TabsContent value="goals">
           <GoalsProgress />
+        </TabsContent>
+        <TabsContent value="budget">
+          <CalorieBudget />
+        </TabsContent>
+        <TabsContent value="symptoms">
+          <SymptomLog />
         </TabsContent>
         <TabsContent value="insights">
           <NutritionInsights />

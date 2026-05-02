@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
   BarChart3, LogOut, Menu, X, Users, Trophy, UserCircle, Settings,
-  Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen,
+  Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ const navSections = [
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
       { to: "/nutrition", label: "Nutrition", icon: Apple },
+      { to: "/coach", label: "Shelf Coach", icon: Sparkles },
     ],
   },
   {

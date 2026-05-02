@@ -7,7 +7,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ChevronDown, ChevronRight, Trash2, Pencil, UtensilsCrossed } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2, Pencil, UtensilsCrossed, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -15,8 +15,17 @@ interface Props {
   onEdit: () => void;
 }
 
+const formatQty = (n: number) => {
+  if (!Number.isFinite(n)) return "—";
+  const rounded = Math.round(n * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, "");
+};
+
 const RecipeCard = ({ recipe, onEdit }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
+  const baseServings = recipe.servings ?? null;
+  const [displayServings, setDisplayServings] = useState<number>(baseServings ?? 1);
+  const scale = baseServings && baseServings > 0 ? displayServings / baseServings : 1;
   const deleteRecipe = useDeleteRecipe();
   const cookRecipe = useCookRecipe();
   const { toast } = useToast();
@@ -83,6 +92,49 @@ const RecipeCard = ({ recipe, onEdit }: Props) => {
               </div>
             )}
 
+            {/* Serving scaler — only meaningful when the recipe has a base servings count */}
+            {baseServings && baseServings > 0 && ingCount > 0 && (
+              <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                <div className="text-xs text-muted-foreground">
+                  Scale to <span className="font-medium text-foreground">{displayServings}</span> serving{displayServings !== 1 ? "s" : ""}
+                  {scale !== 1 && (
+                    <span className="ml-1.5 text-[10px] text-muted-foreground">×{scale.toFixed(2).replace(/\.?0+$/, "")}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setDisplayServings((s) => Math.max(1, s - 1))}
+                    disabled={displayServings <= 1}
+                    aria-label="Decrease servings"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setDisplayServings((s) => s + 1)}
+                    aria-label="Increase servings"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                  {scale !== 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 h-7 px-2 text-xs text-muted-foreground"
+                      onClick={() => setDisplayServings(baseServings)}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Ingredients table */}
             {ingCount > 0 ? (
               <table className="w-full text-sm">
@@ -97,7 +149,7 @@ const RecipeCard = ({ recipe, onEdit }: Props) => {
                   {recipe.recipe_ingredients.map((ri) => (
                     <tr key={ri.id} className="border-t border-border/50">
                       <td className="py-1.5 text-foreground">{ri.items?.name ?? "Unknown"}</td>
-                      <td className="py-1.5 text-right text-muted-foreground tabular-nums">{ri.quantity}</td>
+                      <td className="py-1.5 text-right text-muted-foreground tabular-nums">{formatQty(Number(ri.quantity) * scale)}</td>
                       <td className="py-1.5 text-right text-muted-foreground">{ri.unit}</td>
                     </tr>
                   ))}

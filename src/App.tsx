@@ -26,6 +26,7 @@ import Invitations from "@/pages/Invitations";
 import Intelligence from "@/pages/Intelligence";
 import Nutrition from "@/pages/Nutrition";
 import FoodIntelligence from "@/pages/FoodIntelligence";
+import Coach from "@/pages/Coach";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/intelligence" element={<Intelligence />} />
             <Route path="/food-intelligence" element={<FoodIntelligence />} />
             <Route path="/nutrition" element={<Nutrition />} />
+            <Route path="/coach" element={<Coach />} />
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/:id" element={<GroupDetail />} />
             <Route path="/invitations" element={<Invitations />} />
