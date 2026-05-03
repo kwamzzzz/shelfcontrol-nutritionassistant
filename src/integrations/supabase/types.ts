@@ -479,21 +479,18 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          cuisine_preferences: string[]
           full_name: string | null
           household_name: string | null
           id: string
         }
         Insert: {
           created_at?: string
-          cuisine_preferences?: string[]
           full_name?: string | null
           household_name?: string | null
           id: string
         }
         Update: {
           created_at?: string
-          cuisine_preferences?: string[]
           full_name?: string | null
           household_name?: string | null
           id?: string
@@ -724,50 +721,6 @@ export type Database = {
           },
         ]
       }
-      symptoms: {
-        Row: {
-          consumption_id: string | null
-          created_at: string
-          digestion: number | null
-          energy: number | null
-          id: string
-          mood: number | null
-          notes: string | null
-          recorded_at: string
-          user_id: string
-        }
-        Insert: {
-          consumption_id?: string | null
-          created_at?: string
-          digestion?: number | null
-          energy?: number | null
-          id?: string
-          mood?: number | null
-          notes?: string | null
-          recorded_at?: string
-          user_id: string
-        }
-        Update: {
-          consumption_id?: string | null
-          created_at?: string
-          digestion?: number | null
-          energy?: number | null
-          id?: string
-          mood?: number | null
-          notes?: string | null
-          recorded_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "symptoms_consumption_id_fkey"
-            columns: ["consumption_id"]
-            isOneToOne: false
-            referencedRelation: "consumption_logs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       waste_logs: {
         Row: {
           discarded_at: string
@@ -870,33 +823,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      weigh_ins: {
-        Row: {
-          created_at: string
-          id: string
-          note: string | null
-          recorded_at: string
-          user_id: string
-          weight_kg: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          note?: string | null
-          recorded_at?: string
-          user_id: string
-          weight_kg: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          note?: string | null
-          recorded_at?: string
-          user_id?: string
-          weight_kg?: number
-        }
-        Relationships: []
       }
     }
     Views: {
