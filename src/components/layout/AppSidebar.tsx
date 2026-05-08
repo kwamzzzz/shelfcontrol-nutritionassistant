@@ -20,7 +20,7 @@ const navSections = [
       { to: "/purchases", label: "Purchases", icon: Receipt },
       { to: "/consumption", label: "Consumption", icon: Heart },
       { to: "/shopping", label: "Shopping List", icon: ShoppingCart },
-      { to: "/recipes", label: "Recipes", icon: UtensilsCrossed },
+      { to: "/recipes", label: "My Cook Book", icon: UtensilsCrossed },
     ],
   },
   {
