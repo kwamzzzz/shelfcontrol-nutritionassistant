@@ -36,15 +36,15 @@ const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
             </div>
             <div className="min-w-0">
               {purchase.store_name ? (
-                <p className="font-[Outfit] text-sm font-semibold text-foreground truncate">
+                <p className="font-[Outfit] text-[15px] font-semibold text-foreground truncate">
                   {purchase.store_name}
                 </p>
               ) : (
-                <p className="font-[Outfit] text-sm font-medium text-muted-foreground italic">
+                <p className="font-[Outfit] text-[15px] font-medium text-muted-foreground italic">
                   No store
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
                 {format(parseISO(purchase.purchased_at), "MMM d, yyyy")}
               </p>
             </div>
@@ -60,9 +60,9 @@ const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
 
       {/* Preview items */}
       {previewItems.length > 0 && (
-        <div className="mt-3 space-y-0.5">
+        <div className="mt-3 space-y-1">
           {previewItems.map((pi) => (
-            <p key={pi.id} className="text-xs text-muted-foreground truncate pl-10">
+            <p key={pi.id} className="text-[13px] leading-relaxed text-muted-foreground truncate pl-10">
               {pi.items?.name ?? "Unknown"}
               {pi.unit_price != null && (
                 <span className="ml-1 tabular-nums">· {formatCurrency(Number(pi.unit_price))}</span>
@@ -70,7 +70,7 @@ const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
             </p>
           ))}
           {itemCount > 3 && (
-            <p className="text-xs text-muted-foreground/60 pl-10">
+            <p className="text-[13px] text-muted-foreground/70 pl-10">
               + {itemCount - 3} more item{itemCount - 3 !== 1 ? "s" : ""}
             </p>
           )}
@@ -79,12 +79,12 @@ const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
 
       {/* Footer */}
       <div className="mt-3 flex items-center gap-2 pl-10 flex-wrap">
-        <Badge variant="secondary" className="text-[10px] font-normal px-2 py-0 h-5">
-          <ShoppingBag className="mr-1 h-2.5 w-2.5" />
+        <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5 h-auto">
+          <ShoppingBag className="mr-1 h-3 w-3" />
           {itemCount} item{itemCount !== 1 ? "s" : ""}
         </Badge>
         {loggedBy && (
-          <span className="text-[10px] text-muted-foreground">Logged by {loggedBy}</span>
+          <span className="text-xs text-muted-foreground">Logged by {loggedBy}</span>
         )}
       </div>
     </button>
