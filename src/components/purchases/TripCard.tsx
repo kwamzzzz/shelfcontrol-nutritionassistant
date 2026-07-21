@@ -23,8 +23,8 @@ const TripCard = ({ purchase, isActive, onClick, loggedBy }: Props) => {
       className={cn(
         "w-full text-left rounded-2xl border bg-card p-4 transition-all duration-200",
         isActive
-          ? "border-border bg-secondary shadow-[0_20px_44px_-22px_hsl(var(--foreground)/0.32)] -translate-y-[2px]"
-          : "border-border shadow-[0_1px_8px_-2px_hsl(var(--foreground)/0.04)] hover:border-border hover:-translate-y-px hover:shadow-[0_8px_22px_-10px_hsl(var(--foreground)/0.12)]"
+          ? "border-border bg-secondary shadow-[0_14px_30px_-20px_rgba(0,0,0,0.28)] -translate-y-[2px]"
+          : "border-border shadow-[0_1px_6px_-2px_rgba(0,0,0,0.10)] hover:border-border hover:-translate-y-px hover:shadow-[0_8px_20px_-12px_rgba(0,0,0,0.16)]"
       )}
     >
       {/* Header */}
