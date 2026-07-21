@@ -49,8 +49,8 @@ const Auth = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsla(248,100%,56%,0.12)] blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[hsla(280,100%,50%,0.08)] blur-[100px]" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsla(142,72%,40%,0.12)] blur-[120px]" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[hsla(142,70%,45%,0.08)] blur-[100px]" />
 
       <div className="w-full max-w-sm space-y-8 relative z-10">
         <div className="flex flex-col items-center gap-3">
@@ -105,7 +105,7 @@ const Auth = () => {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-[#8E84FF] hover:underline"
+            className="font-medium text-[#34D399] hover:underline"
           >
             {isLogin ? "Sign up" : "Sign in"}
           </button>

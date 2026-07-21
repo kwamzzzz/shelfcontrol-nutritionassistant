@@ -19,7 +19,7 @@ const CATEGORY_BADGE_STYLE: Record<FoodNewsCategory, string> = {
   nutrition: "bg-emerald-500/90 text-white",
   health: "bg-rose-500/90 text-white",
   trends: "bg-blue-500/90 text-white",
-  science: "bg-purple-500/90 text-white",
+  science: "bg-emerald-500/90 text-white",
 };
 
 type FilterCategory = FoodNewsCategory | "all";

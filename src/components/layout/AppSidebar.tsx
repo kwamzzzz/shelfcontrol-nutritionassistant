@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { ModeToggle } from "@/components/ModeToggle";
 
 const navSections = [
   {
@@ -67,11 +68,11 @@ const AppSidebar = () => {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-white/[0.03] bg-[hsl(252,45%,9%)] px-4 sm:hidden">
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white/70">
+      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-sidebar-border bg-sidebar px-4 sm:hidden">
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-sidebar-foreground hover:text-foreground" aria-label={mobileOpen ? "Close menu" : "Open menu"}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-        <span className="text-lg font-semibold tracking-tight text-white">
+        <span className="text-lg font-semibold tracking-tight text-foreground">
           Shelf Control
         </span>
       </div>
@@ -84,8 +85,8 @@ const AppSidebar = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/[0.03] transition-all duration-200",
-          "bg-[hsl(252,45%,9%)]",
+          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border transition-all duration-200",
+          "bg-sidebar",
           // Mobile always 260px; desktop respects collapsed state
           isCompact ? "w-[260px] sm:w-[68px]" : "w-[260px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"
@@ -103,7 +104,7 @@ const AppSidebar = () => {
               </svg>
             </div>
             {!isCompact && (
-              <span className="text-xl font-bold tracking-tight text-white truncate">
+              <span className="text-xl font-bold tracking-tight text-foreground truncate">
                 Shelf Control
               </span>
             )}
@@ -112,9 +113,10 @@ const AppSidebar = () => {
           <button
             onClick={toggleCollapsed}
             className={cn(
-              "hidden sm:flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors",
+              "hidden sm:flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors",
               isCompact && "ml-0"
             )}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
@@ -124,7 +126,7 @@ const AppSidebar = () => {
           {navSections.map((section) => (
             <div key={section.label}>
               {!isCompact && (
-                <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-white/30">
+                <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
                   {section.label}
                 </p>
               )}
@@ -141,8 +143,8 @@ const AppSidebar = () => {
                           "flex items-center rounded-full text-sm font-medium transition-all duration-200",
                           isCompact ? "justify-center px-0 py-2.5 mx-auto w-11 h-11" : "gap-3 px-4 py-2.5",
                           isActive
-                            ? "bg-primary text-white shadow-[0_4px_20px_hsla(248,100%,56%,0.4)]"
-                            : "text-[hsl(248,30%,75%)] hover:bg-white/[0.05] hover:text-white"
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         )
                       }
                     >
@@ -179,13 +181,25 @@ const AppSidebar = () => {
           ))}
         </nav>
 
-        <div className={cn("border-t border-white/[0.03]", isCompact ? "p-1.5" : "p-3")}>
+        <div className={cn("border-t border-sidebar-border space-y-1", isCompact ? "p-1.5" : "p-3")}>
+          <div className={cn("flex", isCompact ? "justify-center" : "justify-start")}>
+            {isCompact ? (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <ModeToggle className="w-11 h-11 rounded-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="right">Toggle theme</TooltipContent>
+              </Tooltip>
+            ) : (
+              <ModeToggle className="rounded-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
+            )}
+          </div>
           {isCompact ? (
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button
                   onClick={handleLogout}
-                  className="flex w-11 h-11 mx-auto items-center justify-center rounded-full text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
+                  className="flex w-11 h-11 mx-auto items-center justify-center rounded-full text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-destructive"
                 >
                   <LogOut className="h-[18px] w-[18px]" />
                 </button>
@@ -195,7 +209,7 @@ const AppSidebar = () => {
           ) : (
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-[hsl(248,30%,75%)] transition-all duration-200 hover:bg-white/[0.05] hover:text-[#FF5A25]"
+              className="flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-destructive"
             >
               <LogOut className="h-[18px] w-[18px]" />
               Sign Out

@@ -23,13 +23,13 @@ const GroupSwitcher = () => {
           {isPersonalMode ? (
             <User className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <Users className="h-4 w-4 text-[#8E84FF]" />
+            <Users className="h-4 w-4 text-[#34D399]" />
           )}
           <span className="max-w-[120px] truncate">{label}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 glass-card border-white/[0.06] bg-[hsl(252,50%,12%)]">
+      <DropdownMenuContent align="end" className="w-48 glass-card border-white/[0.06] bg-card">
         <DropdownMenuItem
           onClick={() => setActiveGroupId(null)}
           className={isPersonalMode ? "bg-white/[0.08]" : ""}

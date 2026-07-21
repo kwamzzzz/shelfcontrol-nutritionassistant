@@ -20,8 +20,8 @@ export interface FoodNewsItem {
 const CATEGORY_GRADIENTS: Record<FoodNewsCategory, string> = {
   nutrition: "from-emerald-500 to-teal-400",
   health: "from-rose-500 to-pink-400",
-  trends: "from-blue-500 to-indigo-400",
-  science: "from-purple-500 to-violet-400",
+  trends: "from-blue-500 to-emerald-400",
+  science: "from-emerald-500 to-green-400",
 };
 
 export const FOOD_NEWS_CATEGORY_CONFIG: Record<FoodNewsCategory, { label: string; gradient: string }> = {

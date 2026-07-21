@@ -89,7 +89,7 @@ const Dashboard = () => {
       .slice(0, 4);
   }, [inventory]);
 
-  const compositionColors = ["#FFE53B", "#FF5A25", "#C500FF", "#3B28FF"];
+  const compositionColors = ["#FFE53B", "#FF5A25", "#10B981", "#059669"];
 
   /* SVG ring calc */
   const ringRadius = 90;
@@ -111,7 +111,7 @@ const Dashboard = () => {
                 <linearGradient id="ring-warm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#FFE53B" />
                   <stop offset="50%" stopColor="#FF5A25" />
-                  <stop offset="100%" stopColor="#C500FF" />
+                  <stop offset="100%" stopColor="#10B981" />
                 </linearGradient>
               </defs>
             </svg>
@@ -128,14 +128,14 @@ const Dashboard = () => {
               <span className="label-small">This Week</span>
             </div>
           </div>
-          <div className="w-full flex justify-between pt-3 sm:pt-4 separator-dotted" style={{ borderTopStyle: 'dotted', borderTopWidth: 1, borderTopColor: 'hsla(248, 40%, 60%, 0.3)' }}>
+          <div className="w-full flex justify-between pt-3 sm:pt-4 separator-dotted" style={{ borderTopStyle: 'dotted', borderTopWidth: 1, borderTopColor: 'hsla(155, 12%, 45%, 0.3)' }}>
             <div>
               <div className="label-small">Pantry</div>
               <div className="text-lg font-medium text-foreground">{pantryCount}</div>
             </div>
             <div className="text-right">
               <div className="label-small">Expiring</div>
-              <div className="text-lg font-medium text-[#C500FF]">{expiringSoon.length}</div>
+              <div className="text-lg font-medium text-[#10B981]">{expiringSoon.length}</div>
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ const Dashboard = () => {
                     <div className="text-right flex flex-col gap-1">
                       <span className={cn(
                         "inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase",
-                        status === "expired" ? "bg-[hsla(280,100%,50%,0.15)] text-[#C500FF]" : "bg-[hsla(22,100%,55%,0.15)] text-[#FF5A25]"
+                        status === "expired" ? "bg-[hsla(142,70%,45%,0.15)] text-[#10B981]" : "bg-[hsla(22,100%,55%,0.15)] text-[#FF5A25]"
                       )}>
                         {getExpiryLabel(item.expiry_date)}
                       </span>
@@ -374,7 +374,7 @@ const QuickStat = ({
     <Icon className="h-4 w-4 text-muted-foreground mb-2" />
     <p className="text-lg font-medium text-foreground tabular-nums">{value}</p>
     <p className="text-[11px] text-muted-foreground">{label}</p>
-    {sub && <p className="text-[10px] text-[#8E84FF]">{sub}</p>}
+    {sub && <p className="text-[10px] text-[#34D399]">{sub}</p>}
   </div>
 );
 

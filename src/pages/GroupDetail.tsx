@@ -77,7 +77,7 @@ const GroupDetail = () => {
         <StatCard icon={Package} label="Pantry Items" value={activityData?.stats.inventory ?? 0} accent="text-emerald-600" />
         <StatCard icon={ShoppingCart} label="Shopping Items" value={activityData?.stats.shopping ?? 0} accent="text-amber-600" />
         <StatCard icon={Receipt} label="Purchases" value={activityData?.stats.purchases ?? 0} accent="text-blue-600" />
-        <StatCard icon={Users} label="Members" value={members.length} accent="text-violet-600" />
+        <StatCard icon={Users} label="Members" value={members.length} accent="text-emerald-600" />
       </div>
 
       {/* Quick Actions */}

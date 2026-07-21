@@ -19,7 +19,7 @@ const AppLayout = () => {
       >
 
         {/* Topbar */}
-        <header className="hidden sm:flex h-20 items-center justify-between border-b border-white/[0.03] bg-transparent backdrop-blur-md px-8 sticky top-0 z-30">
+        <header className="hidden sm:flex h-20 items-center justify-between border-b border-border bg-background/60 backdrop-blur-md px-8 sticky top-0 z-30">
           <div>
             <h2 className="text-xl font-medium text-foreground">
               {getGreeting()}

@@ -16,8 +16,8 @@ import {
 const CATEGORY_CONFIG: Record<FeedCategory, { label: string; icon: typeof Lightbulb; gradient: string }> = {
   alerts: { label: "Alerts", icon: AlertTriangle, gradient: "from-red-500/80 to-orange-400/60" },
   nutrition: { label: "Nutrition", icon: Salad, gradient: "from-emerald-500/80 to-teal-400/60" },
-  spending: { label: "Spending", icon: TrendingUp, gradient: "from-blue-500/80 to-indigo-400/60" },
-  patterns: { label: "Patterns", icon: BarChart3, gradient: "from-purple-500/80 to-violet-400/60" },
+  spending: { label: "Spending", icon: TrendingUp, gradient: "from-blue-500/80 to-emerald-400/60" },
+  patterns: { label: "Patterns", icon: BarChart3, gradient: "from-emerald-500/80 to-green-400/60" },
   seasonality: { label: "Seasonal", icon: Leaf, gradient: "from-amber-500/80 to-lime-400/60" },
 };
 

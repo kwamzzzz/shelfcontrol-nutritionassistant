@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 const MEAL_META: Record<string, { icon: any; color: string; bg: string; target: number }> = {
   breakfast: { icon: Coffee, color: "text-amber-500", bg: "bg-amber-500/10", target: 300 },
   lunch: { icon: Sun, color: "text-orange-500", bg: "bg-orange-500/10", target: 550 },
-  dinner: { icon: Moon, color: "text-indigo-500", bg: "bg-indigo-500/10", target: 700 },
+  dinner: { icon: Moon, color: "text-emerald-500", bg: "bg-emerald-500/10", target: 700 },
   snacks: { icon: Cookie, color: "text-pink-500", bg: "bg-pink-500/10", target: 250 },
 };
 
