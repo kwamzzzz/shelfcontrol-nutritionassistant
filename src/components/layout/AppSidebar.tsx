@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { ModeToggle } from "@/components/ModeToggle";
-import logoWhite from "@/assets/brand/ShelfControl_Logo_Primary_White_Transparent_2400.png.asset.json";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import appIcon from "@/assets/brand/ShelfControl_AppIcon_Transparent_1024.png.asset.json";
 
 const navSections = [
@@ -106,8 +106,8 @@ const AppSidebar = () => {
               className="h-8 w-8 shrink-0 object-contain"
             />
           ) : (
-            <img
-              src={logoWhite.url}
+            <BrandLogo
+              variant="auto"
               alt="Shelf Control"
               className="h-8 w-auto object-contain"
             />
