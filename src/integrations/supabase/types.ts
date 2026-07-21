@@ -505,6 +505,7 @@ export type Database = {
           expiry_date: string | null
           id: string
           item_id: string
+          notes: string | null
           opened_date: string | null
           purchase_id: string
           quantity: number
@@ -512,11 +513,14 @@ export type Database = {
           unit: string
           unit_price: number | null
           user_id: string
+          weight: number | null
+          weight_unit: string | null
         }
         Insert: {
           expiry_date?: string | null
           id?: string
           item_id: string
+          notes?: string | null
           opened_date?: string | null
           purchase_id: string
           quantity?: number
@@ -524,11 +528,14 @@ export type Database = {
           unit?: string
           unit_price?: number | null
           user_id: string
+          weight?: number | null
+          weight_unit?: string | null
         }
         Update: {
           expiry_date?: string | null
           id?: string
           item_id?: string
+          notes?: string | null
           opened_date?: string | null
           purchase_id?: string
           quantity?: number
@@ -536,6 +543,8 @@ export type Database = {
           unit?: string
           unit_price?: number | null
           user_id?: string
+          weight?: number | null
+          weight_unit?: string | null
         }
         Relationships: [
           {

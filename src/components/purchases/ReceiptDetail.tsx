@@ -94,16 +94,24 @@ const ReceiptDetail = ({ purchase }: Props) => {
                     <p className="font-[Outfit] text-sm font-medium text-foreground">
                       {pi.items?.name ?? "Unknown"}
                     </p>
-                    <div className="mt-0.5 flex items-center gap-2">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {pi.quantity} {pi.unit}
                       </span>
+                      {(pi as any).weight != null && (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          · {(pi as any).weight} {(pi as any).weight_unit ?? ""}
+                        </span>
+                      )}
                       {(pi as any).expiry_date && (
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal text-muted-foreground">
                           exp {format(parseISO((pi as any).expiry_date), "MMM d")}
                         </Badge>
                       )}
                     </div>
+                    {(pi as any).notes && (
+                      <p className="mt-0.5 text-[11px] italic text-muted-foreground/80">{(pi as any).notes}</p>
+                    )}
                   </div>
                   <span className="font-[Outfit] text-sm font-semibold tabular-nums text-foreground ml-4">
                     {pi.unit_price != null ? formatCurrency(Number(pi.unit_price)) : "—"}

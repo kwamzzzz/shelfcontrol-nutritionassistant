@@ -35,7 +35,10 @@ export const usePurchases = () => {
 };
 
 export type NewPurchaseLineItem = {
-  item_id: string;
+  /** Existing catalog item id. Optional for bulk lines — resolved from `name`. */
+  item_id?: string;
+  /** Item name used to find-or-create a catalog item when item_id is absent. */
+  name?: string;
   quantity: number;
   unit: string;
   line_total: number | null;
@@ -44,7 +47,91 @@ export type NewPurchaseLineItem = {
   expiry_date?: string;
   sealed_status?: string;
   opened_date?: string;
+  weight?: number | null;
+  weight_unit?: string | null;
+  notes?: string | null;
   itemOverrides?: ItemOverrides;
+};
+
+/**
+ * Resolve each line to a catalog item_id. Lines that already carry an item_id
+ * are left as-is; lines with only a `name` are matched (case-insensitive) to an
+ * existing catalog item, or a new item is created. This is what makes pasting
+ * 60+ named items viable — no combobox picking required.
+ */
+const resolveItemIds = async (
+  lineItems: NewPurchaseLineItem[],
+  userId: string,
+): Promise<NewPurchaseLineItem[]> => {
+  const needsResolve = lineItems.filter((li) => !li.item_id && (li.name ?? "").trim());
+  if (needsResolve.length === 0) return lineItems;
+
+  const { data: existing, error } = await supabase
+    .from("items")
+    .select("id, name")
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  const byName = new Map<string, string>();
+  for (const it of existing ?? []) byName.set(it.name.trim().toLowerCase(), it.id);
+
+  // Names not already in the catalog (deduped within this batch).
+  const toCreate = new Map<string, { name: string; unit: string }>();
+  for (const li of needsResolve) {
+    const key = li.name!.trim().toLowerCase();
+    if (!byName.has(key) && !toCreate.has(key)) {
+      toCreate.set(key, { name: li.name!.trim(), unit: li.unit || "unit" });
+    }
+  }
+
+  if (toCreate.size > 0) {
+    const rows = Array.from(toCreate.values()).map((c) => ({
+      user_id: userId,
+      name: c.name,
+      default_unit: c.unit,
+    }));
+    const { data: created, error: cErr } = await supabase
+      .from("items")
+      .insert(rows)
+      .select("id, name");
+    if (cErr) throw cErr;
+    for (const it of created ?? []) byName.set(it.name.trim().toLowerCase(), it.id);
+  }
+
+  return lineItems.map((li) => {
+    if (li.item_id) return li;
+    const key = (li.name ?? "").trim().toLowerCase();
+    const id = key ? byName.get(key) : undefined;
+    return id ? { ...li, item_id: id } : li;
+  });
+};
+
+/**
+ * Build a purchase_items insert row. The bulk fields (weight/weight_unit/notes)
+ * are only included when present, so the insert stays valid on databases where
+ * the columns don't exist yet (before the migration is applied) — existing
+ * manual purchases keep working, and the new fields activate post-migration.
+ */
+const buildLineRow = (
+  li: NewPurchaseLineItem,
+  userId: string,
+  purchaseId: string,
+): TablesInsert<"purchase_items"> => {
+  const row: TablesInsert<"purchase_items"> = {
+    user_id: userId,
+    purchase_id: purchaseId,
+    item_id: li.item_id!,
+    quantity: li.quantity,
+    unit: li.unit,
+    unit_price: li.line_total,
+    expiry_date: li.expiry_date || null,
+    sealed_status: li.sealed_status || "sealed",
+    opened_date: li.opened_date || null,
+  };
+  if (li.weight != null) row.weight = li.weight;
+  if (li.weight_unit) row.weight_unit = li.weight_unit;
+  if (li.notes) row.notes = li.notes;
+  return row;
 };
 
 const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
@@ -52,6 +139,7 @@ const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
     (li) => li.itemOverrides && Object.values(li.itemOverrides).some((v) => v !== undefined)
   );
   for (const li of itemsWithOverrides) {
+    if (!li.item_id) continue;
     const o = li.itemOverrides!;
     const update: Record<string, unknown> = {};
     if (o.brand !== undefined) update.brand = o.brand || null;
@@ -92,26 +180,17 @@ export const useCreatePurchase = () => {
         .single();
       if (pErr) throw pErr;
 
-      if (input.line_items.length > 0) {
-        const lineRows = input.line_items.map((li) => ({
-          user_id: user!.id,
-          purchase_id: purchase.id,
-          item_id: li.item_id,
-          quantity: li.quantity,
-          unit: li.unit,
-          unit_price: li.line_total,
-          expiry_date: li.expiry_date || null,
-          sealed_status: li.sealed_status || "sealed",
-          opened_date: li.opened_date || null,
-        }));
+      const resolved = (await resolveItemIds(input.line_items, user!.id)).filter((li) => li.item_id);
+      if (resolved.length > 0) {
+        const lineRows = resolved.map((li) => buildLineRow(li, user!.id, purchase.id));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        const restockItems = input.line_items.filter((li) => li.restock);
+        const restockItems = resolved.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
             user_id: user!.id,
-            item_id: li.item_id,
+            item_id: li.item_id!,
             quantity: li.quantity,
             unit: li.unit,
             storage_location: li.storage_location || null,
@@ -122,7 +201,7 @@ export const useCreatePurchase = () => {
           const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
           if (invErr) throw invErr;
         }
-        await updateItemOverrides(input.line_items);
+        await updateItemOverrides(resolved);
       }
 
       return purchase;
@@ -165,26 +244,17 @@ export const useUpdatePurchase = () => {
       const { error: invDelErr } = await supabase.from("inventory").delete().eq("purchase_id", input.id);
       if (invDelErr) throw invDelErr;
 
-      if (input.line_items.length > 0) {
-        const lineRows = input.line_items.map((li) => ({
-          user_id: user!.id,
-          purchase_id: input.id,
-          item_id: li.item_id,
-          quantity: li.quantity,
-          unit: li.unit,
-          unit_price: li.line_total,
-          expiry_date: li.expiry_date || null,
-          sealed_status: li.sealed_status || "sealed",
-          opened_date: li.opened_date || null,
-        }));
+      const resolved = (await resolveItemIds(input.line_items, user!.id)).filter((li) => li.item_id);
+      if (resolved.length > 0) {
+        const lineRows = resolved.map((li) => buildLineRow(li, user!.id, input.id));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        const restockItems = input.line_items.filter((li) => li.restock);
+        const restockItems = resolved.filter((li) => li.restock);
         if (restockItems.length > 0) {
           const inventoryRows = restockItems.map((li) => ({
             user_id: user!.id,
-            item_id: li.item_id,
+            item_id: li.item_id!,
             quantity: li.quantity,
             unit: li.unit,
             storage_location: li.storage_location || null,
@@ -196,7 +266,7 @@ export const useUpdatePurchase = () => {
           if (invErr) throw invErr;
         }
 
-        await updateItemOverrides(input.line_items);
+        await updateItemOverrides(resolved);
       }
     },
     onSuccess: () => {
