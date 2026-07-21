@@ -131,7 +131,7 @@ const FoodDiary = () => {
         </div>
       )}
 
-      {/* Tabs: Logged Today / My Foods / Recipes */}
+      {/* Tabs: Logged Today / My Foods / My Cook Book */}
       <Tabs value={browseTab} onValueChange={setBrowseTab}>
         <div className="flex items-center gap-3 mb-4">
           <TabsList className="bg-muted/50 rounded-xl p-1 h-auto flex-1">
@@ -142,7 +142,7 @@ const FoodDiary = () => {
               <UtensilsCrossed className="h-3.5 w-3.5" /> My Foods
             </TabsTrigger>
             <TabsTrigger value="recipes" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-xs gap-1.5 flex-1">
-              <ChefHat className="h-3.5 w-3.5" /> Recipes
+              <ChefHat className="h-3.5 w-3.5" /> My Cook Book
             </TabsTrigger>
           </TabsList>
         </div>

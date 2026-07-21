@@ -110,7 +110,7 @@ export const useIntelligenceFeed = () => {
         tags: ["Pantry", "Urgency"],
         actions: [
           { label: "Review Expiring", path: "/pantry?filter=expiring" },
-          { label: "Find Recipes", path: "/recipes" },
+          { label: "Find in My Cook Book", path: "/recipes" },
         ],
       }, { recencyDays: 0, health: true });
     }
