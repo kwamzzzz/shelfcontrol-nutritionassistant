@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+ * SHELF CONTROL — OFFICIAL BRAND THEME (source of truth)
+ *
+ * The official brand color is FRESH GREEN (--primary: 142 72% 34%) on a white
+ * (light) / deep-green-black (dark) base. This is canonical — see README.md.
+ * Do NOT revert to purple ("Lumina") or the olive/sage tones in
+ * src/assets/brand/reference/. Edit brand colors HERE and nowhere else.
+ * ==========================================================================*/
 @layer base {
   :root {
     /* Verdant light-first design system — fresh green on white */
