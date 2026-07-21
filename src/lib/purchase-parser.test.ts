@@ -117,6 +117,80 @@ Potatoes, 8 pieces, 2 kg, 16`);
   });
 });
 
+describe("parseLine — space-separated format (no commas, D = dirham)", () => {
+  it("parses name + weight + price with a D-suffixed price", () => {
+    expect(parseLine("Potato 1.100kg 8D")).toMatchObject({
+      name: "Potato", weight: 1.1, weightUnit: "kg", price: 8, quantity: null,
+    });
+  });
+
+  it("keeps a multi-word item name", () => {
+    expect(parseLine("Onions brown 700g 10D")).toMatchObject({
+      name: "Onions Brown", weight: 700, weightUnit: "g", price: 10,
+    });
+    expect(parseLine("Beef chest 1kg 25D")).toMatchObject({
+      name: "Beef Chest", weight: 1, weightUnit: "kg", price: 25,
+    });
+  });
+
+  it("parses quantity + weight + price together", () => {
+    expect(parseLine("Carrot 6 peices 1kg 10D")).toMatchObject({
+      name: "Carrot", quantity: 6, weight: 1, weightUnit: "kg", price: 10,
+    });
+  });
+
+  it("parses a bundle quantity", () => {
+    expect(parseLine("Corienda  2 bundle 2D")).toMatchObject({
+      name: "Corienda", quantity: 2, quantityUnit: "bundle", price: 2,
+    });
+  });
+
+  it("handles price written before weight", () => {
+    expect(parseLine("Veil 65D 1.3kg")).toMatchObject({
+      name: "Veil", price: 65, weight: 1.3, weightUnit: "kg",
+    });
+  });
+
+  it("handles a weight-only price with no D and a plain trailing number", () => {
+    expect(parseLine("Tail 0.45g 20")).toMatchObject({
+      name: "Tail", weight: 0.45, weightUnit: "g", price: 20,
+    });
+  });
+
+  it("handles name + price only (no measure)", () => {
+    expect(parseLine("Egg plant 12D")).toMatchObject({
+      name: "Egg Plant", price: 12, weight: null, quantity: null,
+    });
+  });
+
+  it("keeps bracketed content while space-parsing", () => {
+    expect(parseLine("Mango 45 (1 box)")).toMatchObject({
+      name: "Mango", price: 45, notes: "1 box",
+    });
+  });
+
+  it("fills weight from a leftover unlabeled number", () => {
+    // "Avocado 3 pieces 650 19D" → 3 pieces, 650 (weight, unit unknown), 19 dirham
+    expect(parseLine("Avocado 3 pieces 650 19D")).toMatchObject({
+      name: "Avocado", quantity: 3, quantityUnit: "piece", weight: 650, price: 19,
+    });
+  });
+
+  it("parses a full realistic block", () => {
+    const rows = parseBulkNotes(`Beetroot 900g 8D
+Bell pepper 1kg 15D
+Mint 1 bundle 1D
+Lamb cubes 50D
+Pomegranate 4 pieces 12D`);
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toMatchObject({ name: "Beetroot", weight: 900, weightUnit: "g", price: 8 });
+    expect(rows[1]).toMatchObject({ name: "Bell Pepper", weight: 1, weightUnit: "kg", price: 15 });
+    expect(rows[2]).toMatchObject({ name: "Mint", quantity: 1, quantityUnit: "bundle", price: 1 });
+    expect(rows[3]).toMatchObject({ name: "Lamb Cubes", price: 50 });
+    expect(rows[4]).toMatchObject({ name: "Pomegranate", quantity: 4, quantityUnit: "piece", price: 12 });
+  });
+});
+
 describe("mergeDuplicates", () => {
   it("sums quantity and price and concatenates notes for same-named items", () => {
     const rows = parseBulkNotes(`Tomatoes, 6 pieces, 1 kg, 14 (ripe)

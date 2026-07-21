@@ -67,8 +67,9 @@ const COUNT_UNITS: Record<string, string> = {
 };
 
 // Currency words/symbols attached to a number mark it as the price.
+// "d" / "dh" / "dhs" = dirham (e.g. "8D"), the app's default currency.
 const CURRENCY_TOKENS = new Set([
-  "aed", "usd", "eur", "gbp", "sar", "inr", "dhs", "dh", "dirham", "dirhams",
+  "aed", "usd", "eur", "gbp", "sar", "inr", "d", "dhs", "dh", "dirham", "dirhams",
   "$", "€", "£", "₹", "﷼", "rs", "usd$",
 ]);
 
@@ -128,6 +129,46 @@ function classifyToken(token: string): Classified {
 const titleCase = (s: string) =>
   s.replace(/\s+/g, " ").trim().replace(/\b\w/g, (c) => c.toUpperCase());
 
+/**
+ * Tokenise a space-separated line (no commas), e.g. "Onions brown 700g 8D".
+ * The item name is the run of leading words that don't start with a digit
+ * (so multi-word names like "Bell pepper" or "Beef chest" stay intact); the
+ * remaining words are the measurement tokens, with a bare number and the word
+ * after it (e.g. "6 pieces") grouped so the classifier sees one unit token.
+ */
+function tokenizeSpaced(s: string): { name: string; rest: string[] } | null {
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+
+  let i = 0;
+  const nameWords: string[] = [];
+  while (i < words.length && !/^\d/.test(words[i])) {
+    nameWords.push(words[i]);
+    i++;
+  }
+
+  // Whole line is a name (no measurements).
+  if (i >= words.length) return { name: nameWords.join(" ") || words[0], rest: [] };
+
+  // Degenerate "5 apples" (starts with a number): take the first word as name.
+  const name = nameWords.join(" ") || words[i];
+  if (!nameWords.length) i++;
+
+  const rest: string[] = [];
+  while (i < words.length) {
+    const w = words[i];
+    const next = words[i + 1];
+    if (/^\d+(?:\.\d+)?$/.test(w) && next && /^[a-zA-Z]/.test(next)) {
+      rest.push(`${w} ${next}`);
+      i += 2;
+    } else {
+      rest.push(w);
+      i += 1;
+    }
+  }
+  return { name, rest };
+}
+
 /** Parse a single line. Returns null for blank/comment lines. */
 export function parseLine(rawLine: string): ParsedLine | null {
   const raw = rawLine.trim();
@@ -144,20 +185,24 @@ export function parseLine(rawLine: string): ParsedLine | null {
     .replace(/\s+/g, " ")
     .trim();
 
-  // 2. Split into comma (or tab / semicolon) separated tokens.
-  const tokens = working
-    .split(/[,;\t]/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  if (tokens.length === 0) {
-    // Line was only an annotation, e.g. "(note)". Nothing to structure.
-    return null;
+  // 2. Tokenise. Comma/semicolon/tab-delimited lines split on the delimiter;
+  //    lines without one fall back to space parsing (name words, then units).
+  let nameRaw: string;
+  let rest: string[];
+  if (/[,;\t]/.test(working)) {
+    const tokens = working.split(/[,;\t]/).map((t) => t.trim()).filter(Boolean);
+    if (tokens.length === 0) return null; // was only an annotation, e.g. "(note)"
+    nameRaw = tokens[0];
+    rest = tokens.slice(1);
+  } else {
+    const spaced = tokenizeSpaced(working);
+    if (!spaced) return null;
+    nameRaw = spaced.name;
+    rest = spaced.rest;
   }
 
-  // 3. First token is the item name.
-  const name = titleCase(tokens[0]);
-  const rest = tokens.slice(1);
+  // 3. Item name.
+  const name = titleCase(nameRaw);
 
   let quantity: number | null = null;
   let quantityUnit: string | null = null;
@@ -195,20 +240,21 @@ export function parseLine(rawLine: string): ParsedLine | null {
     }
   }
 
-  // 4. Resolve price from bare/currency numbers. Currency-tagged wins; otherwise
-  //    the LAST bare number is the price (money is written last in the format),
-  //    and any earlier bare number fills quantity if still empty.
+  // 4. Resolve price from bare/currency numbers. A currency-tagged number
+  //    (e.g. "8D", "AED 30") wins; otherwise the LAST bare number is the price
+  //    (money is written last). Any remaining unlabeled numbers then fill
+  //    quantity, then weight, in the order written.
+  const pool: number[] = [];
   if (currencyNumbers.length) {
     price = currencyNumbers[currencyNumbers.length - 1];
-    // any leftover currency numbers or bares can seed quantity
-    const leftovers = [...currencyNumbers.slice(0, -1), ...bareNumbers];
-    if (quantity == null && leftovers.length) quantity = leftovers[0];
+    pool.push(...currencyNumbers.slice(0, -1), ...bareNumbers);
   } else if (bareNumbers.length) {
     price = bareNumbers[bareNumbers.length - 1];
-    const earlier = bareNumbers.slice(0, -1);
-    if (quantity == null && earlier.length) {
-      quantity = earlier[0];
-    }
+    pool.push(...bareNumbers.slice(0, -1));
+  }
+  for (const n of pool) {
+    if (quantity == null) quantity = n;
+    else if (weight == null) weight = n;
   }
 
   const notes = noteParts.length ? noteParts.join("; ") : null;
