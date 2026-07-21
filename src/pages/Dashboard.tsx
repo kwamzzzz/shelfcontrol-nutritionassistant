@@ -168,7 +168,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 gap-3">
             <QuickStat icon={Package} label="Pantry" value={pantryCount} onClick={() => navigate("/pantry")} />
             <QuickStat icon={ShoppingCart} label="To Buy" value={openItems} onClick={() => navigate("/shopping")} />
-            <QuickStat icon={ChefHat} label="Recipes" value={recipes?.length ?? 0} onClick={() => navigate("/recipes")} />
+            <QuickStat icon={ChefHat} label="My Cook Book" value={recipes?.length ?? 0} onClick={() => navigate("/recipes")} />
             <QuickStat icon={GlassWater} label="Water" value={`${(waterTotal / 1000).toFixed(1)}L`} sub={`${waterPct.toFixed(0)}%`} onClick={() => navigate("/nutrition")} />
           </div>
         </div>
