@@ -97,18 +97,19 @@ const AppSidebar = () => {
           "flex h-16 items-center",
           isCompact ? "justify-center px-2" : "justify-between px-6"
         )}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-7 w-7 shrink-0 rounded-lg gradient-warm flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            {!isCompact && (
-              <span className="text-xl font-bold tracking-tight text-foreground truncate">
-                Shelf Control
-              </span>
-            )}
-          </div>
+          {isCompact ? (
+            <img
+              src={appIcon.url}
+              alt="Shelf Control"
+              className="h-8 w-8 shrink-0 object-contain"
+            />
+          ) : (
+            <img
+              src={logoWhite.url}
+              alt="Shelf Control"
+              className="h-8 w-auto object-contain"
+            />
+          )}
           {/* Desktop collapse toggle */}
           <button
             onClick={toggleCollapsed}
