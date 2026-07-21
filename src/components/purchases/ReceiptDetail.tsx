@@ -89,7 +89,7 @@ const ReceiptDetail = ({ purchase }: Props) => {
           {items.length > 0 ? (
             <div className="space-y-0">
               {items.map((pi) => (
-                <div key={pi.id} className="flex items-start justify-between py-2.5 border-b border-border/30 last:border-0">
+                <div key={pi.id} className="flex items-start justify-between py-2.5 border-b border-border last:border-0">
                   <div className="min-w-0 flex-1">
                     <p className="font-[Outfit] text-sm font-medium text-foreground">
                       {pi.items?.name ?? "Unknown"}

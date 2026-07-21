@@ -16,10 +16,8 @@ const SpendValueTab = ({ data }: { data: Analytics }) => {
     <AnalyticsLayout rail={<InsightsRail insights={insights} tab="spend_value" />}>
       {/* Dominant: Best Value Insight */}
       <div className="rounded-2xl bg-card shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] p-8">
-        <div className="flex items-center gap-3 text-muted-foreground mb-3">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
+        <div className="flex items-center gap-2 text-muted-foreground mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
           <p className="text-sm font-semibold font-analytics tracking-wide">Your Best Value This Month</p>
         </div>
         {bestValue.bestProteinItem ? (
@@ -78,7 +76,7 @@ const SpendValueTab = ({ data }: { data: Analytics }) => {
               <div
                 key={s.name}
                 className={`flex justify-between py-2.5 text-sm ${
-                  i < spending.stores.length - 1 ? "border-b border-dotted border-border/50" : ""
+                  i < spending.stores.length - 1 ? "border-b border-dotted border-border" : ""
                 }`}
               >
                 <span className="text-foreground font-semibold truncate">{s.name}</span>

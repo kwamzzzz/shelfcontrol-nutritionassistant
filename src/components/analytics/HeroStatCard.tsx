@@ -19,10 +19,8 @@ const HeroStatCard = ({ icon: Icon, label, value, sub, variant = "standard", acc
     return (
       <div className={`rounded-2xl bg-card shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] p-8 ${accentClass ?? ""}`}>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Icon className="h-4 w-4 text-primary" />
-            </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Icon className="h-4 w-4 text-primary" />
             <p className="text-sm font-semibold font-analytics tracking-wide">{label}</p>
           </div>
           {cta && (

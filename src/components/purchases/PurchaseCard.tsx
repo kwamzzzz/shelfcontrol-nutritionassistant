@@ -80,7 +80,7 @@ const PurchaseCard = ({ purchase }: Props) => {
                   </thead>
                   <tbody>
                     {purchase.purchase_items.map((pi) => (
-                      <tr key={pi.id} className="border-t border-border/50">
+                      <tr key={pi.id} className="border-t border-border">
                         <td className="py-1.5 text-foreground">
                           {pi.items?.name ?? "Unknown"}
                           {(pi as any).expiry_date && (

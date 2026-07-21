@@ -147,7 +147,7 @@ const RecipeCard = ({ recipe, onEdit }: Props) => {
                 </thead>
                 <tbody>
                   {recipe.recipe_ingredients.map((ri) => (
-                    <tr key={ri.id} className="border-t border-border/50">
+                    <tr key={ri.id} className="border-t border-border">
                       <td className="py-1.5 text-foreground">{ri.items?.name ?? "Unknown"}</td>
                       <td className="py-1.5 text-right text-muted-foreground tabular-nums">{formatQty(Number(ri.quantity) * scale)}</td>
                       <td className="py-1.5 text-right text-muted-foreground">{ri.unit}</td>

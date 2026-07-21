@@ -126,7 +126,7 @@ export const AISummaryCard = () => {
           {(["waste", "spending", "nutrition", "recommendation"] as const).map((key) => {
             const Icon = SECTION_ICONS[key];
             return (
-              <div key={key} className="rounded-xl bg-card/80 border border-border/50 p-3">
+              <div key={key} className="rounded-xl bg-card/80 border border-border p-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Icon className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

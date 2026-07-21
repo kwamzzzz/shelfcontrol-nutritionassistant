@@ -86,7 +86,7 @@ const NutritionDetailModal = ({ open, onOpenChange, item }: Props) => {
             {MICROS.map(({ key, label, unit }) => {
               const val = Number((item as any)[key] ?? 0);
               return (
-                <div key={key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                <div key={key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm text-foreground">{label}</span>
                   <span className="text-sm font-medium tabular-nums text-foreground">{val} {unit}</span>
                 </div>

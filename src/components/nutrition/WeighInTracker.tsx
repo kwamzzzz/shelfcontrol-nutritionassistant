@@ -94,7 +94,7 @@ const WeighInTracker = () => {
       ) : !weighIns?.length ? (
         <p className="text-sm text-muted-foreground">No weigh-ins yet. Add your first one above.</p>
       ) : (
-        <ul className="divide-y divide-border/60 rounded-xl border">
+        <ul className="divide-y divide-border rounded-xl border">
           {weighIns.slice(0, 10).map((w) => (
             <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
               <div className="min-w-0">

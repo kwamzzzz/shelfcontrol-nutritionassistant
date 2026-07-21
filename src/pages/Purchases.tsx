@@ -78,10 +78,10 @@ const Purchases = () => {
   }, [purchases]);
 
   const summaryCards = [
-    { label: "Total Spend", value: formatCurrencyAlways(stats.totalSpend), icon: DollarSign, accent: "text-primary" },
-    { label: "Stores", value: String(stats.storeCount), icon: Store, accent: "text-accent" },
-    { label: "Avg / Trip", value: formatCurrencyAlways(stats.avgPerTrip), icon: TrendingUp, accent: "text-primary" },
-    { label: "Most Bought", value: stats.bestValue ?? "—", icon: Star, accent: "text-accent" },
+    { label: "Total Spend", value: formatCurrencyAlways(stats.totalSpend), icon: DollarSign },
+    { label: "Stores", value: String(stats.storeCount), icon: Store },
+    { label: "Avg / Trip", value: formatCurrencyAlways(stats.avgPerTrip), icon: TrendingUp },
+    { label: "Most Bought", value: stats.bestValue ?? "—", icon: Star },
   ];
 
   return (
@@ -102,12 +102,10 @@ const Purchases = () => {
         {summaryCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-2xl bg-card p-4 shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] border border-border/50"
+            className="rounded-2xl bg-card p-4 shadow-[0_2px_16px_-4px_hsl(var(--foreground)/0.06)] border border-border"
           >
-            <div className="flex items-center gap-2">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-secondary ${card.accent}`}>
-                <card.icon className="h-4 w-4" />
-              </div>
+            <div className="flex items-center gap-1.5">
+              <card.icon className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
             </div>
             <p className="mt-2 text-xl font-bold tabular-nums text-foreground truncate">

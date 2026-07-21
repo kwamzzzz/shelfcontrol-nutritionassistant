@@ -96,7 +96,7 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
         </div>
 
         {/* Quantity + Cost footer */}
-        <div className="mt-auto pt-3 border-t border-border/50 flex items-baseline justify-between">
+        <div className="mt-auto pt-3 border-t border-border flex items-baseline justify-between">
           {item.quantity ? (
             <span className="text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
               ×{item.quantity}
