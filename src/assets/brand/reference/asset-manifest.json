@@ -1,0 +1,142 @@
+[
+  {
+    "path": "01_Master_Vector/ShelfControl_Logo_Primary_FullColor.svg",
+    "bytes": 15931
+  },
+  {
+    "path": "01_Master_Vector/ShelfControl_Logo_Primary_Black.svg",
+    "bytes": 15931
+  },
+  {
+    "path": "01_Master_Vector/ShelfControl_Logo_Primary_White.svg",
+    "bytes": 15931
+  },
+  {
+    "path": "01_Master_Vector/ShelfControl_Logo_Primary_SingleGreen.svg",
+    "bytes": 15931
+  },
+  {
+    "path": "01_Master_Vector/ShelfControl_Logo_Master_Editable.svg",
+    "bytes": 15931
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_FullColor_Transparent_2400.png",
+    "bytes": 61784
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_Black_Transparent_2400.png",
+    "bytes": 59474
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_White_Transparent_2400.png",
+    "bytes": 52292
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_FullColor_OnWhite_2400.png",
+    "bytes": 64652
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_White_OnDark_2400.png",
+    "bytes": 65737
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_FullColor_Transparent_1024.png",
+    "bytes": 25381
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_FullColor_Transparent_512.png",
+    "bytes": 12584
+  },
+  {
+    "path": "02_Raster/ShelfControl_Logo_Primary_FullColor_Transparent_256.png",
+    "bytes": 6304
+  },
+  {
+    "path": "03_Digital/ShelfControl_AppIcon_Transparent_1024.png",
+    "bytes": 53167
+  },
+  {
+    "path": "03_Digital/ShelfControl_AppIcon_WhiteBG_1024.png",
+    "bytes": 51506
+  },
+  {
+    "path": "03_Digital/favicon-16x16.png",
+    "bytes": 522
+  },
+  {
+    "path": "03_Digital/favicon-32x32.png",
+    "bytes": 1252
+  },
+  {
+    "path": "03_Digital/favicon-48x48.png",
+    "bytes": 1962
+  },
+  {
+    "path": "03_Digital/favicon-64x64.png",
+    "bytes": 2808
+  },
+  {
+    "path": "03_Digital/apple-touch-icon.png",
+    "bytes": 8713
+  },
+  {
+    "path": "03_Digital/android-chrome-192x192.png",
+    "bytes": 9432
+  },
+  {
+    "path": "03_Digital/android-chrome-512x512.png",
+    "bytes": 25564
+  },
+  {
+    "path": "03_Digital/favicon.ico",
+    "bytes": 8793
+  },
+  {
+    "path": "03_Digital/site.webmanifest",
+    "bytes": 385
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_FullColor.pdf",
+    "bytes": 5569
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_FullColor.eps",
+    "bytes": 18977
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_Black.pdf",
+    "bytes": 5539
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_Black.eps",
+    "bytes": 18928
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_White.pdf",
+    "bytes": 5533
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_White.eps",
+    "bytes": 18920
+  },
+  {
+    "path": "04_Print/ShelfControl_Logo_Primary_FullColor_300DPI.png",
+    "bytes": 100209
+  },
+  {
+    "path": "05_Brand_Guidelines/ShelfControl_Brand_Guidelines.txt",
+    "bytes": 884
+  },
+  {
+    "path": "05_Brand_Guidelines/ShelfControl_Brand_Guidelines.pdf",
+    "bytes": 62004
+  },
+  {
+    "path": "06_Brand_Data/color-palette.json",
+    "bytes": 437
+  },
+  {
+    "path": "06_Brand_Data/color-palette.csv",
+    "bytes": 101
+  }
+]

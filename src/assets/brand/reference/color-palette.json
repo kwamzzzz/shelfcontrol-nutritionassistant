@@ -1,0 +1,30 @@
+{
+  "brand": "Shelf Control",
+  "colors": {
+    "charcoal": {
+      "hex": "#17211C",
+      "rgb": [
+        23,
+        33,
+        28
+      ]
+    },
+    "sage_green": {
+      "hex": "#64945C",
+      "rgb": [
+        100,
+        148,
+        92
+      ]
+    },
+    "white": {
+      "hex": "#FFFFFF",
+      "rgb": [
+        255,
+        255,
+        255
+      ]
+    }
+  },
+  "notes": "Primary logo artwork should be preserved exactly."
+}
