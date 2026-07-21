@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import appIcon from "@/assets/brand/ShelfControl_AppIcon_Transparent_1024.png.asset.json";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -56,8 +55,7 @@ const Auth = () => {
 
       <div className="w-full max-w-sm space-y-8 relative z-10">
         <div className="flex flex-col items-center gap-3">
-          <img src={appIcon.url} alt="ShelfControl" className="h-16 w-16" />
-          <BrandLogo variant="auto" className="h-8 w-auto" />
+          <BrandLogo variant="auto" className="h-14 w-auto" />
           <h1 className="sr-only">ShelfControl</h1>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Sign in to your kitchen" : "Create your account"}
