@@ -9,6 +9,7 @@ import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
+import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
@@ -122,7 +123,10 @@ const Pantry = () => {
             )}
           </p>
         </div>
-        <AddInventoryDialog />
+        <div className="flex items-center gap-2">
+          <ShelfLifeManager />
+          <AddInventoryDialog />
+        </div>
       </div>
 
       {/* Location Pill Tabs */}

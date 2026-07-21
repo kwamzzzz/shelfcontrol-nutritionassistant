@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { STORAGE_LOCATIONS } from "@/lib/pantry-utils";
-import { PackagePlus, Users, User } from "lucide-react";
+import { classifyFood, estimateShelfLifeDays, estimateExpiryDate, recommendStorage, type StorageLocation } from "@/lib/shelf-life";
+import { PackagePlus, Users, User, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -34,6 +35,7 @@ const AddInventoryDialog = () => {
   const [unit, setUnit] = useState("Unit");
   const [location, setLocation] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [autoExpiry, setAutoExpiry] = useState(true); // false once the user edits expiry by hand
   const { data: items } = useItems();
   const createInventory = useCreateInventory();
   const { toast } = useToast();
@@ -46,12 +48,37 @@ const AddInventoryDialog = () => {
     setUnit("Unit");
     setLocation("");
     setExpiryDate("");
+    setAutoExpiry(true);
+  };
+
+  // Auto-estimate expiry from food type + storage location (unless user typed one).
+  const estimateExpiry = (id: string, loc: string, auto: boolean) => {
+    if (!auto) return;
+    const item = items?.find((i) => i.id === id);
+    if (!item || !loc || loc === "Other") return;
+    const cls = classifyFood(item.name, item.category);
+    const days = estimateShelfLifeDays(cls.type, loc as StorageLocation, "sealed");
+    if (days != null) setExpiryDate(estimateExpiryDate(new Date().toISOString(), days));
   };
 
   const handleItemSelect = (id: string) => {
     setItemId(id);
     const item = items?.find((i) => i.id === id);
     if (item?.default_unit) setUnit(item.default_unit);
+    // Suggest a confident storage location, then estimate expiry.
+    const cls = classifyFood(item?.name, item?.category);
+    const rec = recommendStorage(cls.type);
+    let loc = location;
+    if (!location && rec.confidence === "high" && rec.location) {
+      loc = rec.location;
+      setLocation(rec.location);
+    }
+    estimateExpiry(id, loc, autoExpiry);
+  };
+
+  const handleLocationChange = (loc: string) => {
+    setLocation(loc);
+    estimateExpiry(itemId, loc, autoExpiry);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,7 +142,7 @@ const AddInventoryDialog = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Storage Location</Label>
-              <Select value={location} onValueChange={setLocation}>
+              <Select value={location} onValueChange={handleLocationChange}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {STORAGE_LOCATIONS.map((l) => (
@@ -126,7 +153,12 @@ const AddInventoryDialog = () => {
             </div>
             <div className="space-y-2">
               <Label>Expiry Date</Label>
-              <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+              <Input type="date" value={expiryDate} onChange={(e) => { setExpiryDate(e.target.value); setAutoExpiry(false); }} />
+              {autoExpiry && expiryDate && location && (
+                <p className="flex items-center gap-1 text-[11px] text-primary">
+                  <Sparkles className="h-3 w-3" /> Auto-estimated
+                </p>
+              )}
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={!itemId || createInventory.isPending}>

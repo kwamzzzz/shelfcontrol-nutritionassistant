@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { STORAGE_LOCATIONS, CATEGORIES } from "@/lib/pantry-utils";
-import { Trash2 } from "lucide-react";
+import { classifyFood, estimateShelfLifeDays, estimateExpiryDate, type StorageLocation } from "@/lib/shelf-life";
+import { Trash2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -40,6 +41,23 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
   const updateItem = useUpdateItem();
   const deleteInventory = useDeleteInventory();
   const { toast } = useToast();
+
+  // Changing storage location recalculates the expected shelf life — but never
+  // over an expiry the user has typed/kept (e.g. a printed use-by date).
+  const [autoEstimated, setAutoEstimated] = useState(false);
+  const [manualExpiry, setManualExpiry] = useState(!!entry.expiry_date);
+  const handleLocationChange = (loc: string) => {
+    setLocation(loc);
+    if (loc && loc !== "Other" && entry.added_at && !manualExpiry) {
+      const cls = classifyFood(entry.items.name, entry.items.category);
+      const sealed = entry.sealed_status === "opened" ? "opened" : "sealed";
+      const days = estimateShelfLifeDays(cls.type, loc as StorageLocation, sealed);
+      if (days != null) {
+        setExpiryDate(estimateExpiryDate(entry.added_at, days));
+        setAutoEstimated(true);
+      }
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +145,7 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Storage Location</Label>
-              <Select value={location} onValueChange={setLocation}>
+              <Select value={location} onValueChange={handleLocationChange}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {STORAGE_LOCATIONS.map((l) => (
@@ -138,7 +156,12 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
             </div>
             <div className="space-y-2">
               <Label>Expiry Date</Label>
-              <Input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+              <Input type="date" value={expiryDate} onChange={(e) => { setExpiryDate(e.target.value); setAutoEstimated(false); setManualExpiry(!!e.target.value); }} />
+              {autoEstimated && (
+                <p className="flex items-center gap-1 text-[11px] text-primary">
+                  <Sparkles className="h-3 w-3" /> Auto-estimated from {location}
+                </p>
+              )}
             </div>
           </div>
 

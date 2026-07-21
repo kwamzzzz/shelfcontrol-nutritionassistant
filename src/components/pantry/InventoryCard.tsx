@@ -2,7 +2,7 @@ import { type InventoryRow } from "@/hooks/usePantry";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { MapPin, Package, PackageOpen } from "lucide-react";
+import { MapPin, Package, PackageOpen, AlertTriangle } from "lucide-react";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 
 interface Props {
@@ -53,6 +53,16 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
           <span className="absolute top-2.5 left-2.5 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-1">
             <PackageOpen className="h-3 w-3" />
             Opened
+          </span>
+        )}
+        {/* No confirmed storage location — expiry estimates are unreliable until set */}
+        {!entry.storage_location && (
+          <span
+            className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground shadow-sm"
+            title="No storage location set — confirm it for an accurate expiry estimate"
+          >
+            <AlertTriangle className="h-3 w-3" />
+            Set storage
           </span>
         )}
       </div>
