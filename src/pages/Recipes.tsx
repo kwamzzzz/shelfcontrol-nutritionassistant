@@ -18,19 +18,9 @@ import {
 import { BookOpen, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_RECIPES } from "@/data/cookbookMockData";
+import { DEFAULT_TAGS } from "@/components/recipes/RecipeTagEditor";
 
-const CATEGORIES = [
-  "All Recipes",
-  "Favourites",
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  "Soups",
-  "Salads",
-  "Sides",
-  "Desserts",
-  "Quick & Easy",
-];
+const SPECIAL_CATEGORIES = ["All Recipes", "Favourites"];
 
 const FAV_KEY = "cookbook.favorites.v1";
 
@@ -59,6 +49,16 @@ const Recipes = () => {
     });
   };
 
+  const knownTags = useMemo(() => {
+    const set = new Set<string>(DEFAULT_TAGS);
+    for (const r of recipes ?? []) {
+      for (const t of ((r as any).tags as string[] | null) ?? []) set.add(t);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [recipes]);
+
+  const categories = useMemo(() => [...SPECIAL_CATEGORIES, ...knownTags], [knownTags]);
+
   const filtered = useMemo(() => {
     let list = recipes ?? [];
     if (query.trim()) {
@@ -71,6 +71,8 @@ const Recipes = () => {
     }
     if (category === "Favourites") {
       list = list.filter((r) => favorites.has(r.id));
+    } else if (category !== "All Recipes") {
+      list = list.filter((r) => (((r as any).tags as string[] | null) ?? []).includes(category));
     }
     const sorted = [...list];
     if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -133,7 +135,7 @@ const Recipes = () => {
 
       {/* Category chips */}
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <button
             key={c}
             onClick={() => setCategory(c)}
@@ -199,6 +201,7 @@ const Recipes = () => {
               favorite={favorites.has(recipe.id)}
               onToggleFavorite={() => toggleFavorite(recipe.id)}
               onEdit={() => setEditing(recipe)}
+              knownTags={knownTags}
             />
           ))}
         </div>
