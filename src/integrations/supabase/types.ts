@@ -672,6 +672,7 @@ export type Database = {
           servings: number | null
           sodium_mg_per_serving: number | null
           sugar_g_per_serving: number | null
+          tags: string[]
           user_id: string
         }
         Insert: {
@@ -690,6 +691,7 @@ export type Database = {
           servings?: number | null
           sodium_mg_per_serving?: number | null
           sugar_g_per_serving?: number | null
+          tags?: string[]
           user_id: string
         }
         Update: {
@@ -708,6 +710,7 @@ export type Database = {
           servings?: number | null
           sodium_mg_per_serving?: number | null
           sugar_g_per_serving?: number | null
+          tags?: string[]
           user_id?: string
         }
         Relationships: []

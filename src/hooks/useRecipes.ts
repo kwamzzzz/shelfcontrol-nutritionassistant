@@ -160,6 +160,20 @@ export const useRemoveRecipeIngredient = () => {
   });
 };
 
+export const useUpdateRecipeTags = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; tags: string[] }) => {
+      const { error } = await supabase
+        .from("recipes")
+        .update({ tags: input.tags } as any)
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["recipes"] }),
+  });
+};
+
 /**
  * Cook a recipe:
  * 1. Create a consumption_log row per ingredient
