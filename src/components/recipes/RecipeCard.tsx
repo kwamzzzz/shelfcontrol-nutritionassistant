@@ -89,7 +89,7 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
     <>
       <div
         onClick={() => navigate(`/recipes/${recipe.id}`)}
-        className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 cursor-pointer focus-within:ring-2 focus-within:ring-primary/40"
+        className="group relative flex flex-row sm:flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 cursor-pointer focus-within:ring-2 focus-within:ring-primary/40"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -99,7 +99,7 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
           }
         }}
       >
-        <div className="relative aspect-square w-full overflow-hidden bg-muted">
+        <div className="relative h-full w-2/5 sm:h-auto sm:w-full sm:aspect-[4/3] lg:aspect-square overflow-hidden bg-muted shrink-0">
           {recipe.image_url ? (
             <img
               src={recipe.image_url}
