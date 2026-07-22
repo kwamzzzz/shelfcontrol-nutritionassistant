@@ -15,16 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  BookOpen,
-  Search,
-  Sparkles,
-  ArrowRight,
-  ImageIcon,
-  Users,
-  UtensilsCrossed,
-  Heart,
-} from "lucide-react";
+import { BookOpen, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_RECIPES } from "@/data/cookbookMockData";
 
@@ -216,79 +207,6 @@ const Recipes = () => {
       {editing && (
         <EditRecipeDialog recipe={editing} open={!!editing} onClose={() => setEditing(null)} />
       )}
-    </div>
-  );
-};
-
-const FeaturedCard = ({
-  recipe,
-  favorite,
-  onToggleFavorite,
-}: {
-  recipe: RecipeWithIngredients;
-  favorite: boolean;
-  onToggleFavorite: () => void;
-}) => {
-  const ingCount = recipe.recipe_ingredients?.length ?? 0;
-  return (
-    <div className="grid grid-cols-1 gap-0 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm md:grid-cols-[1.15fr_1fr]">
-      <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[280px]">
-        {recipe.image_url ? (
-          <img
-            src={recipe.image_url}
-            alt={recipe.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/25 text-primary/50">
-            <ImageIcon className="h-14 w-14" />
-          </div>
-        )}
-        <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1 text-xs font-medium text-primary backdrop-blur">
-          <Sparkles className="h-3.5 w-3.5" /> Featured
-        </div>
-        <button
-          onClick={onToggleFavorite}
-          aria-label={favorite ? "Unfavorite" : "Favorite"}
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-background/85 backdrop-blur shadow-sm hover:bg-background transition-colors"
-        >
-          <Heart className={cn("h-4 w-4", favorite ? "fill-rose-500 text-rose-500" : "text-muted-foreground")} />
-        </button>
-      </div>
-
-      <div className="flex flex-col justify-between gap-6 p-6 md:p-8">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">From your cookbook</p>
-          <h2 className="mt-2 font-serif text-2xl md:text-3xl leading-tight text-foreground">
-            {recipe.name}
-          </h2>
-          {recipe.instructions && (
-            <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
-              {recipe.instructions.split("\n")[0]}
-            </p>
-          )}
-
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            {recipe.servings ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Users className="h-4 w-4" /> {recipe.servings} serving{recipe.servings !== 1 ? "s" : ""}
-              </span>
-            ) : null}
-            <span className="inline-flex items-center gap-1.5">
-              <UtensilsCrossed className="h-4 w-4" /> {ingCount} ingredient{ingCount !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-
-        <div>
-          <Link to={`/recipes/${recipe.id}`}>
-            <Button className="group">
-              View recipe
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Button>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 };
