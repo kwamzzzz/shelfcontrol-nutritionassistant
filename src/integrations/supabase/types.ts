@@ -657,30 +657,57 @@ export type Database = {
       }
       recipes: {
         Row: {
+          calories_per_serving: number | null
+          carbs_g_per_serving: number | null
           created_at: string
+          fat_g_per_serving: number | null
+          fiber_g_per_serving: number | null
           id: string
           image_url: string | null
           instructions: string | null
           name: string
+          nutrition_calculated_at: string | null
+          nutrition_notes: string | null
+          protein_g_per_serving: number | null
           servings: number | null
+          sodium_mg_per_serving: number | null
+          sugar_g_per_serving: number | null
           user_id: string
         }
         Insert: {
+          calories_per_serving?: number | null
+          carbs_g_per_serving?: number | null
           created_at?: string
+          fat_g_per_serving?: number | null
+          fiber_g_per_serving?: number | null
           id?: string
           image_url?: string | null
           instructions?: string | null
           name: string
+          nutrition_calculated_at?: string | null
+          nutrition_notes?: string | null
+          protein_g_per_serving?: number | null
           servings?: number | null
+          sodium_mg_per_serving?: number | null
+          sugar_g_per_serving?: number | null
           user_id: string
         }
         Update: {
+          calories_per_serving?: number | null
+          carbs_g_per_serving?: number | null
           created_at?: string
+          fat_g_per_serving?: number | null
+          fiber_g_per_serving?: number | null
           id?: string
           image_url?: string | null
           instructions?: string | null
           name?: string
+          nutrition_calculated_at?: string | null
+          nutrition_notes?: string | null
+          protein_g_per_serving?: number | null
           servings?: number | null
+          sodium_mg_per_serving?: number | null
+          sugar_g_per_serving?: number | null
           user_id?: string
         }
         Relationships: []
