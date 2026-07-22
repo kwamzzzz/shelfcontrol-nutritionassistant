@@ -81,19 +81,18 @@ const RecipeHero = ({ recipe, servings, favorite, onToggleFavorite, onEditImage 
             })}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {recipe.tags.map((t) => (
-              <span
-                key={t}
-                className="px-3 py-1 rounded-full text-xs border border-border/60 text-foreground/80 bg-background/40"
-              >
-                {t}
-              </span>
-            ))}
-            <button className="px-3 py-1 rounded-full text-xs border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              …
-            </button>
-          </div>
+          {recipe.tags.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {recipe.tags.map((t) => (
+                <span
+                  key={t}
+                  className="px-3 py-1 rounded-full text-xs border border-border/60 text-foreground/80 bg-background/40"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
