@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -65,6 +65,8 @@ const RecipeDetail = () => {
   const [savingNutrition, setSavingNutrition] = useState(false);
   const [savingSteps, setSavingSteps] = useState(false);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recipe = useMemo<MockRecipe | null>(() => {
     const dbMatch = recipes?.find((r) => r.id === id);
     if (dbMatch) return adaptRecipe(dbMatch);
@@ -81,6 +83,52 @@ const RecipeDetail = () => {
   }, [recipe?.id, recipe?.servings]);
 
   const notImpl = (label: string) => () => toast.info(`${label} — coming soon`);
+
+  const handleEditImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !recipe) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("You must be signed in to upload images");
+
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("item-images")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("item-images").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+
+      const { error: updErr } = await supabase
+        .from("recipes")
+        .update({ image_url: publicUrl })
+        .eq("id", recipe.id);
+      if (updErr) throw updErr;
+
+      await qc.invalidateQueries({ queryKey: ["recipes"] });
+      toast.success("Recipe image updated");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not upload image");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleCalculateNutrition = async () => {
     if (!recipe) return;
@@ -174,7 +222,15 @@ const RecipeDetail = () => {
           servings={servings}
           favorite={favorite}
           onToggleFavorite={() => setFavorite((f) => !f)}
-          onEditImage={notImpl("Edit image")}
+          onEditImage={handleEditImage}
+          uploadingImage={uploadingImage}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageChange}
         />
 
         <div className="flex flex-wrap gap-2">
