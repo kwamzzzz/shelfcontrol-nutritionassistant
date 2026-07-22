@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BookOpen, Search, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { MOCK_RECIPES } from "@/data/cookbookMockData";
 
 const CATEGORIES = [
