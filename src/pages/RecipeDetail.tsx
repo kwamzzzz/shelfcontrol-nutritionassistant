@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import RecipeBreadcrumb from "@/components/cookbook/RecipeBreadcrumb";
@@ -10,20 +10,63 @@ import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
 import RelatedRecipes from "@/components/cookbook/RelatedRecipes";
 import StepByStepMode from "@/components/cookbook/StepByStepMode";
-import { MOCK_RECIPES } from "@/data/cookbookMockData";
+import { MOCK_RECIPES, type MockRecipe } from "@/data/cookbookMockData";
+import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
 
 const TOTAL_RECIPES = 42;
 const CURRENT_INDEX = 1;
 
+function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
+  const rawInstr = (r.instructions ?? "").trim();
+  const steps = rawInstr
+    ? rawInstr
+        .split(/\n+/)
+        .map((s) => s.replace(/^\s*\d+[\.\)]\s*/, "").trim())
+        .filter(Boolean)
+    : ["No instructions yet."];
+  const servings = r.servings ?? 1;
+  return {
+    id: r.id,
+    title: r.name,
+    description: steps[0] ?? "",
+    image:
+      r.image_url ||
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1400&q=80",
+    prepMins: 10,
+    cookMins: 20,
+    servings,
+    caloriesPerServing: 0,
+    tags: [],
+    ingredients: (r.recipe_ingredients ?? []).map((ing, i) => ({
+      id: ing.id ?? `ing-${i}`,
+      name: ing.items?.name ?? "Ingredient",
+      quantity: ing.quantity ?? null,
+      unit: ing.unit ?? "",
+    })),
+    instructions: steps,
+    nutrition: { calories: 0, carbs: 0, protein: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 },
+  };
+}
+
 const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const recipe = useMemo(() => MOCK_RECIPES.find((r) => r.id === id) ?? MOCK_RECIPES[0], [id]);
+  const { data: recipes, isLoading } = useRecipes();
+  const recipe = useMemo<MockRecipe | null>(() => {
+    const dbMatch = recipes?.find((r) => r.id === id);
+    if (dbMatch) return adaptRecipe(dbMatch);
+    const mock = MOCK_RECIPES.find((r) => r.id === id);
+    return mock ?? null;
+  }, [recipes, id]);
 
   const [active, setActive] = useState<SectionKey>("overview");
-  const [servings, setServings] = useState(recipe.servings);
+  const [servings, setServings] = useState(recipe?.servings ?? 1);
   const [favorite, setFavorite] = useState(false);
   const [stepMode, setStepMode] = useState(false);
+
+  useEffect(() => {
+    if (recipe) setServings(recipe.servings);
+  }, [recipe?.id, recipe?.servings]);
 
   const scrollTo = (k: SectionKey) => {
     setActive(k);
@@ -32,6 +75,14 @@ const RecipeDetail = () => {
   };
 
   const notImpl = (label: string) => () => toast.info(`${label} — coming soon`);
+
+  if (!recipe) {
+    return (
+      <div className="p-8 text-sm text-muted-foreground">
+        {isLoading ? "Loading recipe…" : "Recipe not found."}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
