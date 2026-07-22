@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { MockRecipe } from "@/data/cookbookMockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,11 @@ interface Props {
 
 const NutritionCard = ({ nutrition, servings, onFull }: Props) => {
   const [mode, setMode] = useState<"per-serving" | "total">("per-serving");
+  const hasData =
+    nutrition.calories > 0 ||
+    nutrition.carbs > 0 ||
+    nutrition.protein > 0 ||
+    nutrition.fat > 0;
   const factor = mode === "total" ? servings : 1;
   const values = useMemo(
     () => ({
@@ -39,6 +44,29 @@ const NutritionCard = ({ nutrition, servings, onFull }: Props) => {
     ["Sugar", `${values.sugar} g`],
     ["Sodium", `${values.sodium} mg`],
   ];
+
+  if (!hasData) {
+    return (
+      <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
+        <h3 className="font-medium text-foreground">Nutrition</h3>
+        <div className="mt-6 flex flex-col items-center justify-center text-center py-8">
+          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Sparkles className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-medium text-foreground">Nutrition not calculated</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+            Estimate macros and calories for this recipe.
+          </p>
+          <button
+            onClick={onFull}
+            className="mt-4 rounded-full bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors"
+          >
+            Calculate Nutrition
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">

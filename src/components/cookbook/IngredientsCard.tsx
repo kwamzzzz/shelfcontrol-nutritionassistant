@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Check, Minus, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatQuantity, type Ingredient } from "@/data/cookbookMockData";
 
@@ -9,10 +8,9 @@ interface Props {
   baseServings: number;
   servings: number;
   onServingsChange: (n: number) => void;
-  onAddToShopping: () => void;
 }
 
-const IngredientsCard = ({ ingredients, baseServings, servings, onServingsChange, onAddToShopping }: Props) => {
+const IngredientsCard = ({ ingredients, baseServings, servings, onServingsChange }: Props) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const scale = servings / baseServings;
 
@@ -64,10 +62,7 @@ const IngredientsCard = ({ ingredients, baseServings, servings, onServingsChange
         })}
       </ul>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 justify-between">
-        <Button variant="outline" size="sm" onClick={onAddToShopping} className="gap-2 rounded-full">
-          <Plus className="h-3.5 w-3.5" /> Add Ingredient
-        </Button>
+      <div className="mt-5 flex flex-wrap items-center gap-2 justify-end">
         <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/50 px-2 py-1">
           <span className="text-xs text-muted-foreground pl-2">Servings</span>
           <button
