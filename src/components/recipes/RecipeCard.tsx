@@ -96,7 +96,7 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite }: Props) => {
           }
         }}
       >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+        <div className="relative aspect-square w-full overflow-hidden bg-muted">
           {recipe.image_url ? (
             <img
               src={recipe.image_url}
