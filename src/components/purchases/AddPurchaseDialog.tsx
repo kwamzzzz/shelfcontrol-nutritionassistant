@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ShoppingBag, Sparkles, Camera, Loader2, ScanLine } from "lucide-react";
+import { Plus, ShoppingBag, Sparkles, Camera, Loader2, ScanLine, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -108,14 +108,15 @@ const AddPurchaseDialog = () => {
     }
     const totalCost = lineItems.reduce((s, l) => s + (l.line_total ?? 0), 0);
     try {
-      await createPurchase.mutateAsync({
+      const result = await createPurchase.mutateAsync({
         store_name: storeName || null,
         purchased_at: purchasedAt ? new Date(purchasedAt).toISOString() : new Date().toISOString(),
         notes: notes || null,
         total_cost: totalCost || null,
         line_items: lineItems,
       });
-      toast({ title: "Purchase recorded", description: `${lineItems.length} item(s) logged.` });
+      const n = (result as { pantryAdded?: number })?.pantryAdded ?? lineItems.length;
+      toast({ title: "Purchase saved", description: `${n} item${n !== 1 ? "s" : ""} added to your Pantry.` });
       reset();
       setOpen(false);
     } catch (err: any) {
@@ -158,6 +159,10 @@ const AddPurchaseDialog = () => {
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="General notes for this trip…" className="h-14 max-h-28 resize-y" />
           </div>
         </div>
+
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Package className="h-3.5 w-3.5 shrink-0 text-primary" /> Every item is added to your Pantry automatically on save.
+        </p>
 
         {inReview ? (
           <div className="mt-4">

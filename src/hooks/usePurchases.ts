@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import type { ItemOverrides } from "@/components/purchases/ItemDetailsSection";
+import { classifyFood, recommendStorage, estimateShelfLifeDays, estimateExpiryDate, type StorageLocation } from "@/lib/shelf-life";
 
 export type Purchase = Tables<"purchases">;
 export type PurchaseItem = Tables<"purchase_items"> & { items: Tables<"items"> };
@@ -154,6 +155,84 @@ const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
   }
 };
 
+/**
+ * Auto-add every purchased line to the active pantry. Each pantry entry inherits
+ * quantity/unit/expiry from the line, plus a suggested storage location and an
+ * estimated shelf life from the shelf-life engine. Lines that match an existing
+ * pantry batch (same item + storage + condition + expiry) increment its quantity;
+ * anything that differs becomes a separate batch — never a silent overwrite.
+ * Returns the number of purchased items added.
+ */
+const autoAddToPantry = async (
+  resolved: NewPurchaseLineItem[],
+  purchaseId: string,
+  purchasedAt: string,
+  userId: string,
+  groupId: string | null,
+): Promise<number> => {
+  const itemIds = [...new Set(resolved.map((li) => li.item_id!).filter(Boolean))];
+  if (itemIds.length === 0) return 0;
+
+  const { data: catalog } = await supabase.from("items").select("id, name, category").in("id", itemIds);
+  const catMap = new Map((catalog ?? []).map((c) => [c.id, { name: c.name, category: c.category }]));
+
+  let invQuery = supabase.from("inventory").select("id, item_id, quantity, storage_location, sealed_status, expiry_date");
+  invQuery = groupId ? invQuery.eq("group_id", groupId) : invQuery.is("group_id", null);
+  const { data: existing } = await invQuery;
+
+  const keyOf = (itemId: string, loc: string | null, sealed: string, expiry: string | null) =>
+    `${itemId}|${loc ?? ""}|${sealed}|${expiry ?? ""}`;
+  const existingMap = new Map((existing ?? []).map((r) => [
+    keyOf(r.item_id, r.storage_location, r.sealed_status ?? "sealed", r.expiry_date),
+    { id: r.id, quantity: Number(r.quantity) },
+  ]));
+
+  // Compute pantry attributes per line, aggregating identical lines within this purchase.
+  const agg = new Map<string, { item_id: string; unit: string; storage: string | null; sealed: string; expiry: string | null; quantity: number }>();
+  for (const li of resolved) {
+    const id = li.item_id!;
+    const info = catMap.get(id);
+    const cls = classifyFood(info?.name, info?.category);
+    const sealed = li.sealed_status || "sealed";
+    const rec = recommendStorage(cls.type);
+    const storage = li.storage_location || (rec.confidence === "high" && rec.location ? rec.location : null);
+    let expiry = li.expiry_date || null;
+    if (!expiry && storage) {
+      const days = estimateShelfLifeDays(cls.type, storage as StorageLocation, sealed as "sealed" | "opened");
+      if (days != null) expiry = estimateExpiryDate(purchasedAt, days);
+    }
+    const k = keyOf(id, storage, sealed, expiry);
+    const cur = agg.get(k);
+    if (cur) cur.quantity += li.quantity;
+    else agg.set(k, { item_id: id, unit: li.unit, storage, sealed, expiry, quantity: li.quantity });
+  }
+
+  const inserts: TablesInsert<"inventory">[] = [];
+  for (const [k, a] of agg) {
+    const match = existingMap.get(k);
+    if (match) {
+      await supabase.from("inventory").update({ quantity: match.quantity + a.quantity }).eq("id", match.id);
+    } else {
+      inserts.push({
+        user_id: userId,
+        item_id: a.item_id,
+        quantity: a.quantity,
+        unit: a.unit,
+        storage_location: a.storage,
+        expiry_date: a.expiry,
+        sealed_status: a.sealed,
+        purchase_id: purchaseId,
+        group_id: groupId,
+      });
+    }
+  }
+  if (inserts.length > 0) {
+    const { error } = await supabase.from("inventory").insert(inserts);
+    if (error) throw error;
+  }
+  return resolved.length;
+};
+
 export const useCreatePurchase = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -181,30 +260,18 @@ export const useCreatePurchase = () => {
       if (pErr) throw pErr;
 
       const resolved = (await resolveItemIds(input.line_items, user!.id)).filter((li) => li.item_id);
+      let pantryAdded = 0;
       if (resolved.length > 0) {
         const lineRows = resolved.map((li) => buildLineRow(li, user!.id, purchase.id));
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        const restockItems = resolved.filter((li) => li.restock);
-        if (restockItems.length > 0) {
-          const inventoryRows = restockItems.map((li) => ({
-            user_id: user!.id,
-            item_id: li.item_id!,
-            quantity: li.quantity,
-            unit: li.unit,
-            storage_location: li.storage_location || null,
-            expiry_date: li.expiry_date || null,
-            purchase_id: purchase.id,
-            group_id: activeGroupId,
-          }));
-          const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
-          if (invErr) throw invErr;
-        }
+        // Every purchased item is added to the active pantry automatically.
+        pantryAdded = await autoAddToPantry(resolved, purchase.id, input.purchased_at, user!.id, activeGroupId);
         await updateItemOverrides(resolved);
       }
 
-      return purchase;
+      return { ...purchase, pantryAdded };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });
@@ -250,22 +317,8 @@ export const useUpdatePurchase = () => {
         const { error: liErr } = await supabase.from("purchase_items").insert(lineRows);
         if (liErr) throw liErr;
 
-        const restockItems = resolved.filter((li) => li.restock);
-        if (restockItems.length > 0) {
-          const inventoryRows = restockItems.map((li) => ({
-            user_id: user!.id,
-            item_id: li.item_id!,
-            quantity: li.quantity,
-            unit: li.unit,
-            storage_location: li.storage_location || null,
-            expiry_date: li.expiry_date || null,
-            purchase_id: input.id,
-            group_id: activeGroupId,
-          }));
-          const { error: invErr } = await supabase.from("inventory").insert(inventoryRows);
-          if (invErr) throw invErr;
-        }
-
+        // Re-sync the pantry for this purchase (inventory was cleared above).
+        await autoAddToPantry(resolved, input.id, input.purchased_at, user!.id, activeGroupId);
         await updateItemOverrides(resolved);
       }
     },

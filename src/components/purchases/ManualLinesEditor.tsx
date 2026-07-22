@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { STORAGE_LOCATIONS, SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
+import { SEALED_STATUS_OPTIONS } from "@/lib/pantry-utils";
 import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -179,21 +178,6 @@ const ManualLinesEditor = ({ lines, setLines }: Props) => {
               onChange={(patch) => updateLine(idx, { itemOverrides: { ...(line.itemOverrides ?? {}), ...patch } })}
             />
           )}
-
-          <div className="flex items-center gap-2 pt-1">
-            <Checkbox id={`restock-${idx}`} checked={line.restock} onCheckedChange={(v) => updateLine(idx, { restock: !!v })} />
-            <label htmlFor={`restock-${idx}`} className="text-xs text-muted-foreground cursor-pointer">Add to pantry inventory</label>
-            {line.restock && (
-              <Select value={line.storage_location ?? ""} onValueChange={(v) => updateLine(idx, { storage_location: v })}>
-                <SelectTrigger className="h-7 w-28 text-xs ml-auto"><SelectValue placeholder="Location" /></SelectTrigger>
-                <SelectContent>
-                  {STORAGE_LOCATIONS.map((l) => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
         </div>
       ))}
 

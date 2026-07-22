@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { format, parseISO } from "date-fns";
 import { useInventory, useUpdateInventory, type InventoryRow } from "@/hooks/usePantry";
 import {
   classifyFood, estimateShelfLifeDays, recommendStorage, estimateExpiryDate,
@@ -27,45 +26,46 @@ const ShelfLifeRow = ({ entry }: { entry: InventoryRow }) => {
   const rec = recommendStorage(cls.type);
 
   const [location, setLocation] = useState<StorageLocation | "">((entry.storage_location as StorageLocation) ?? "");
-  const [days, setDays] = useState<number | null>(() => {
-    if (entry.expiry_date && entry.added_at) return Math.max(0, daysFromDates(entry.added_at, entry.expiry_date));
-    if (entry.storage_location && entry.storage_location !== "Other")
-      return estimateShelfLifeDays(cls.type, entry.storage_location as StorageLocation, sealed);
-    return null;
-  });
+  // Expiry (best-before date) is the single source of truth; shelf-life days derive from it.
+  const [expiry, setExpiry] = useState<string>(entry.expiry_date ?? "");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => () => clearTimeout(saveTimer.current), []); // cancel pending write on unmount
 
-  const persist = (loc: StorageLocation | "", d: number | null) => {
-    const updates: Record<string, unknown> = { id: entry.id };
-    if (loc) updates.storage_location = loc;
-    if (d != null && loc && loc !== "Other" && entry.added_at) {
-      updates.expiry_date = estimateExpiryDate(entry.added_at, d);
-    }
-    updateInventory.mutate(updates as never);
-  };
+  const days = expiry && entry.added_at ? daysFromDates(entry.added_at, expiry) : null;
+  const persist = (patch: Record<string, unknown>) => updateInventory.mutate({ id: entry.id, ...patch } as never);
 
   // Changing the storage location immediately recalculates the shelf life.
   const applyLocation = (loc: StorageLocation) => {
-    clearTimeout(saveTimer.current); // cancel any pending ± write so it can't clobber this
+    clearTimeout(saveTimer.current);
     setLocation(loc);
     const est = loc !== "Other" ? estimateShelfLifeDays(cls.type, loc, sealed) : null;
-    const nextDays = est ?? days; // unknown foods keep any existing value
-    setDays(nextDays);
-    persist(loc, est); // only write a fresh expiry when we actually have an estimate
+    if (est != null && entry.added_at) {
+      const exp = estimateExpiryDate(entry.added_at, est);
+      setExpiry(exp);
+      persist({ storage_location: loc, expiry_date: exp });
+    } else {
+      persist({ storage_location: loc });
+    }
   };
 
+  // ± fine-tunes the estimate by a day (debounced save).
   const adjust = (delta: number) => {
-    if (days == null || !location || location === "Other") return;
-    const nd = Math.max(0, days + delta);
-    setDays(nd);
+    if (!entry.added_at) return;
+    const base = days ?? (location && location !== "Other" ? estimateShelfLifeDays(cls.type, location as StorageLocation, sealed) ?? 0 : 0);
+    const exp = estimateExpiryDate(entry.added_at, Math.max(0, base + delta));
+    setExpiry(exp);
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => persist(location, nd), 600);
+    saveTimer.current = setTimeout(() => persist({ expiry_date: exp }), 600);
   };
 
-  const status = getExpiryStatus(entry.expiry_date);
-  const preview = days != null && location && location !== "Other" && entry.added_at
-    ? estimateExpiryDate(entry.added_at, days) : null;
+  // Fast path: type/pick a best-before date directly.
+  const setBestBefore = (val: string) => {
+    clearTimeout(saveTimer.current);
+    setExpiry(val);
+    persist({ expiry_date: val || null });
+  };
+
+  const status = getExpiryStatus(expiry || null);
   const needsLocation = !location;
 
   return (
@@ -85,13 +85,13 @@ const ShelfLifeRow = ({ entry }: { entry: InventoryRow }) => {
           </p>
         </div>
         <Badge className={cn("shrink-0 border-0 text-[11px] font-medium", statusColor[status])}>
-          {getExpiryLabel(entry.expiry_date)}
+          {getExpiryLabel(expiry || null)}
         </Badge>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={location || undefined} onValueChange={(v) => applyLocation(v as StorageLocation)}>
-          <SelectTrigger className={cn("h-8 w-[130px] text-sm", needsLocation && "border-warning/50")}>
+          <SelectTrigger className={cn("h-8 w-[124px] text-sm", needsLocation && "border-warning/50")}>
             <SelectValue placeholder="Select location" />
           </SelectTrigger>
           <SelectContent>
@@ -111,25 +111,25 @@ const ShelfLifeRow = ({ entry }: { entry: InventoryRow }) => {
           </Button>
         )}
 
-        {location && location !== "Other" && days != null ? (
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Shelf life</span>
-            <button type="button" onClick={() => adjust(-1)} className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-secondary disabled:opacity-40" disabled={days <= 0}>
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-            <span className="min-w-[3.5rem] text-center text-sm font-semibold tabular-nums">{days} day{days !== 1 ? "s" : ""}</span>
-            <button type="button" onClick={() => adjust(1)} className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-secondary">
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-            {preview && <span className="ml-1 text-xs text-muted-foreground">→ {format(parseISO(preview), "MMM d")}</span>}
-          </div>
-        ) : (
-          <span className="ml-auto text-xs text-muted-foreground">
-            {needsLocation
-              ? (rec.confidence !== "high" ? "Pick a storage location to estimate expiry" : "")
-              : location === "Other" ? "No estimate for “Other”" : "No auto-estimate — set expiry in edit"}
+        <div className="ml-auto flex items-center gap-1.5">
+          {/* Fast best-before entry — type a date instead of clicking ± */}
+          <input
+            type="date"
+            value={expiry}
+            onChange={(e) => setBestBefore(e.target.value)}
+            title="Best before date"
+            className="h-8 rounded-md border border-input bg-background/60 px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <button type="button" onClick={() => adjust(-1)} disabled={!entry.added_at} className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-secondary disabled:opacity-40" aria-label="One day less">
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <span className="min-w-[2.75rem] text-center text-xs font-semibold tabular-nums text-muted-foreground">
+            {days != null ? `${days}d` : "—"}
           </span>
-        )}
+          <button type="button" onClick={() => adjust(1)} disabled={!entry.added_at} className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-secondary disabled:opacity-40" aria-label="One day more">
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );
