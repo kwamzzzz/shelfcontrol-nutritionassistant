@@ -4,7 +4,9 @@ import AddRecipeDialog from "@/components/recipes/AddRecipeDialog";
 import EditRecipeDialog from "@/components/recipes/EditRecipeDialog";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import RecipeImportDialog from "@/components/recipes/RecipeImportDialog";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { MOCK_RECIPES } from "@/data/cookbookMockData";
 
 const Recipes = () => {
   const { data: recipes, isLoading } = useRecipes();
@@ -20,6 +22,12 @@ const Recipes = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            to={`/recipes/${MOCK_RECIPES[0].id}`}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm text-primary hover:bg-primary/15 transition-colors"
+          >
+            <Sparkles className="h-4 w-4" /> View sample cookbook page
+          </Link>
           <RecipeImportDialog />
           <AddRecipeDialog />
         </div>

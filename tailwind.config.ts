@@ -16,6 +16,7 @@ export default {
       sans: ['"Inter"', 'system-ui', 'sans-serif'],
       display: ['"Inter"', 'system-ui', 'sans-serif'],
       analytics: ['"Inter"', 'system-ui', 'sans-serif'],
+      serif: ['"Fraunces"', '"Playfair Display"', 'ui-serif', 'Georgia', 'serif'],
     },
     extend: {
       colors: {

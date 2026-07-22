@@ -12,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Pantry from "@/pages/Pantry";
 import ShoppingList from "@/pages/ShoppingList";
 import Recipes from "@/pages/Recipes";
+import RecipeDetail from "@/pages/RecipeDetail";
 import Consumption from "@/pages/Consumption";
 import Analytics from "@/pages/Analytics";
 import Purchases from "@/pages/Purchases";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/shopping" element={<ShoppingList />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/recipes" element={<Recipes />} />
+            <Route path="/recipes/:id" element={<RecipeDetail />} />
             <Route path="/consumption" element={<Consumption />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/intelligence" element={<Intelligence />} />
