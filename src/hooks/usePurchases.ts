@@ -176,7 +176,7 @@ const autoAddToPantry = async (
   const { data: catalog } = await supabase.from("items").select("id, name, category").in("id", itemIds);
   const catMap = new Map((catalog ?? []).map((c) => [c.id, { name: c.name, category: c.category }]));
 
-  let invQuery = supabase.from("inventory").select("id, item_id, quantity, storage_location, sealed_status, expiry_date");
+  let invQuery = supabase.from("inventory").select("id, item_id, quantity, storage_location, sealed_status, expiry_date").eq("status", "active");
   invQuery = groupId ? invQuery.eq("group_id", groupId) : invQuery.is("group_id", null);
   const { data: existing } = await invQuery;
 

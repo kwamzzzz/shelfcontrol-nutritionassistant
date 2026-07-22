@@ -10,6 +10,8 @@ import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
+import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
+import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
 import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
@@ -123,7 +125,9 @@ const Pantry = () => {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <PantryStatsDialog />
+          <PantryCleanupDialog />
           <ShelfLifeManager />
           <AddInventoryDialog />
         </div>

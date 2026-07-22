@@ -77,6 +77,7 @@ export const useInventory = () => {
       let query = supabase
         .from("inventory")
         .select("*, items(*)")
+        .eq("status", "active") // archived/consumed/discarded items leave the active pantry view
         .order("added_at", { ascending: false });
 
       if (activeGroupId) {
@@ -88,6 +89,67 @@ export const useInventory = () => {
       const { data, error } = await query;
       if (error) throw error;
       return data as InventoryRow[];
+    },
+    enabled: !!user,
+  });
+};
+
+/**
+ * Archive a set of active inventory rows (bulk pantry cleanup). Items are marked
+ * with a status + a shared cleanup_batch (so the whole batch can be undone) and
+ * disappear from the active pantry — but rows, images, catalogue and purchase
+ * history are preserved.
+ */
+export const useArchiveInventory = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      ids, batch, status = "archived", reason = "pantry cleanup",
+    }: { ids: string[]; batch: string; status?: string; reason?: string }) => {
+      if (ids.length === 0) return;
+      const { error } = await supabase
+        .from("inventory")
+        .update({ status, archived_at: new Date().toISOString(), archive_reason: reason, cleanup_batch: batch })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory-all"] });
+    },
+  });
+};
+
+/** Restore every item archived in a given cleanup batch back to the active pantry. */
+export const useUndoCleanup = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (batch: string) => {
+      const { error } = await supabase
+        .from("inventory")
+        .update({ status: "active", archived_at: null, archive_reason: null, cleanup_batch: null })
+        .eq("cleanup_batch", batch);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["inventory-all"] });
+    },
+  });
+};
+
+/** All inventory rows incl. archived/consumed/discarded (with purchase date) — for statistics. */
+export const useAllInventory = () => {
+  const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
+  return useQuery({
+    queryKey: ["inventory-all", user?.id, activeGroupId],
+    queryFn: async () => {
+      let query = supabase.from("inventory").select("*, items(*), purchases(purchased_at)");
+      query = activeGroupId ? query.eq("group_id", activeGroupId) : query.is("group_id", null);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as (InventoryRow & { purchases: { purchased_at: string } | null })[];
     },
     enabled: !!user,
   });
