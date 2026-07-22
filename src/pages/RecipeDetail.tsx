@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import RecipeBreadcrumb from "@/components/cookbook/RecipeBreadcrumb";
@@ -63,6 +63,10 @@ const RecipeDetail = () => {
   const [servings, setServings] = useState(recipe?.servings ?? 1);
   const [favorite, setFavorite] = useState(false);
   const [stepMode, setStepMode] = useState(false);
+
+  useEffect(() => {
+    if (recipe) setServings(recipe.servings);
+  }, [recipe?.id, recipe?.servings]);
 
   const scrollTo = (k: SectionKey) => {
     setActive(k);
