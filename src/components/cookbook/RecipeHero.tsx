@@ -1,4 +1,4 @@
-import { Heart, Pencil, Timer, Flame, Users, Zap } from "lucide-react";
+import { Heart, Pencil, Timer, Flame, Users, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MockRecipe } from "@/data/cookbookMockData";
 
@@ -8,9 +8,10 @@ interface Props {
   favorite: boolean;
   onToggleFavorite: () => void;
   onEditImage: () => void;
+  uploadingImage?: boolean;
 }
 
-const RecipeHero = ({ recipe, servings, favorite, onToggleFavorite, onEditImage }: Props) => {
+const RecipeHero = ({ recipe, servings, favorite, onToggleFavorite, onEditImage, uploadingImage }: Props) => {
   const stats = [
     { label: "Prep Time", value: `${recipe.prepMins} mins`, icon: Timer },
     { label: "Cook Time", value: `${recipe.cookMins} mins`, icon: Flame },
@@ -29,10 +30,15 @@ const RecipeHero = ({ recipe, servings, favorite, onToggleFavorite, onEditImage 
           />
           <button
             onClick={onEditImage}
-            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center text-foreground hover:bg-background transition-colors"
+            disabled={uploadingImage}
+            className="absolute top-3 right-3 h-9 w-9 rounded-full bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center text-foreground hover:bg-background transition-colors disabled:opacity-70"
             aria-label="Edit image"
           >
-            <Pencil className="h-4 w-4" />
+            {uploadingImage ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Pencil className="h-4 w-4" />
+            )}
           </button>
         </div>
 
