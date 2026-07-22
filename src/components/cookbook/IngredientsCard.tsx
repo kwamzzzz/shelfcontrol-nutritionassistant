@@ -8,9 +8,16 @@ interface Props {
   baseServings: number;
   servings: number;
   onServingsChange: (n: number) => void;
+  onAddIngredient?: () => void;
 }
 
-const IngredientsCard = ({ ingredients, baseServings, servings, onServingsChange }: Props) => {
+const IngredientsCard = ({
+  ingredients,
+  baseServings,
+  servings,
+  onServingsChange,
+  onAddIngredient,
+}: Props) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const scale = servings / baseServings;
 
@@ -23,6 +30,15 @@ const IngredientsCard = ({ ingredients, baseServings, servings, onServingsChange
             {ingredients.length} items
           </span>
         </div>
+        {onAddIngredient && (
+          <button
+            type="button"
+            onClick={onAddIngredient}
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add
+          </button>
+        )}
       </div>
 
       <ul className="mt-4 space-y-1">
