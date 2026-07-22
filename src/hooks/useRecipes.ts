@@ -131,6 +131,35 @@ export const useDeleteRecipe = () => {
   });
 };
 
+export const useAddRecipeIngredient = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { recipe_id: string } & NewIngredientLine) => {
+      const { error } = await supabase.from("recipe_ingredients").insert({
+        user_id: user!.id,
+        recipe_id: input.recipe_id,
+        item_id: input.item_id,
+        quantity: input.quantity,
+        unit: input.unit,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["recipes"] }),
+  });
+};
+
+export const useRemoveRecipeIngredient = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("recipe_ingredients").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["recipes"] }),
+  });
+};
+
 /**
  * Cook a recipe:
  * 1. Create a consumption_log row per ingredient
