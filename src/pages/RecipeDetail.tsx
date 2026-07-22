@@ -9,6 +9,7 @@ import IngredientsCard from "@/components/cookbook/IngredientsCard";
 import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
 import StepByStepMode from "@/components/cookbook/StepByStepMode";
+import AddIngredientDialog from "@/components/cookbook/AddIngredientDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, ShoppingCart } from "lucide-react";
 import { MOCK_RECIPES, type MockRecipe } from "@/data/cookbookMockData";
@@ -61,6 +62,7 @@ const RecipeDetail = () => {
   const { data: recipes, isLoading } = useRecipes();
   const qc = useQueryClient();
   const [calculating, setCalculating] = useState(false);
+  const [addIngredientOpen, setAddIngredientOpen] = useState(false);
   const recipe = useMemo<MockRecipe | null>(() => {
     const dbMatch = recipes?.find((r) => r.id === id);
     if (dbMatch) return adaptRecipe(dbMatch);
@@ -153,6 +155,7 @@ const RecipeDetail = () => {
             baseServings={recipe.servings}
             servings={servings}
             onServingsChange={setServings}
+            onAddIngredient={() => setAddIngredientOpen(true)}
           />
           <InstructionsCard steps={recipe.instructions} onOpenStepByStep={() => setStepMode(true)} />
           <NutritionCard
@@ -181,6 +184,12 @@ const RecipeDetail = () => {
         steps={recipe.instructions}
         ingredients={recipe.ingredients}
         servingsScale={servings / recipe.servings}
+      />
+
+      <AddIngredientDialog
+        recipeId={recipe.id}
+        open={addIngredientOpen}
+        onOpenChange={setAddIngredientOpen}
       />
     </div>
   );
