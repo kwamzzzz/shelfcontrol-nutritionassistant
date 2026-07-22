@@ -62,6 +62,7 @@ const RecipeDetail = () => {
   const { data: recipes, isLoading } = useRecipes();
   const qc = useQueryClient();
   const [calculating, setCalculating] = useState(false);
+  const [savingNutrition, setSavingNutrition] = useState(false);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
   const recipe = useMemo<MockRecipe | null>(() => {
     const dbMatch = recipes?.find((r) => r.id === id);
@@ -99,6 +100,32 @@ const RecipeDetail = () => {
       toast.error(e?.message ?? "Could not calculate nutrition");
     } finally {
       setCalculating(false);
+    }
+  };
+
+  const handleSaveNutrition = async (n: MockRecipe["nutrition"]) => {
+    if (!recipe) return;
+    setSavingNutrition(true);
+    try {
+      const { error } = await supabase
+        .from("recipes")
+        .update({
+          calories_per_serving: n.calories,
+          carbs_g_per_serving: n.carbs,
+          protein_g_per_serving: n.protein,
+          fat_g_per_serving: n.fat,
+          fiber_g_per_serving: n.fiber,
+          sugar_g_per_serving: n.sugar,
+          sodium_mg_per_serving: n.sodium,
+        } as any)
+        .eq("id", recipe.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["recipes"] });
+      toast.success("Nutrition updated");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save nutrition");
+    } finally {
+      setSavingNutrition(false);
     }
   };
 
@@ -163,6 +190,8 @@ const RecipeDetail = () => {
             servings={servings}
             onCalculate={handleCalculateNutrition}
             calculating={calculating}
+            onSave={handleSaveNutrition}
+            saving={savingNutrition}
           />
         </div>
 
