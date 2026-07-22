@@ -5,7 +5,10 @@ import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type Item = Tables<"items">;
-export type InventoryRow = Tables<"inventory"> & { items: Item };
+export type InventoryRow = Tables<"inventory"> & {
+  items: Item;
+  purchases?: { purchased_at: string; store_name: string | null } | null;
+};
 
 export const useItems = () => {
   const { user } = useAuth();
@@ -76,7 +79,7 @@ export const useInventory = () => {
     queryFn: async () => {
       let query = supabase
         .from("inventory")
-        .select("*, items(*)")
+        .select("*, items(*), purchases(purchased_at, store_name)")
         .eq("status", "active") // archived/consumed/discarded items leave the active pantry view
         .order("added_at", { ascending: false });
 
@@ -145,11 +148,11 @@ export const useAllInventory = () => {
   return useQuery({
     queryKey: ["inventory-all", user?.id, activeGroupId],
     queryFn: async () => {
-      let query = supabase.from("inventory").select("*, items(*), purchases(purchased_at)");
+      let query = supabase.from("inventory").select("*, items(*), purchases(purchased_at, store_name)");
       query = activeGroupId ? query.eq("group_id", activeGroupId) : query.is("group_id", null);
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as (InventoryRow & { purchases: { purchased_at: string } | null })[];
+      return (data ?? []) as InventoryRow[];
     },
     enabled: !!user,
   });

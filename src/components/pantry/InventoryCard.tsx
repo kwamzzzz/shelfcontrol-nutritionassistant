@@ -3,6 +3,7 @@ import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { MapPin, Package, PackageOpen, AlertTriangle } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 
 interface Props {
@@ -56,13 +57,19 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
           </span>
         )}
         {/* No confirmed storage location — expiry estimates are unreliable until set */}
-        {!entry.storage_location && (
+        {entry.status === "active" && !entry.storage_location && (
           <span
             className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground shadow-sm"
             title="No storage location set — confirm it for an accurate expiry estimate"
           >
             <AlertTriangle className="h-3 w-3" />
             Set storage
+          </span>
+        )}
+        {/* Archived / consumed / discarded status (archived-months view) */}
+        {entry.status && entry.status !== "active" && (
+          <span className="absolute bottom-2.5 right-2.5 rounded-full bg-foreground/85 px-2 py-0.5 text-[0.65rem] font-medium capitalize text-background shadow-sm">
+            {entry.status}
           </span>
         )}
       </div>
@@ -90,6 +97,14 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
             </span>
           )}
         </div>
+
+        {/* Purchase date + store */}
+        {entry.purchases?.purchased_at && (
+          <p className="mt-1 text-[0.65rem] text-muted-foreground truncate">
+            Bought {format(parseISO(entry.purchases.purchased_at), "MMM d")}
+            {entry.purchases.store_name ? ` · ${entry.purchases.store_name}` : ""}
+          </p>
+        )}
 
         {/* Attribution */}
         {addedBy && (

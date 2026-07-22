@@ -14,7 +14,7 @@ const LAST_BATCH_KEY = "sc:last-cleanup-batch";
 const Stat = ({ label, value, tone }: { label: string; value: number; tone?: string }) => (
   <div className="rounded-xl border border-border bg-card p-3 text-center">
     <p className={`text-2xl font-bold tabular-nums ${tone ?? "text-foreground"}`}>{value}</p>
-    <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+    <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">{label}</p>
   </div>
 );
 
@@ -122,14 +122,17 @@ const PantryCleanupDialog = () => {
                   <AlertTriangle className="h-4 w-4 text-warning" /> {review.length} item{review.length !== 1 ? "s" : ""} with no purchase date
                 </p>
                 <p className="text-xs text-muted-foreground">These aren't touched automatically — keep, assign a date, or archive each.</p>
-                <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                <div className="max-h-44 space-y-1.5 overflow-y-auto pr-0.5">
                   {review.map((r) => (
-                    <div key={r.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-1.5">
+                    <div key={r.id} className="flex items-center gap-1.5 rounded-lg bg-card px-2.5 py-1.5">
                       <span className="min-w-0 flex-1 truncate text-sm">{r.items?.name ?? "Unknown"}</span>
-                      <Input type="date" onChange={(e) => assignDate(r.id, e.target.value)} className="h-7 w-[130px] text-xs" title="Assign a date" />
-                      <Button variant="ghost" size="sm" onClick={() => archiveOne(r.id)} className="h-7 gap-1 px-2 text-muted-foreground hover:text-foreground">
-                        <Archive className="h-3.5 w-3.5" /> Archive
-                      </Button>
+                      <Input type="date" onChange={(e) => assignDate(r.id, e.target.value)} className="h-7 w-[118px] shrink-0 px-2 text-xs" title="Assign a purchase date" />
+                      <button
+                        type="button" onClick={() => archiveOne(r.id)} title="Archive this item"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
