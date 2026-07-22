@@ -1,0 +1,6 @@
+UPDATE public.recipes
+SET
+  image_url = '/__l5e/assets-v1/8162a00b-8e9b-4064-a71e-ad4b518417d8/chicken-stir-fry.jpg',
+  servings = 4,
+  instructions = E'1. Slice 500g boneless chicken thighs into bite-sized pieces. Toss with 1 tbsp soy sauce, 1 tsp cornstarch, and a pinch of white pepper. Let marinate 10 minutes.\n\n2. Whisk the sauce: 3 tbsp soy sauce, 1 tbsp oyster sauce, 1 tbsp honey, 1 tsp sesame oil, 1 tsp rice vinegar, and 2 tbsp water. Set aside.\n\n3. Heat a wok or large skillet over high heat until smoking. Add 2 tbsp neutral oil, then sear the chicken in a single layer for 3-4 minutes until golden. Remove and set aside.\n\n4. Add 1 tbsp more oil to the wok. Stir-fry 3 cloves minced garlic and 1 tbsp grated ginger for 20 seconds until fragrant.\n\n5. Add 1 sliced red bell pepper, 1 sliced yellow bell pepper, 1 cup broccoli florets, 1 sliced carrot, and 1 cup snap peas. Stir-fry 3-4 minutes until crisp-tender.\n\n6. Return the chicken to the wok, pour in the sauce, and toss everything for 1-2 minutes until glossy and coated.\n\n7. Finish with sliced scallions and toasted sesame seeds. Serve immediately over steamed jasmine rice.'
+WHERE id = 'd510b582-4e35-4475-bddb-bf297c291f16';
