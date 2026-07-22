@@ -1,17 +1,25 @@
-import { Loader2, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Loader2, Pencil, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { MockRecipe } from "@/data/cookbookMockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   nutrition: MockRecipe["nutrition"];
   servings: number;
   onCalculate: () => void;
   calculating?: boolean;
+  onSave?: (n: MockRecipe["nutrition"]) => Promise<void> | void;
+  saving?: boolean;
 }
 
-const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false }: Props) => {
+const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false, onSave, saving = false }: Props) => {
   const [mode, setMode] = useState<"per-serving" | "total">("per-serving");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(nutrition);
+  useEffect(() => {
+    setDraft(nutrition);
+  }, [nutrition]);
   const hasData =
     nutrition.calories > 0 ||
     nutrition.carbs > 0 ||
@@ -46,6 +54,81 @@ const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false }
     ["Sodium", `${values.sodium} mg`],
   ];
 
+  const handleSave = async () => {
+    if (!onSave) return;
+    await onSave({
+      calories: Number(draft.calories) || 0,
+      carbs: Number(draft.carbs) || 0,
+      protein: Number(draft.protein) || 0,
+      fat: Number(draft.fat) || 0,
+      fiber: Number(draft.fiber) || 0,
+      sugar: Number(draft.sugar) || 0,
+      sodium: Number(draft.sodium) || 0,
+    });
+    setEditing(false);
+  };
+
+  const fields: { key: keyof MockRecipe["nutrition"]; label: string; unit: string }[] = [
+    { key: "calories", label: "Calories", unit: "kcal" },
+    { key: "carbs", label: "Carbs", unit: "g" },
+    { key: "protein", label: "Protein", unit: "g" },
+    { key: "fat", label: "Fat", unit: "g" },
+    { key: "fiber", label: "Fiber", unit: "g" },
+    { key: "sugar", label: "Sugar", unit: "g" },
+    { key: "sodium", label: "Sodium", unit: "mg" },
+  ];
+
+  if (editing) {
+    return (
+      <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-foreground">Edit Nutrition</h3>
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Per serving</span>
+        </div>
+        <div className="mt-4 space-y-2">
+          {fields.map((f) => (
+            <div key={f.key} className="flex items-center justify-between gap-2 text-sm">
+              <label className="text-muted-foreground">{f.label}</label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={String(draft[f.key] ?? 0)}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, [f.key]: e.target.value === "" ? 0 : Number(e.target.value) }))
+                  }
+                  className="h-8 w-24 text-right tabular-nums"
+                />
+                <span className="w-8 text-xs text-muted-foreground">{f.unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-sm py-2 hover:bg-primary/90 disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            Save
+          </button>
+          <button
+            onClick={() => {
+              setDraft(nutrition);
+              setEditing(false);
+            }}
+            disabled={saving}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 text-sm py-2 hover:bg-muted disabled:opacity-60"
+          >
+            <X className="h-3.5 w-3.5" /> Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasData) {
     return (
       <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
@@ -58,14 +141,24 @@ const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false }
           <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
             Estimate macros and calories for this recipe.
           </p>
-          <button
-            onClick={onCalculate}
-            disabled={calculating}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
-          >
-            {calculating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {calculating ? "Calculating…" : "Calculate Nutrition"}
-          </button>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button
+              onClick={onCalculate}
+              disabled={calculating}
+              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {calculating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {calculating ? "Calculating…" : "Calculate Nutrition"}
+            </button>
+            {onSave && (
+              <button
+                onClick={() => setEditing(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-border/60 text-sm px-4 py-2 hover:bg-muted transition-colors"
+              >
+                <Pencil className="h-3.5 w-3.5" /> Enter Manually
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -75,15 +168,26 @@ const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false }
     <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium text-foreground">Nutrition</h3>
-        <Select value={mode} onValueChange={(v) => setMode(v as "per-serving" | "total")}>
-          <SelectTrigger className="h-7 w-[130px] text-xs rounded-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="per-serving">Per serving</SelectItem>
-            <SelectItem value="total">Total ({servings})</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1.5">
+          <Select value={mode} onValueChange={(v) => setMode(v as "per-serving" | "total")}>
+            <SelectTrigger className="h-7 w-[130px] text-xs rounded-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="per-serving">Per serving</SelectItem>
+              <SelectItem value="total">Total ({servings})</SelectItem>
+            </SelectContent>
+          </Select>
+          {onSave && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Edit nutrition"
+              className="h-7 w-7 inline-flex items-center justify-center rounded-full border border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-center">
