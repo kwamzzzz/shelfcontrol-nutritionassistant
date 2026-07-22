@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import RecipeBreadcrumb from "@/components/cookbook/RecipeBreadcrumb";
 import RecipeHero from "@/components/cookbook/RecipeHero";
 import IngredientsCard from "@/components/cookbook/IngredientsCard";
@@ -21,6 +23,7 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
         .filter(Boolean)
     : ["No instructions yet."];
   const servings = r.servings ?? 1;
+  const anyR = r as any;
   return {
     id: r.id,
     title: r.name,
@@ -31,7 +34,7 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
     prepMins: 10,
     cookMins: 20,
     servings,
-    caloriesPerServing: 0,
+    caloriesPerServing: Number(anyR.calories_per_serving ?? 0),
     tags: [],
     ingredients: (r.recipe_ingredients ?? []).map((ing, i) => ({
       id: ing.id ?? `ing-${i}`,
@@ -40,7 +43,15 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
       unit: ing.unit ?? "",
     })),
     instructions: steps,
-    nutrition: { calories: 0, carbs: 0, protein: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 },
+    nutrition: {
+      calories: Number(anyR.calories_per_serving ?? 0),
+      carbs: Number(anyR.carbs_g_per_serving ?? 0),
+      protein: Number(anyR.protein_g_per_serving ?? 0),
+      fat: Number(anyR.fat_g_per_serving ?? 0),
+      fiber: Number(anyR.fiber_g_per_serving ?? 0),
+      sugar: Number(anyR.sugar_g_per_serving ?? 0),
+      sodium: Number(anyR.sodium_mg_per_serving ?? 0),
+    },
   };
 }
 
@@ -48,6 +59,8 @@ const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
+  const qc = useQueryClient();
+  const [calculating, setCalculating] = useState(false);
   const recipe = useMemo<MockRecipe | null>(() => {
     const dbMatch = recipes?.find((r) => r.id === id);
     if (dbMatch) return adaptRecipe(dbMatch);
@@ -64,6 +77,28 @@ const RecipeDetail = () => {
   }, [recipe?.id, recipe?.servings]);
 
   const notImpl = (label: string) => () => toast.info(`${label} — coming soon`);
+
+  const handleCalculateNutrition = async () => {
+    if (!recipe) return;
+    if (!recipe.ingredients.length) {
+      toast.error("Add ingredients before calculating nutrition.");
+      return;
+    }
+    setCalculating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("calculate-recipe-nutrition", {
+        body: { recipe_id: recipe.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      await qc.invalidateQueries({ queryKey: ["recipes"] });
+      toast.success("Nutrition calculated");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not calculate nutrition");
+    } finally {
+      setCalculating(false);
+    }
+  };
 
   if (!recipe) {
     return (
@@ -123,7 +158,8 @@ const RecipeDetail = () => {
           <NutritionCard
             nutrition={recipe.nutrition}
             servings={servings}
-            onFull={notImpl("Calculate nutrition")}
+            onCalculate={handleCalculateNutrition}
+            calculating={calculating}
           />
         </div>
 
