@@ -91,10 +91,7 @@ const Recipes = () => {
     return sorted;
   }, [recipes, query, category, sort, favorites]);
 
-  const featured = (recipes ?? [])[0];
-  const showFeatured = category === "All Recipes" && !query && featured;
-  const gridList = showFeatured ? filtered.filter((r) => r.id !== featured!.id) : filtered;
-
+  const gridList = filtered;
   const totalCount = recipes?.length ?? 0;
 
   return (
@@ -203,26 +200,16 @@ const Recipes = () => {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {showFeatured && (
-            <FeaturedCard
-              recipe={featured!}
-              favorite={favorites.has(featured!.id)}
-              onToggleFavorite={() => toggleFavorite(featured!.id)}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {gridList.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              favorite={favorites.has(recipe.id)}
+              onToggleFavorite={() => toggleFavorite(recipe.id)}
+              onEdit={() => setEditing(recipe)}
             />
-          )}
-
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {gridList.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                favorite={favorites.has(recipe.id)}
-                onToggleFavorite={() => toggleFavorite(recipe.id)}
-                onEdit={() => setEditing(recipe)}
-              />
-            ))}
-          </div>
+          ))}
         </div>
       )}
 
