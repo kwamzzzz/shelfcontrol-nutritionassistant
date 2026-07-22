@@ -34,15 +34,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import RecipeTagEditor from "./RecipeTagEditor";
 
 interface Props {
   recipe: RecipeWithIngredients;
   onEdit: () => void;
   favorite?: boolean;
   onToggleFavorite?: () => void;
+  knownTags?: string[];
 }
 
-const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite }: Props) => {
+const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: Props) => {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const deleteRecipe = useDeleteRecipe();
@@ -50,6 +52,7 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite }: Props) => {
   const { toast } = useToast();
 
   const ingCount = recipe.recipe_ingredients?.length ?? 0;
+  const tags: string[] = ((recipe as any).tags as string[] | null) ?? [];
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   const handleDelete = async () => {
@@ -183,6 +186,21 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite }: Props) => {
               {recipe.instructions.split("\n")[0]}
             </p>
           )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={stop}>
+            {tags.slice(0, 3).map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium"
+              >
+                {t}
+              </span>
+            ))}
+            {tags.length > 3 && (
+              <span className="text-[11px] text-muted-foreground">+{tags.length - 3}</span>
+            )}
+            <RecipeTagEditor recipeId={recipe.id} tags={tags} knownTags={knownTags} compact />
+          </div>
 
           <div className="mt-auto flex items-center gap-4 pt-4 text-xs text-muted-foreground">
             {recipe.servings ? (
