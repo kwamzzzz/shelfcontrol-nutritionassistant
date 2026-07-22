@@ -316,6 +316,9 @@ export type Database = {
       inventory: {
         Row: {
           added_at: string
+          archive_reason: string | null
+          archived_at: string | null
+          cleanup_batch: string | null
           expiry_date: string | null
           group_id: string | null
           id: string
@@ -324,12 +327,16 @@ export type Database = {
           purchase_id: string | null
           quantity: number
           sealed_status: string | null
+          status: string
           storage_location: string | null
           unit: string
           user_id: string
         }
         Insert: {
           added_at?: string
+          archive_reason?: string | null
+          archived_at?: string | null
+          cleanup_batch?: string | null
           expiry_date?: string | null
           group_id?: string | null
           id?: string
@@ -338,12 +345,16 @@ export type Database = {
           purchase_id?: string | null
           quantity?: number
           sealed_status?: string | null
+          status?: string
           storage_location?: string | null
           unit?: string
           user_id: string
         }
         Update: {
           added_at?: string
+          archive_reason?: string | null
+          archived_at?: string | null
+          cleanup_batch?: string | null
           expiry_date?: string | null
           group_id?: string | null
           id?: string
@@ -352,6 +363,7 @@ export type Database = {
           purchase_id?: string | null
           quantity?: number
           sealed_status?: string | null
+          status?: string
           storage_location?: string | null
           unit?: string
           user_id?: string
