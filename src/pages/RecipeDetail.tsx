@@ -22,7 +22,7 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
         .split(/\n+/)
         .map((s) => s.replace(/^\s*\d+[\.\)]\s*/, "").trim())
         .filter(Boolean)
-    : ["No instructions yet."];
+    : [];
   const servings = r.servings ?? 1;
   const anyR = r as any;
   return {
@@ -63,6 +63,7 @@ const RecipeDetail = () => {
   const qc = useQueryClient();
   const [calculating, setCalculating] = useState(false);
   const [savingNutrition, setSavingNutrition] = useState(false);
+  const [savingSteps, setSavingSteps] = useState(false);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
   const recipe = useMemo<MockRecipe | null>(() => {
     const dbMatch = recipes?.find((r) => r.id === id);
@@ -100,6 +101,25 @@ const RecipeDetail = () => {
       toast.error(e?.message ?? "Could not calculate nutrition");
     } finally {
       setCalculating(false);
+    }
+  };
+
+  const handleSaveSteps = async (steps: string[]) => {
+    if (!recipe) return;
+    setSavingSteps(true);
+    try {
+      const joined = steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+      const { error } = await supabase
+        .from("recipes")
+        .update({ instructions: joined })
+        .eq("id", recipe.id);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["recipes"] });
+      toast.success("Instructions updated");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save instructions");
+    } finally {
+      setSavingSteps(false);
     }
   };
 
@@ -184,7 +204,12 @@ const RecipeDetail = () => {
             onServingsChange={setServings}
             onAddIngredient={() => setAddIngredientOpen(true)}
           />
-          <InstructionsCard steps={recipe.instructions} onOpenStepByStep={() => setStepMode(true)} />
+          <InstructionsCard
+            steps={recipe.instructions}
+            onOpenStepByStep={() => setStepMode(true)}
+            onSaveSteps={handleSaveSteps}
+            saving={savingSteps}
+          />
           <NutritionCard
             nutrition={recipe.nutrition}
             servings={servings}
