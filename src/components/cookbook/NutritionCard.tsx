@@ -1,4 +1,4 @@
-import { ExternalLink, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { MockRecipe } from "@/data/cookbookMockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface Props {
   nutrition: MockRecipe["nutrition"];
   servings: number;
-  onFull: () => void;
+  onCalculate: () => void;
+  calculating?: boolean;
 }
 
-const NutritionCard = ({ nutrition, servings, onFull }: Props) => {
+const NutritionCard = ({ nutrition, servings, onCalculate, calculating = false }: Props) => {
   const [mode, setMode] = useState<"per-serving" | "total">("per-serving");
   const hasData =
     nutrition.calories > 0 ||
@@ -58,10 +59,12 @@ const NutritionCard = ({ nutrition, servings, onFull }: Props) => {
             Estimate macros and calories for this recipe.
           </p>
           <button
-            onClick={onFull}
-            className="mt-4 rounded-full bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors"
+            onClick={onCalculate}
+            disabled={calculating}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors disabled:opacity-60"
           >
-            Calculate Nutrition
+            {calculating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {calculating ? "Calculating…" : "Calculate Nutrition"}
           </button>
         </div>
       </div>
@@ -116,10 +119,19 @@ const NutritionCard = ({ nutrition, servings, onFull }: Props) => {
       </div>
 
       <button
-        onClick={onFull}
-        className="mt-4 w-full rounded-xl border border-border/60 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2"
+        onClick={onCalculate}
+        disabled={calculating}
+        className="mt-4 w-full rounded-xl border border-border/60 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
       >
-        View Full Nutrition <ExternalLink className="h-3.5 w-3.5" />
+        {calculating ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Recalculating…
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-3.5 w-3.5" /> Recalculate Nutrition
+          </>
+        )}
       </button>
     </div>
   );
