@@ -278,7 +278,7 @@ const Pantry = () => {
           </p>
         </div>
       ) : isArchivedView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {filtered.map((entry) => (
             <InventoryCard
               key={entry.id}
@@ -304,7 +304,7 @@ const Pantry = () => {
                     {items.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                   {items.map((entry) => (
                     <InventoryCard
                       key={entry.id}
