@@ -75,24 +75,24 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-2.5 sm:p-3.5">
-        <p className="font-semibold text-sm sm:text-[0.95rem] leading-tight text-foreground truncate font-[Outfit,var(--font-heading),sans-serif]">
+      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+        <p className="font-semibold text-base sm:text-[0.95rem] leading-tight text-foreground truncate font-[Outfit,var(--font-heading),sans-serif]">
           {entry.items.name}
         </p>
 
         {entry.items.brand && (
-          <p className="mt-0.5 text-[0.7rem] sm:text-xs text-muted-foreground truncate">{entry.items.brand}</p>
+          <p className="mt-0.5 text-xs sm:text-xs text-muted-foreground truncate">{entry.items.brand}</p>
         )}
 
         <div className="mt-1.5 flex flex-wrap items-center gap-1 sm:gap-1.5">
           {entry.items.category && (
-            <Badge variant="secondary" className="text-[0.6rem] sm:text-[0.65rem] font-normal px-1.5 py-0">
+            <Badge variant="secondary" className="text-[0.7rem] sm:text-[0.65rem] font-normal px-1.5 py-0">
               {entry.items.category}
             </Badge>
           )}
           {entry.storage_location && (
-            <span className="inline-flex items-center gap-0.5 text-[0.6rem] sm:text-[0.65rem] text-muted-foreground">
-              <MapPin className="h-2.5 w-2.5" />
+            <span className="inline-flex items-center gap-0.5 text-[0.7rem] sm:text-[0.65rem] text-muted-foreground">
+              <MapPin className="h-3 w-3 sm:h-2.5 sm:w-2.5" />
               {entry.storage_location}
             </span>
           )}
@@ -100,7 +100,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
         {/* Purchase date + store */}
         {entry.purchases?.purchased_at && (
-          <p className="mt-1 text-[0.6rem] sm:text-[0.65rem] text-muted-foreground truncate">
+          <p className="mt-1 text-[0.7rem] sm:text-[0.65rem] text-muted-foreground truncate">
             Bought {format(parseISO(entry.purchases.purchased_at), "MMM d")}
             {entry.purchases.store_name ? ` · ${entry.purchases.store_name}` : ""}
           </p>
@@ -108,7 +108,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
         {/* Attribution */}
         {addedBy && (
-          <p className="mt-1 text-[0.6rem] text-muted-foreground truncate">
+          <p className="mt-1 text-[0.65rem] sm:text-[0.6rem] text-muted-foreground truncate">
             Added by {addedBy}
           </p>
         )}
@@ -116,10 +116,10 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
         {/* Quantity */}
         <div className="mt-auto pt-2 sm:pt-3 border-t border-border flex items-baseline justify-between">
           <div>
-            <span className="text-base sm:text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
+            <span className="text-lg sm:text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
               {entry.quantity}
             </span>
-            <span className="ml-1 text-xs sm:text-sm text-muted-foreground">{entry.unit}</span>
+            <span className="ml-1 text-sm sm:text-sm text-muted-foreground">{entry.unit}</span>
           </div>
         </div>
 
