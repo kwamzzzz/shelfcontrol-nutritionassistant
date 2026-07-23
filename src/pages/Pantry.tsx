@@ -166,14 +166,14 @@ const Pantry = () => {
         </div>
       </div>
 
-      {/* Location Pill Tabs */}
-      <div className="flex flex-wrap gap-2">
+      {/* Location Pill Tabs — scroll on phone, wrap on larger screens */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0">
         {LOCATION_TABS.map((loc) => (
           <button
             key={loc}
             onClick={() => setFilterLocation(loc)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
               filterLocation === loc
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"

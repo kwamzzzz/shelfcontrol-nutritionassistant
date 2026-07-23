@@ -64,7 +64,7 @@ const FoodIntelligence = () => {
       </div>
 
       {/* Category tabs */}
-      <div className="mt-6 flex flex-wrap gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-2 -mx-1 px-1">
+      <div className="mt-6 flex flex-wrap gap-2 sticky top-[calc(var(--phone-header-height)+var(--safe-top))] md:top-20 z-10 bg-background/80 backdrop-blur-sm py-2 -mx-1 px-1">
         {categories.map((cat) => {
           const isActive = activeCategory === cat;
           const config = cat !== "all" ? FOOD_NEWS_CATEGORY_CONFIG[cat] : null;

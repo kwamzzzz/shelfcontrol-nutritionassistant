@@ -10,6 +10,7 @@ import ChallengeCard from "@/components/challenges/ChallengeCard";
 import ChallengeDetail from "@/components/challenges/ChallengeDetail";
 import CreateChallengeDialog from "@/components/challenges/CreateChallengeDialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const ChallengeSection = ({
   title,
@@ -87,6 +88,7 @@ const Challenges = () => {
 
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [phoneTab, setPhoneTab] = useState<"active" | "upcoming" | "completed">("active");
 
   const handleJoin = async (challengeId: string) => {
     setJoiningId(challengeId);
@@ -194,9 +196,36 @@ const Challenges = () => {
         </Card>
       ) : (
         <>
-          <ChallengeSection title="Active" challenges={activeChallenges} {...sectionProps} />
-          <ChallengeSection title="Upcoming" challenges={upcomingChallenges} {...sectionProps} />
-          <ChallengeSection title="Completed" challenges={completedChallenges} {...sectionProps} />
+          {/* Phone: segmented Current/Available/Completed selector */}
+          <div className="flex gap-1.5 rounded-xl bg-muted/50 p-1 sm:hidden">
+            {([["active", "Active"], ["upcoming", "Upcoming"], ["completed", "Completed"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPhoneTab(key)}
+                className={cn(
+                  "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  phoneTab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Phone: only the selected section */}
+          <div className="sm:hidden">
+            {phoneTab === "active" && <ChallengeSection title="Active" challenges={activeChallenges} {...sectionProps} />}
+            {phoneTab === "upcoming" && <ChallengeSection title="Upcoming" challenges={upcomingChallenges} {...sectionProps} />}
+            {phoneTab === "completed" && <ChallengeSection title="Completed" challenges={completedChallenges} {...sectionProps} />}
+          </div>
+
+          {/* Tablet / desktop: all sections stacked */}
+          <div className="hidden space-y-8 sm:block">
+            <ChallengeSection title="Active" challenges={activeChallenges} {...sectionProps} />
+            <ChallengeSection title="Upcoming" challenges={upcomingChallenges} {...sectionProps} />
+            <ChallengeSection title="Completed" challenges={completedChallenges} {...sectionProps} />
+          </div>
         </>
       )}
     </div>

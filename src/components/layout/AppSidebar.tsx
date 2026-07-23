@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
-  BarChart3, LogOut, Menu, X, Users, Trophy, UserCircle, Settings,
+  BarChart3, LogOut, Users, Trophy, UserCircle, Settings,
   Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { type ShellMode } from "@/hooks/use-shell-mode";
 import { ModeToggle } from "@/components/ModeToggle";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import appIcon from "@/assets/brand/ShelfControl_AppIcon_Transparent_1024.png.asset.json";
@@ -53,9 +54,9 @@ const navSections = [
   },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
   const navigate = useNavigate();
-  const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
+  const { collapsed, toggleCollapsed } = useSidebar();
   const { pendingCount } = useMyInvites();
 
   const handleLogout = async () => {
@@ -63,37 +64,17 @@ const AppSidebar = () => {
     navigate("/auth");
   };
 
-  // On mobile (mobileOpen overlay), always render expanded regardless of collapsed state.
-  // collapsed only affects the persistent desktop sidebar (sm+).
-  const isCompact = collapsed && !mobileOpen;
+  // Tablet always shows the compact rail; desktop respects the collapsed state.
+  // (Phone does not render the sidebar — it uses the bottom-nav shell instead.)
+  const isCompact = mode === "tablet" ? true : collapsed;
 
   return (
-    <>
-      {/* Mobile top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-sidebar-border bg-sidebar px-4 sm:hidden">
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-sidebar-foreground hover:text-foreground" aria-label={mobileOpen ? "Close menu" : "Open menu"}>
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-        <span className="text-lg font-semibold tracking-tight text-foreground">
-          Shelf Control
-        </span>
-      </div>
-
-      {/* Overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm sm:hidden" onClick={() => setMobileOpen(false)} />
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200",
+        isCompact ? "w-[68px]" : "w-[260px]",
       )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border transition-all duration-200",
-          "bg-sidebar",
-          // Mobile always 260px; desktop respects collapsed state
-          isCompact ? "w-[260px] sm:w-[68px]" : "w-[260px]",
-          mobileOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"
-        )}
-      >
+    >
         {/* Header: Logo + collapse toggle */}
         <div className={cn(
           "flex h-16 items-center",
@@ -140,7 +121,6 @@ const AppSidebar = () => {
                       key={item.to}
                       to={item.to}
                       end={item.to === "/"}
-                      onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
                         cn(
                           "flex items-center rounded-full text-sm font-medium transition-all duration-200",
@@ -219,8 +199,7 @@ const AppSidebar = () => {
             </button>
           )}
         </div>
-      </aside>
-    </>
+    </aside>
   );
 };
 

@@ -92,7 +92,7 @@ const Invitations = () => {
                 }`}
               >
                 <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
+                  <div className="flex flex-wrap items-start gap-4">
                     <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
@@ -116,10 +116,10 @@ const Invitations = () => {
                       </p>
                     </div>
                     {isPending && (
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
                         <Button
                           size="sm"
-                          className="rounded-xl gap-1.5"
+                          className="h-11 flex-1 rounded-xl gap-1.5 sm:h-9 sm:flex-none"
                           onClick={() => handleAccept(inv)}
                           disabled={acceptInvite.isPending}
                         >
@@ -129,7 +129,7 @@ const Invitations = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="rounded-xl gap-1.5"
+                          className="h-11 flex-1 rounded-xl gap-1.5 sm:h-9 sm:flex-none"
                           onClick={() => handleDecline(inv)}
                           disabled={declineInvite.isPending}
                         >

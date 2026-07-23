@@ -26,8 +26,19 @@ type Tab = "bulk" | "scan" | "manual";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const AddPurchaseDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddPurchaseDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+const AddPurchaseDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: AddPurchaseDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [tab, setTab] = useState<Tab>("bulk");
 
   // Session-level fields — applied to every item in this purchase.
@@ -131,12 +142,14 @@ const AddPurchaseDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Log Purchase
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Log Purchase
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className={cn("max-h-[88vh] overflow-y-auto", inReview ? "max-w-3xl" : "max-w-lg")}>
         <DialogHeader>
           <DialogTitle className="font-display">Log Purchase</DialogTitle>

@@ -174,7 +174,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ ATTENTION REQUIRED ═══ */}
-        <div className="col-span-1 lg:col-span-8 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-8 lg:col-span-8 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-medium text-foreground">Attention Required</h2>
             <button onClick={() => navigate("/pantry?filter=expiring")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -219,7 +219,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ PANTRY COMPOSITION ═══ */}
-        <div className="col-span-1 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-4 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
           <h3 className="label-small mb-4">Pantry Composition</h3>
           {composition.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No data yet</p>
@@ -241,12 +241,12 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ INTELLIGENCE ═══ */}
-        <div className="col-span-1 lg:col-span-8">
+        <div className="col-span-1 md:col-span-8 lg:col-span-8">
           <IntelligenceWidget />
         </div>
 
         {/* ═══ SPEND TREND ═══ */}
-        <div className="col-span-1 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-4 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">Spend Trend</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -257,7 +257,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ TODAY'S LOG ═══ */}
-        <div className="col-span-1 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-6 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🍽 Today's Food Log</h3>
             <button onClick={() => navigate("/nutrition")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -301,7 +301,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ RECENT PURCHASES ═══ */}
-        <div className="col-span-1 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-6 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🧾 Recent Purchases</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -343,8 +343,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ═══ FLOATING ACTION PANEL ═══ */}
-      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 hidden sm:flex items-center gap-1 bg-background rounded-full p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.06]">
+      {/* ═══ FLOATING ACTION PANEL (tablet/desktop only — phone uses Quick Add) ═══ */}
+      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 hidden md:flex items-center gap-1 bg-background rounded-full p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.06]">
         <FabButton onClick={() => navigate("/consumption")}>
           <Heart className="h-4 w-4" /> Consume
         </FabButton>

@@ -94,6 +94,7 @@ const Profile = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your name"
+              autoComplete="name"
               className="mt-1 rounded-xl"
             />
           </div>
@@ -135,11 +136,11 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex">
         <Button
           onClick={() => updateProfile.mutate()}
           disabled={updateProfile.isPending}
-          className="gap-2 rounded-xl"
+          className="w-full gap-2 rounded-xl sm:ml-auto sm:w-auto"
         >
           <Save className="h-4 w-4" />
           Save Changes

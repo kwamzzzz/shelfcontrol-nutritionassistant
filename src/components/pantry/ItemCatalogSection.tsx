@@ -104,7 +104,9 @@ const ItemCatalogSection = () => {
               No catalog items yet. Create one to get started.
             </div>
           ) : (
-            <div className="rounded-xl border bg-card overflow-hidden">
+            <>
+            {/* Table (sm and up): horizontal-scroll */}
+            <div className="hidden sm:block rounded-xl border bg-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -172,6 +174,41 @@ const ItemCatalogSection = () => {
                 </table>
               </div>
             </div>
+
+            {/* Cards (mobile): expandable catalog collection */}
+            <div className="space-y-2 sm:hidden">
+              {items.map((item) => (
+                <div key={item.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{item.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {[item.brand, item.category, item.default_unit ?? "Unit"].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={() => setEditingItem(item)}
+                      aria-label={`Edit ${item.name}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span>Cal <span className="font-medium tabular-nums text-foreground">{item.calories_per_unit ?? 0}</span></span>
+                    <span>P <span className="font-medium tabular-nums text-foreground">{item.protein_g ?? 0}g</span></span>
+                    <span>C <span className="font-medium tabular-nums text-foreground">{item.carbs_g ?? 0}g</span></span>
+                    <span>F <span className="font-medium tabular-nums text-foreground">{item.fat_g ?? 0}g</span></span>
+                    {inventoryCountByItem[item.id] ? (
+                      <span className="text-primary">In use: {inventoryCountByItem[item.id]}</span>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </CollapsibleContent>
       </Collapsible>

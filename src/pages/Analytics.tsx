@@ -34,11 +34,11 @@ const Analytics = () => {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="mb-6 w-full sm:w-auto bg-muted/50 p-1 rounded-xl">
-          <TabsTrigger value="overview" className="font-analytics rounded-lg text-xs font-semibold">Overview</TabsTrigger>
-          <TabsTrigger value="food_pantry" className="font-analytics rounded-lg text-xs font-semibold">Food & Pantry</TabsTrigger>
-          <TabsTrigger value="consumption" className="font-analytics rounded-lg text-xs font-semibold">Consumption</TabsTrigger>
-          <TabsTrigger value="spend_value" className="font-analytics rounded-lg text-xs font-semibold">Spend & Value</TabsTrigger>
+        <TabsList className="mb-6 flex w-full overflow-x-auto bg-muted/50 p-1 rounded-xl sm:w-auto">
+          <TabsTrigger value="overview" className="shrink-0 font-analytics rounded-lg text-xs font-semibold">Overview</TabsTrigger>
+          <TabsTrigger value="food_pantry" className="shrink-0 font-analytics rounded-lg text-xs font-semibold">Food & Pantry</TabsTrigger>
+          <TabsTrigger value="consumption" className="shrink-0 font-analytics rounded-lg text-xs font-semibold">Consumption</TabsTrigger>
+          <TabsTrigger value="spend_value" className="shrink-0 font-analytics rounded-lg text-xs font-semibold">Spend & Value</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">

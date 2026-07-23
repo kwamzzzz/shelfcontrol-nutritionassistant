@@ -28,8 +28,19 @@ const ContextBanner = () => {
   );
 };
 
-const AddInventoryDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddInventoryDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+const AddInventoryDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: AddInventoryDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("Unit");
@@ -101,12 +112,14 @@ const AddInventoryDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PackagePlus className="mr-1.5 h-4 w-4" />
-          Add to Pantry
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <PackagePlus className="mr-1.5 h-4 w-4" />
+            Add to Pantry
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display">Add to Pantry</DialogTitle>

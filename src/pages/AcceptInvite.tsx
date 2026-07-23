@@ -19,7 +19,7 @@ const AcceptInvite = () => {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <p className="text-muted-foreground">Loading invite…</p>
       </div>
     );
@@ -27,7 +27,7 @@ const AcceptInvite = () => {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-dvh items-center justify-center p-4">
         <Card className="max-w-md w-full rounded-2xl shadow-lg">
           <CardContent className="py-10 text-center space-y-4">
             <Users className="h-12 w-12 mx-auto text-primary" />
@@ -46,7 +46,7 @@ const AcceptInvite = () => {
 
   if (error || !invite) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-dvh items-center justify-center p-4">
         <Card className="max-w-md w-full rounded-2xl shadow-lg">
           <CardContent className="py-10 text-center space-y-4">
             <XCircle className="h-12 w-12 mx-auto text-destructive" />
@@ -70,7 +70,7 @@ const AcceptInvite = () => {
 
   if (accepted || isAlreadyAccepted) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-dvh items-center justify-center p-4">
         <Card className="max-w-md w-full rounded-2xl shadow-lg">
           <CardContent className="py-10 text-center space-y-4">
             <CheckCircle className="h-12 w-12 mx-auto text-emerald-500" />
@@ -89,7 +89,7 @@ const AcceptInvite = () => {
 
   if (isExpired || isRevoked) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-dvh items-center justify-center p-4">
         <Card className="max-w-md w-full rounded-2xl shadow-lg">
           <CardContent className="py-10 text-center space-y-4">
             <Clock className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -140,7 +140,7 @@ const AcceptInvite = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-dvh items-center justify-center p-4">
       <Card className="max-w-md w-full rounded-2xl shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">

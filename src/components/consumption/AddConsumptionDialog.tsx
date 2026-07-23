@@ -12,8 +12,19 @@ import { Plus, Check, ChevronsUpDown, Utensils } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const AddConsumptionDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddConsumptionDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: AddConsumptionDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [consumedAt, setConsumedAt] = useState(new Date().toISOString().slice(0, 16));
@@ -63,12 +74,14 @@ const AddConsumptionDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Log Consumption
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Log Consumption
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-display">Log Consumption</DialogTitle>

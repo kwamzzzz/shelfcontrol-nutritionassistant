@@ -41,7 +41,7 @@ const StepByStepMode = ({ open, onOpenChange, steps, ingredients, servingsScale 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-3xl gap-0 p-0">
         <div className="p-6 sm:p-10">
           <div className="flex items-center justify-between">
             <span className="text-xs uppercase tracking-widest text-muted-foreground">

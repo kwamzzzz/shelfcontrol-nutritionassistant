@@ -1,20 +1,23 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePurchases } from "@/hooks/usePurchases";
-import { formatCurrency, formatCurrencyAlways } from "@/lib/currency";
+import { formatCurrencyAlways } from "@/lib/currency";
 import AddPurchaseDialog from "@/components/purchases/AddPurchaseDialog";
 import TripCard from "@/components/purchases/TripCard";
 import ReceiptDetail from "@/components/purchases/ReceiptDetail";
-import { Receipt, DollarSign, Store, TrendingUp, Star } from "lucide-react";
+import { Receipt, DollarSign, Store, TrendingUp, Star, ChevronLeft } from "lucide-react";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useProfileNames } from "@/hooks/useProfileNames";
+import { useShellMode } from "@/hooks/use-shell-mode";
 import { isThisWeek, parseISO } from "date-fns";
 
 const Purchases = () => {
   const { data: purchases, isLoading } = usePurchases();
   const { activeGroupId } = useGroupContext();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mode = useShellMode();
+  const isPhone = mode === "phone";
+  const tripParam = searchParams.get("trip");
 
   // Deep-link filters from Intelligence
   const storeFilter = searchParams.get("store");
@@ -39,17 +42,24 @@ const Purchases = () => {
     });
   }, [purchases, storeFilter, periodFilter, searchFilter]);
 
-  // Auto-select first purchase
-  useEffect(() => {
-    if (!selectedId && filteredPurchases?.length) {
-      setSelectedId(filteredPurchases[0].id);
-    }
-  }, [filteredPurchases, selectedId]);
+  const selectTrip = (id: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("trip", id);
+    setSearchParams(next);
+  };
+  const clearTrip = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("trip");
+    setSearchParams(next);
+  };
 
-  const selectedPurchase = useMemo(
-    () => filteredPurchases?.find((p) => p.id === selectedId) ?? null,
-    [filteredPurchases, selectedId]
+  // ?trip drives selection. Phone shows the list until a trip is chosen; desktop
+  // falls back to the first trip so the split view always has a receipt.
+  const selectedFromParam = useMemo(
+    () => filteredPurchases?.find((p) => p.id === tripParam) ?? null,
+    [filteredPurchases, tripParam],
   );
+  const selectedPurchase = selectedFromParam ?? (isPhone ? null : filteredPurchases?.[0] ?? null);
 
   // Summary computations
   const stats = useMemo(() => {
@@ -127,7 +137,38 @@ const Purchases = () => {
               Log your first grocery trip to get started.
             </p>
           </div>
+        ) : isPhone ? (
+          selectedPurchase ? (
+            /* Phone: one receipt at a time, Back returns to the list */
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={clearTrip}
+                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" /> All trips
+              </button>
+              <ReceiptDetail purchase={selectedPurchase} />
+            </div>
+          ) : (
+            /* Phone: trips list */
+            <div className="space-y-2">
+              <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {storeFilter || periodFilter || searchFilter ? "Filtered Trips" : "Recent Trips"}
+              </h2>
+              {filteredPurchases.map((p) => (
+                <TripCard
+                  key={p.id}
+                  purchase={p}
+                  isActive={false}
+                  onClick={() => selectTrip(p.id)}
+                  loggedBy={activeGroupId ? profileMap?.get(p.user_id) : undefined}
+                />
+              ))}
+            </div>
+          )
         ) : (
+          /* Tablet / desktop: master-detail split */
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Left: Trips list */}
             <div className="lg:col-span-5 space-y-3">
@@ -139,8 +180,8 @@ const Purchases = () => {
                   <TripCard
                     key={p.id}
                     purchase={p}
-                    isActive={selectedId === p.id}
-                    onClick={() => setSelectedId(p.id)}
+                    isActive={selectedPurchase?.id === p.id}
+                    onClick={() => selectTrip(p.id)}
                     loggedBy={activeGroupId ? profileMap?.get(p.user_id) : undefined}
                   />
                 ))}

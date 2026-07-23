@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -63,6 +64,14 @@ interface Props {
 const cell =
   "h-9 rounded-lg border border-input bg-background/60 backdrop-blur-sm px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+// Labeled field wrapper for the mobile stacked-card layout.
+const Field = ({ label, children }: { label: string; children: ReactNode }) => (
+  <label className="space-y-1">
+    <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+    {children}
+  </label>
+);
+
 const BulkReviewTable = ({ rows, setRows, selected, setSelected, onSave, saving, onBack }: Props) => {
   const total = rows.reduce((s, r) => s + (r.price ? Number(r.price) : 0), 0);
   const allSelected = rows.length > 0 && selected.size === rows.length;
@@ -124,8 +133,8 @@ const BulkReviewTable = ({ rows, setRows, selected, setSelected, onSave, saving,
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-border">
+      {/* Table (sm and up): horizontal-scroll grid */}
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-border">
         <div className="min-w-[720px]">
           {/* Header */}
           <div className="grid grid-cols-[32px_minmax(120px,1.6fr)_repeat(2,minmax(64px,0.8fr))_repeat(2,minmax(64px,0.8fr))_minmax(72px,0.8fr)_minmax(120px,1.2fr)_32px] items-center gap-1.5 bg-secondary/60 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -166,6 +175,46 @@ const BulkReviewTable = ({ rows, setRows, selected, setSelected, onSave, saving,
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">No items to review.</div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Cards (mobile): one stacked card per row */}
+      <div className="sm:hidden space-y-2">
+        {rows.length > 0 && (
+          <label className="flex items-center gap-2 px-1 py-1 text-sm text-muted-foreground">
+            <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Select all" />
+            Select all
+          </label>
+        )}
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+          {rows.map((r) => (
+            <div
+              key={r.id}
+              className={cn(
+                "rounded-xl border border-border p-3 space-y-2.5",
+                selected.has(r.id) && "border-primary/30 bg-primary/5"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggle(r.id)} aria-label={`Select ${r.name}`} />
+                <input className={cn(cell, "flex-1 font-medium")} value={r.name} placeholder="Item name" onChange={(e) => update(r.id, { name: e.target.value })} />
+                <button type="button" onClick={() => removeRow(r.id)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Remove ${r.name}`}>
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Qty"><input className={cn(cell, "w-full tabular-nums")} value={r.quantity} inputMode="decimal" placeholder="—" onChange={(e) => update(r.id, { quantity: e.target.value })} /></Field>
+                <Field label="Unit"><input className={cn(cell, "w-full")} value={r.quantityUnit} placeholder="pcs" onChange={(e) => update(r.id, { quantityUnit: e.target.value })} /></Field>
+                <Field label="Weight"><input className={cn(cell, "w-full tabular-nums")} value={r.weight} inputMode="decimal" placeholder="—" onChange={(e) => update(r.id, { weight: e.target.value })} /></Field>
+                <Field label="W. unit"><input className={cn(cell, "w-full")} value={r.weightUnit} placeholder="kg" onChange={(e) => update(r.id, { weightUnit: e.target.value })} /></Field>
+                <Field label="Price"><input className={cn(cell, "w-full tabular-nums")} value={r.price} inputMode="decimal" placeholder="0.00" onChange={(e) => update(r.id, { price: e.target.value })} /></Field>
+                <Field label="Notes"><input className={cn(cell, "w-full")} value={r.notes} placeholder="—" onChange={(e) => update(r.id, { notes: e.target.value })} /></Field>
+              </div>
+            </div>
+          ))}
+          {rows.length === 0 && (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">No items to review.</div>
+          )}
         </div>
       </div>
 

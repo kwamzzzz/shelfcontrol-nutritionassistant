@@ -1,19 +1,11 @@
-import * as React from "react";
+import { useShellMode } from "@/hooks/use-shell-mode";
 
-const MOBILE_BREAKPOINT = 768;
-
+/**
+ * Retained for the shadcn ui/sidebar primitive, which imports `useIsMobile`.
+ * The app shell now uses `useShellMode()` as the single source of truth, so
+ * "mobile" here means the phone shell mode — reconciling the previously
+ * conflicting 640px / 768px / 1024px breakpoints onto one definition.
+ */
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return !!isMobile;
+  return useShellMode() === "phone";
 }

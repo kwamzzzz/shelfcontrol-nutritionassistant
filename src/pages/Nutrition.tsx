@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Apple, BookOpen, GlassWater, Target, Brain, HeartPulse, Wallet } from "lucide-react";
 import NutritionDashboard from "@/components/nutrition/NutritionDashboard";
 import FoodDiary from "@/components/nutrition/FoodDiary";
@@ -8,6 +9,16 @@ import GoalsProgress from "@/components/nutrition/GoalsProgress";
 import NutritionInsights from "@/components/nutrition/NutritionInsights";
 import SymptomLog from "@/components/nutrition/SymptomLog";
 import CalorieBudget from "@/components/nutrition/CalorieBudget";
+
+const SECTIONS = [
+  { value: "dashboard", label: "Dashboard", icon: Apple },
+  { value: "diary", label: "Diary", icon: BookOpen },
+  { value: "water", label: "Water", icon: GlassWater },
+  { value: "goals", label: "Goals", icon: Target },
+  { value: "budget", label: "Budget", icon: Wallet },
+  { value: "symptoms", label: "Symptoms", icon: HeartPulse },
+  { value: "insights", label: "Insights", icon: Brain },
+];
 
 const Nutrition = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -23,7 +34,26 @@ const Nutrition = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full justify-start mb-6 bg-muted/50 rounded-xl p-1 h-auto flex-wrap">
+        {/* Phone: labeled section selector */}
+        <div className="mb-4 md:hidden">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  <span className="flex items-center gap-2">
+                    <s.icon className="h-4 w-4" />
+                    {s.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Tablet / desktop: visible tabs */}
+        <TabsList className="mb-6 hidden h-auto w-full flex-wrap justify-start rounded-xl bg-muted/50 p-1 md:flex">
           <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm gap-1.5 text-xs sm:text-sm">
             <Apple className="h-3.5 w-3.5" />
             Dashboard

@@ -48,7 +48,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsla(142,72%,40%,0.12)] blur-[120px]" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[hsla(142,70%,45%,0.08)] blur-[100px]" />
@@ -68,6 +68,8 @@ const Auth = () => {
             <Input
               id="email"
               type="email"
+              inputMode="email"
+              autoComplete="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -80,6 +82,7 @@ const Auth = () => {
             <Input
               id="password"
               type="password"
+              autoComplete={isLogin ? "current-password" : "new-password"}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -102,7 +105,7 @@ const Auth = () => {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-[#34D399] hover:underline"
+            className="-my-2 inline-flex min-h-[44px] items-center rounded px-2 py-2 align-middle font-medium text-[#34D399] hover:underline"
           >
             {isLogin ? "Sign up" : "Sign in"}
           </button>

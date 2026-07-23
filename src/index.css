@@ -73,6 +73,19 @@
     --glow-b: 160 80% 40% / 0.05;
     --scrollbar-thumb: 155 15% 55% / 0.4;
     --scrollbar-thumb-hover: 155 18% 45% / 0.55;
+
+    /* ---- Responsive shell layout contract (mobile-optimization brief) ----
+     * Use these variables instead of repeating magic numbers. Safe-area values
+     * resolve to 0px on devices without insets. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --phone-header-height: 56px;
+    --phone-nav-height: 64px;
+    --tablet-rail-width: 68px;
+    --desktop-sidebar-width: 260px;
+    --desktop-sidebar-collapsed-width: 68px;
   }
 
   .dark {
@@ -165,6 +178,48 @@
       radial-gradient(circle at 20% 100%, hsl(var(--glow-b)) 0%, transparent 40%);
     background-attachment: fixed;
   }
+
+  /* iOS / mobile hardening */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* On touch devices, keep focusable text fields >=16px so iOS Safari does not
+     auto-zoom on focus. The [class] attribute selector outranks Tailwind's
+     text-xs/text-sm utilities without needing !important. */
+  @media (hover: none) and (pointer: coarse) {
+    input[class],
+    textarea[class],
+    select[class] {
+      font-size: 16px;
+    }
+  }
+
+  /* Touch devices cannot hover: reveal hover-gated controls (edit / delete /
+     row actions) so no required action is ever hidden behind hover, and drop
+     hover-scale card effects that otherwise "stick" after a tap. */
+  @media (hover: none) {
+    .group-hover\:opacity-100 {
+      opacity: 1 !important;
+    }
+    .hover\:scale-\[1\.02\]:hover,
+    .hover\:scale-105:hover {
+      transform: none;
+    }
+  }
+
+  /* Honor the user's reduced-motion preference consistently across the app. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* Verdant utility classes */
@@ -228,4 +283,17 @@
   .metric-large {
     @apply text-4xl font-medium tracking-tight;
   }
+
+  /* ---- Safe-area helpers (resolve to 0 on devices without insets) ---- */
+  .pt-safe { padding-top: var(--safe-top); }
+  .pb-safe { padding-bottom: var(--safe-bottom); }
+  .pl-safe { padding-left: var(--safe-left); }
+  .pr-safe { padding-right: var(--safe-right); }
+  .px-safe { padding-left: var(--safe-left); padding-right: var(--safe-right); }
+
+  /* ---- Phone chrome offsets (fixed header / bottom nav + safe areas) ---- */
+  .h-phone-header { height: calc(var(--phone-header-height) + var(--safe-top)); }
+  .pt-phone-header { padding-top: calc(var(--phone-header-height) + var(--safe-top)); }
+  .h-phone-nav { height: calc(var(--phone-nav-height) + var(--safe-bottom)); }
+  .pb-phone-nav { padding-bottom: calc(var(--phone-nav-height) + var(--safe-bottom)); }
 }

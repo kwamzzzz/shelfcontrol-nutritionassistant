@@ -30,7 +30,7 @@ const Coach = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
+    <div className="mx-auto flex max-w-3xl flex-col h-[calc(100dvh-var(--phone-header-height)-var(--safe-top)-var(--phone-nav-height)-var(--safe-bottom))] sm:h-[calc(100dvh-8rem)]">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground flex items-center gap-2">
