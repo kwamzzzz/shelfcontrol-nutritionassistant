@@ -75,13 +75,13 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-3.5">
-        <p className="font-semibold text-[0.95rem] leading-tight text-foreground truncate font-[Outfit,var(--font-heading),sans-serif]">
+      <div className="flex flex-1 flex-col p-2 sm:p-3.5">
+        <p className="font-semibold text-xs sm:text-[0.95rem] leading-tight text-foreground truncate font-[Outfit,var(--font-heading),sans-serif]">
           {entry.items.name}
         </p>
 
         {entry.items.brand && (
-          <p className="mt-0.5 text-xs text-muted-foreground truncate">{entry.items.brand}</p>
+          <p className="mt-0.5 text-[0.65rem] sm:text-xs text-muted-foreground truncate">{entry.items.brand}</p>
         )}
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
