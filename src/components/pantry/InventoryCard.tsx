@@ -43,7 +43,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
         {/* Status badge overlay */}
         <span
           className={cn(
-            "absolute top-2.5 right-2.5 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+            "absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 rounded-full px-1.5 py-0.5 sm:px-2.5 text-[0.55rem] sm:text-xs font-semibold shadow-sm",
             statusBadge[status]
           )}
         >
@@ -51,18 +51,18 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
         </span>
         {/* Opened indicator */}
         {isOpened && (
-          <span className="absolute top-2.5 left-2.5 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-1">
-            <PackageOpen className="h-3 w-3" />
+          <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 rounded-full bg-accent/90 px-1.5 py-0.5 sm:px-2 text-[0.55rem] sm:text-xs font-medium text-accent-foreground shadow-sm flex items-center gap-0.5 sm:gap-1">
+            <PackageOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             Opened
           </span>
         )}
         {/* No confirmed storage location — expiry estimates are unreliable until set */}
         {entry.status === "active" && !entry.storage_location && (
           <span
-            className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground shadow-sm"
+            className="absolute bottom-1.5 left-1.5 sm:bottom-2.5 sm:left-2.5 flex items-center gap-0.5 sm:gap-1 rounded-full bg-warning px-1.5 py-0.5 sm:px-2 text-[0.55rem] sm:text-xs font-medium text-warning-foreground shadow-sm"
             title="No storage location set — confirm it for an accurate expiry estimate"
           >
-            <AlertTriangle className="h-3 w-3" />
+            <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             Set storage
           </span>
         )}
@@ -86,12 +86,12 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {entry.items.category && (
-            <Badge variant="secondary" className="text-[0.65rem] font-normal px-1.5 py-0">
+            <Badge variant="secondary" className="text-[0.55rem] sm:text-[0.65rem] font-normal px-1 sm:px-1.5 py-0">
               {entry.items.category}
             </Badge>
           )}
           {entry.storage_location && (
-            <span className="inline-flex items-center gap-0.5 text-[0.65rem] text-muted-foreground">
+            <span className="inline-flex items-center gap-0.5 text-[0.55rem] sm:text-[0.65rem] text-muted-foreground">
               <MapPin className="h-2.5 w-2.5" />
               {entry.storage_location}
             </span>
@@ -100,7 +100,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
         {/* Purchase date + store */}
         {entry.purchases?.purchased_at && (
-          <p className="mt-1 text-[0.65rem] text-muted-foreground truncate">
+          <p className="mt-1 text-[0.55rem] sm:text-[0.65rem] text-muted-foreground truncate">
             Bought {format(parseISO(entry.purchases.purchased_at), "MMM d")}
             {entry.purchases.store_name ? ` · ${entry.purchases.store_name}` : ""}
           </p>
@@ -108,18 +108,18 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
         {/* Attribution */}
         {addedBy && (
-          <p className="mt-1 text-[0.6rem] text-muted-foreground truncate">
+          <p className="mt-1 text-[0.55rem] sm:text-[0.6rem] text-muted-foreground truncate">
             Added by {addedBy}
           </p>
         )}
 
         {/* Quantity */}
-        <div className="mt-auto pt-3 border-t border-border flex items-baseline justify-between">
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border flex items-baseline justify-between">
           <div>
-            <span className="text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
+            <span className="text-sm sm:text-lg font-bold tabular-nums text-foreground font-[Outfit,var(--font-heading),sans-serif]">
               {entry.quantity}
             </span>
-            <span className="ml-1 text-sm text-muted-foreground">{entry.unit}</span>
+            <span className="ml-1 text-[0.65rem] sm:text-sm text-muted-foreground">{entry.unit}</span>
           </div>
         </div>
 
