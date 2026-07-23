@@ -1,4 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  fetchPublicHtml,
+  UnsafeUrlError,
+} from "../_shared/ssrf.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,17 +19,33 @@ interface ParsedRecipe {
   source?: { url?: string; method: "json-ld" | "ai" };
 }
 
-const fetchHtml = async (url: string): Promise<string> => {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; ShelfControlBot/1.0; +https://shelf-control.app)",
-      Accept: "text/html,application/xhtml+xml",
-    },
-    redirect: "follow",
+const MAX_TEXT_LENGTH = 50_000;
+
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-  if (!response.ok) throw new Error(`Failed to fetch URL (${response.status})`);
-  return await response.text();
+
+const isAuthenticated = async (req: Request): Promise<boolean> => {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) return false;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase authentication is not configured");
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  const { data, error } = await supabase.auth.getUser(match[1]);
+  return !error && Boolean(data.user);
 };
 
 const tryParseJsonLd = (html: string): ParsedRecipe | null => {
@@ -85,17 +106,26 @@ const parseQuantity = (s: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const formatInstructions = (raw: any): string | null => {
+const getStringProperty = (value: unknown, property: string): string | null => {
+  if (typeof value !== "object" || value === null || !(property in value)) return null;
+  const candidate = (value as Record<string, unknown>)[property];
+  return typeof candidate === "string" ? candidate : null;
+};
+
+const formatInstructions = (raw: unknown): string | null => {
   if (!raw) return null;
   if (typeof raw === "string") return raw;
   if (Array.isArray(raw)) {
     return raw
-      .map((step) => (typeof step === "string" ? step : step?.text ?? step?.name ?? ""))
+      .map((step) =>
+        typeof step === "string"
+          ? step
+          : getStringProperty(step, "text") ?? getStringProperty(step, "name") ?? ""
+      )
       .filter(Boolean)
       .join("\n\n");
   }
-  if (raw?.text) return raw.text;
-  return null;
+  return getStringProperty(raw, "text");
 };
 
 const stripToText = (html: string): string => {
@@ -107,40 +137,49 @@ const stripToText = (html: string): string => {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
 
   try {
+    if (!await isAuthenticated(req)) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
     const { url, text } = await req.json();
     if (!url && !text) {
-      return new Response(JSON.stringify({ error: "Provide a url or text" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Provide a url or text" }, 400);
+    }
+    if (text && (typeof text !== "string" || text.length > MAX_TEXT_LENGTH)) {
+      return jsonResponse({ error: "Recipe text must be 50,000 characters or less" }, 400);
     }
 
     let html: string | null = null;
     let plain: string | null = text ?? null;
 
     if (url) {
+      if (typeof url !== "string") {
+        return jsonResponse({ error: "Recipe URL must be a string" }, 400);
+      }
       try {
-        html = await fetchHtml(url);
+        const result = await fetchPublicHtml(url, {
+          resolveDns: (hostname, recordType) => Deno.resolveDns(hostname, recordType),
+        });
+        html = result.html;
         const fromJsonLd = tryParseJsonLd(html);
         if (fromJsonLd) {
           fromJsonLd.source = { ...(fromJsonLd.source ?? { method: "json-ld" }), url };
-          return new Response(JSON.stringify(fromJsonLd), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return jsonResponse(fromJsonLd);
         }
         plain = stripToText(html);
       } catch (err) {
+        if (err instanceof UnsafeUrlError) throw err;
         if (!plain) throw err;
       }
     }
 
     if (!plain) {
-      return new Response(JSON.stringify({ error: "No content to parse" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No content to parse" }, 400);
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -206,9 +245,9 @@ Rules:
       const status = response.status;
       const errBody = await response.text();
       console.error("AI gateway error:", status, errBody);
-      return new Response(
-        JSON.stringify({ error: status === 429 ? "Rate limited." : status === 402 ? "AI credits exhausted." : "AI service unavailable" }),
-        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      return jsonResponse(
+        { error: status === 429 ? "Rate limited." : status === 402 ? "AI credits exhausted." : "AI service unavailable" },
+        status,
       );
     }
 
@@ -217,20 +256,15 @@ Rules:
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments) as ParsedRecipe;
       parsed.source = { method: "ai", url: url || undefined };
-      return new Response(JSON.stringify(parsed), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(parsed);
     }
 
-    return new Response(JSON.stringify({ error: "Could not parse AI response" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Could not parse AI response" }, 500);
   } catch (e) {
     console.error("import-recipe error:", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (e instanceof UnsafeUrlError) {
+      return jsonResponse({ error: e.message }, 400);
+    }
+    return jsonResponse({ error: "Failed to import recipe" }, 500);
   }
 });
