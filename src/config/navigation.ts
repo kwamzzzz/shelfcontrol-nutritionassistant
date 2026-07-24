@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, Receipt, Heart, ShoppingCart, UtensilsCrossed,
-  BarChart3, Lightbulb, Newspaper, Apple, Sparkles, Users, Mail, Trophy,
+  BarChart3, BookHeart, Lightbulb, Newspaper, Apple, Sparkles, Users, Mail, Trophy,
   UserCircle, Settings,
 } from "lucide-react";
 
@@ -41,6 +41,7 @@ export const NAV_ITEMS: AppNavItem[] = [
   { path: "/consumption",       label: "Consumption",         icon: Heart,            section: "activity",     desktopGroup: "MAIN" },
   { path: "/shopping",          label: "Shopping List",       shortLabel: "Shopping", icon: ShoppingCart,     section: "primary",      desktopGroup: "MAIN",         mobileSlot: "shopping" },
   { path: "/recipes",           label: "My Cook Book",        shortLabel: "Recipes",  icon: UtensilsCrossed,  section: "activity",     desktopGroup: "MAIN",         activeFor: ["/recipes"] },
+  { path: "/kitchen-story",     label: "Kitchen Story",       icon: BookHeart,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
   { path: "/analytics",         label: "Analytics",           icon: BarChart3,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
   { path: "/intelligence",      label: "Pantry Intelligence", icon: Lightbulb,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
   { path: "/food-intelligence", label: "Food Intelligence",   icon: Newspaper,        section: "intelligence", desktopGroup: "INTELLIGENCE" },

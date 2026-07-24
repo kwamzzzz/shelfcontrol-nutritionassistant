@@ -43,16 +43,16 @@ const AppLayout = () => {
           <PhoneHeader />
         ) : (
           /* Desktop / tablet topbar */
-          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/60 px-8 backdrop-blur-md">
-            <div>
+          <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-4 border-b border-border bg-background/60 px-5 backdrop-blur-md lg:px-8">
+            <div className="min-w-0 shrink-0">
               <h2 className="text-xl font-medium text-foreground">{getGreeting()}</h2>
-              <span className="text-sm text-muted-foreground">
-                Your pantry health is <strong className="text-foreground">Optimal</strong>
+              <span className="hidden text-sm text-muted-foreground xl:block">
+                Your kitchen, organised in one place
               </span>
             </div>
 
             {/* Search bar */}
-            <div className="flex w-[300px] items-center gap-2 rounded-full glass-card px-4 py-2">
+            <div className="flex w-[240px] items-center gap-2 rounded-full glass-card px-4 py-2 xl:w-[300px]">
               <Search className="h-4 w-4 text-muted-foreground" />
               <input
                 type="text"

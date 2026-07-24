@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -29,10 +30,11 @@ import Intelligence from "@/pages/Intelligence";
 import Nutrition from "@/pages/Nutrition";
 import FoodIntelligence from "@/pages/FoodIntelligence";
 import Coach from "@/pages/Coach";
+import KitchenStory from "@/pages/KitchenStory";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoutes = () => {
+const AuthGate = ({ children }: { children: ReactNode }) => {
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -47,14 +49,31 @@ const ProtectedRoutes = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  return (
+  return <>{children}</>;
+};
+
+const ProtectedRoutes = () => (
+  <AuthGate>
     <GroupProvider>
       <SidebarProvider>
         <AppLayout />
       </SidebarProvider>
     </GroupProvider>
-  );
-};
+  </AuthGate>
+);
+
+/**
+ * Signed-in routes that deliberately render without the app chrome — no header,
+ * no bottom navigation. Group scope still applies, so these screens read the
+ * same personal/household data as the rest of the app.
+ */
+const ImmersiveRoutes = () => (
+  <AuthGate>
+    <GroupProvider>
+      <Outlet />
+    </GroupProvider>
+  </AuthGate>
+);
 
 const AuthRoute = () => {
   const { session, loading } = useAuth();
@@ -94,6 +113,9 @@ const App = () => (
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
+          </Route>
+          <Route element={<ImmersiveRoutes />}>
+            <Route path="/kitchen-story" element={<KitchenStory />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

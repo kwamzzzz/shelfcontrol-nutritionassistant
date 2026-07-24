@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
-  BarChart3, LogOut, Users, Trophy, UserCircle, Settings,
+  BarChart3, BookHeart, LogOut, Users, Trophy, UserCircle, Settings,
   Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ const navSections = [
   {
     label: "INTELLIGENCE",
     items: [
+      { to: "/kitchen-story", label: "Kitchen Story", icon: BookHeart },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
