@@ -72,7 +72,7 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200",
-        isCompact ? "w-[68px]" : "w-[260px]",
+        isCompact ? "w-[68px]" : "w-[230px]",
       )}
     >
         {/* Header: Logo + collapse toggle */}
