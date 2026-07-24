@@ -5,12 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-const AddShoppingItemDialog = () => {
+interface Props {
+  triggerClassName?: string;
+  triggerLabel?: string;
+}
+
+const AddShoppingItemDialog = ({
+  triggerClassName,
+  triggerLabel = "Add Item",
+}: Props) => {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"catalog" | "custom">("custom");
   const [itemId, setItemId] = useState("");
@@ -54,30 +70,37 @@ const AddShoppingItemDialog = () => {
       toast({ title: "Added", description: `${name} added to shopping list.` });
       reset();
       setOpen(false);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't add item",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button className={cn("min-h-11 rounded-full px-5", triggerClassName)}>
           <Plus className="mr-1.5 h-4 w-4" />
-          Add Item
+          {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md rounded-[1.75rem]">
         <DialogHeader>
           <DialogTitle className="font-display">Add to Shopping List</DialogTitle>
+          <DialogDescription>
+            Add something new or choose an item already in your pantry catalog.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Mode toggle */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               variant={mode === "custom" ? "default" : "outline"}
-              size="sm"
+              className="min-h-11 rounded-xl"
               onClick={() => { setMode("custom"); setItemId(""); }}
             >
               Custom Item
@@ -85,7 +108,7 @@ const AddShoppingItemDialog = () => {
             <Button
               type="button"
               variant={mode === "catalog" ? "default" : "outline"}
-              size="sm"
+              className="min-h-11 rounded-xl"
               onClick={() => setMode("catalog")}
             >
               From Catalog
@@ -96,7 +119,7 @@ const AddShoppingItemDialog = () => {
             <div className="space-y-2">
               <Label>Catalog Item</Label>
               <Select value={itemId} onValueChange={handleCatalogSelect}>
-                <SelectTrigger><SelectValue placeholder="Select an item" /></SelectTrigger>
+                <SelectTrigger className="min-h-11 rounded-xl"><SelectValue placeholder="Select an item" /></SelectTrigger>
                 <SelectContent>
                   {items?.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
@@ -117,6 +140,7 @@ const AddShoppingItemDialog = () => {
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder="e.g. Olive Oil"
+                className="min-h-11 rounded-xl"
               />
             </div>
           )}
@@ -125,19 +149,19 @@ const AddShoppingItemDialog = () => {
           {mode === "catalog" && itemId && (
             <div className="space-y-2">
               <Label>Display Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Qty</Label>
-              <Input type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="min-h-11 rounded-xl"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -147,11 +171,11 @@ const AddShoppingItemDialog = () => {
             </div>
             <div className="space-y-2">
               <Label>Est. Cost</Label>
-              <Input type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
+              <Input className="min-h-11 rounded-xl" type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={!name.trim() || createItem.isPending}>
+          <Button type="submit" className="min-h-11 w-full rounded-xl" disabled={!name.trim() || createItem.isPending}>
             {createItem.isPending ? "Adding..." : "Add to List"}
           </Button>
         </form>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
 import { Trash2 } from "lucide-react";
@@ -37,8 +37,12 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
       });
       toast({ title: "Updated", description: `${name} updated.` });
       onClose();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't update item",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -47,31 +51,38 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
       await deleteItem.mutateAsync(item.id);
       toast({ title: "Removed", description: `${item.name} removed.` });
       onClose();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't remove item",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md rounded-[1.75rem]">
         <DialogHeader>
           <DialogTitle className="font-display">Edit: {item.name}</DialogTitle>
+          <DialogDescription>
+            Update the quantity, category, or expected unit cost.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
             <Label>Name *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input className="min-h-11 rounded-xl" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Qty</Label>
-              <Input type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="min-h-11 rounded-xl"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -81,17 +92,18 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
             </div>
             <div className="space-y-2">
               <Label>Est. Cost</Label>
-              <Input type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
+              <Input className="min-h-11 rounded-xl" type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
             </div>
           </div>
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1" disabled={updateItem.isPending}>
+            <Button type="submit" className="min-h-11 flex-1 rounded-xl" disabled={updateItem.isPending}>
               {updateItem.isPending ? "Saving..." : "Save"}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" size="icon">
+                <Button type="button" variant="destructive" className="min-h-11 rounded-xl px-4">
                   <Trash2 className="h-4 w-4" />
+                  <span className="ml-2">Remove</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
