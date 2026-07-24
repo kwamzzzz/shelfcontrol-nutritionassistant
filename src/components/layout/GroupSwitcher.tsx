@@ -32,17 +32,17 @@ const GroupSwitcher = () => {
       <DropdownMenuContent align="end" className="w-48 glass-card border-white/[0.06] bg-card">
         <DropdownMenuItem
           onClick={() => setActiveGroupId(null)}
-          className={isPersonalMode ? "bg-white/[0.08]" : ""}
+          className={isPersonalMode ? "bg-accent" : ""}
         >
           <User className="mr-2 h-4 w-4" />
           Personal
         </DropdownMenuItem>
-        {groups.length > 0 && <DropdownMenuSeparator className="bg-white/[0.06]" />}
+        {groups.length > 0 && <DropdownMenuSeparator />}
         {groups.map((group) => (
           <DropdownMenuItem
             key={group.id}
             onClick={() => setActiveGroupId(group.id)}
-            className={activeGroupId === group.id ? "bg-white/[0.08]" : ""}
+            className={activeGroupId === group.id ? "bg-accent" : ""}
           >
             <Users className="mr-2 h-4 w-4" />
             <span className="truncate">{group.name}</span>

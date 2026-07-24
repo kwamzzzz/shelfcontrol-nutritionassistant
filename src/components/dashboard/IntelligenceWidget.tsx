@@ -42,7 +42,7 @@ const IntelligenceWidget = () => {
             <div
               key={item.id}
               className={cn(
-                "flex items-start gap-3 cursor-pointer hover:bg-white/[0.04] rounded-xl p-3 -mx-3 transition-colors",
+                "flex items-start gap-3 cursor-pointer hover:bg-[hsl(var(--surface-subtle))] rounded-xl p-3 -mx-3 transition-colors",
                 idx < topItems.length - 1 && "separator-dotted"
               )}
               onClick={() => navigate("/intelligence")}

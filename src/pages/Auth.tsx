@@ -74,7 +74,7 @@ const Auth = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="glass-card border-white/[0.06] bg-white/[0.05] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
+              className="bg-[hsl(var(--surface-panel))] border-[hsl(var(--surface-border))] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
             />
           </div>
           <div className="space-y-2">
@@ -88,7 +88,7 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="glass-card border-white/[0.06] bg-white/[0.05] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
+              className="bg-[hsl(var(--surface-panel))] border-[hsl(var(--surface-border))] text-foreground placeholder:text-muted-foreground rounded-xl h-11"
             />
           </div>
           <Button
