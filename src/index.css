@@ -84,6 +84,9 @@
     --surface-subtle: 150 22% 96%;
     --surface-inset: 150 18% 93%;
 
+    /* Neutral stage behind product photos (see .media-well). */
+    --media-stage: 150 18% 93%;
+
     --media-well-start: 150 25% 98%;
     --media-well-mid: 150 20% 94%;
     --media-well-end: 150 16% 90%;
@@ -170,6 +173,11 @@
     --surface-raised: 155 23% 13%;
     --surface-subtle: 155 21% 12%;
     --surface-inset: 155 20% 16%;
+
+    /* Stays light in dark mode — the photo multiplies into it, so a dark value
+       would crush the product or leave it on a white plate. Below pure white so
+       it does not glare across a long grid. */
+    --media-stage: 150 10% 88%;
 
     --media-well-start: 150 20% 18%;
     --media-well-mid: 155 22% 13%;
@@ -347,12 +355,13 @@
   }
 
   /* Consistent stage for product imagery — used with or without an image.
-     Neutral surface so the photo sits on a quiet gray slot, not a bright cutout. */
+     Neutral surface so the photo sits on a quiet gray slot, not a bright cutout.
+     Driven by --media-stage, which stays light in dark mode: product shots are
+     supplied on white, and the photo is multiplied into this surface so that
+     white reads as the slot itself. A dark stage would either crush the product
+     (multiply) or leave it on a white plate — see InventoryCard. */
   .media-well {
-    background-color: hsl(var(--surface-inset));
-  }
-  .dark .media-well {
-    background-color: hsl(var(--surface-inset));
+    background-color: hsl(var(--media-stage));
   }
 
   /* ---- Safe-area helpers (resolve to 0 on devices without insets) ---- */

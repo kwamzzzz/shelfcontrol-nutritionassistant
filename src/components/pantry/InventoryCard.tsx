@@ -61,11 +61,22 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
       aria-label={a11yLabel}
     >
       {/* Image area — consistent media well whether or not an image exists */}
-      <div className="media-well relative aspect-[3/4] sm:aspect-[4/3] w-full flex items-center justify-center overflow-hidden">
+      <div className="media-well relative isolate aspect-[3/4] sm:aspect-[4/3] w-full flex items-center justify-center overflow-hidden">
         {imageUrl ? (
-          <img src={imageUrl} alt={entry.items.name} loading="lazy" className="h-full w-full object-contain p-1.5 sm:p-2" />
+          /* Product shots are supplied on white studio backgrounds. Multiplying
+             them into the well makes that white read as the well's own surface,
+             so the photo sits on the neutral slot instead of on a white plate.
+             The slot is a light neutral in both themes so this works either way. */
+          <img
+            src={imageUrl}
+            alt={entry.items.name}
+            loading="lazy"
+            className="h-full w-full object-contain p-1.5 sm:p-2 mix-blend-multiply"
+          />
         ) : (
-          <Package aria-hidden className="h-10 w-10 sm:h-10 sm:w-10 text-muted-foreground/30" />
+          /* Fixed neutral: the slot is light in both themes, so a theme-aware
+             muted colour would disappear in dark mode. */
+          <Package aria-hidden className="h-10 w-10 text-[hsl(155_10%_62%)]" />
         )}
 
         {/* Phone: a single prioritised status. Tablet/desktop: full badge set. */}
