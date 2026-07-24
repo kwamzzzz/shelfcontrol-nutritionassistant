@@ -346,26 +346,13 @@
     border: 1px solid hsl(var(--surface-border) / 0.7);
   }
 
-  /* Consistent stage for product imagery — used with or without an image. */
+  /* Consistent stage for product imagery — used with or without an image.
+     Neutral surface so the photo sits on a quiet gray slot, not a bright cutout. */
   .media-well {
-    background:
-      radial-gradient(circle at 50% 24%, hsl(var(--surface-highlight)) 0%, transparent 52%),
-      linear-gradient(
-        160deg,
-        hsl(var(--media-well-start)) 0%,
-        hsl(var(--media-well-mid)) 56%,
-        hsl(var(--media-well-end)) 100%
-      );
+    background-color: hsl(var(--surface-inset));
   }
   .dark .media-well {
-    background:
-      radial-gradient(circle at 50% 28%, hsl(150 22% 23% / 0.75) 0%, transparent 56%),
-      linear-gradient(
-        160deg,
-        hsl(var(--media-well-start)) 0%,
-        hsl(var(--media-well-mid)) 58%,
-        hsl(var(--media-well-end)) 100%
-      );
+    background-color: hsl(var(--surface-inset));
   }
 
   /* ---- Safe-area helpers (resolve to 0 on devices without insets) ---- */
