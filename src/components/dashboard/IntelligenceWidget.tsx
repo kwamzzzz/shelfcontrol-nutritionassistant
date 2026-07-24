@@ -21,7 +21,7 @@ const IntelligenceWidget = () => {
   if (topItems.length === 0) return null;
 
   return (
-    <div className="glass-card glass-card-hover p-6">
+    <div className="surface-panel rounded-3xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-[#FFE53B]" />

@@ -102,7 +102,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 lg:gap-6">
 
         {/* ═══ BUDGET RING ═══ */}
-        <div className="col-span-1 md:col-span-4 glass-card glass-card-hover p-4 sm:p-6 flex flex-col items-center text-center relative">
+        <div className="col-span-1 md:col-span-4 surface-panel rounded-3xl p-4 sm:p-6 flex flex-col items-center text-center relative">
           <h3 className="label-small absolute top-4 left-4 sm:top-6 sm:left-6">Monthly Budget</h3>
           <div className="relative w-[140px] h-[140px] sm:w-[200px] sm:h-[200px] mt-4 mb-3 sm:mb-4">
             {/* SVG gradient definition */}
@@ -161,7 +161,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ QUICK STATS ═══ */}
-        <div className="col-span-1 md:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-4 surface-panel rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">Quick Stats</h3>
           </div>
@@ -174,7 +174,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ ATTENTION REQUIRED ═══ */}
-        <div className="col-span-1 md:col-span-8 lg:col-span-8 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-8 lg:col-span-8 surface-panel rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-medium text-foreground">Attention Required</h2>
             <button onClick={() => navigate("/pantry?filter=expiring")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -193,7 +193,7 @@ const Dashboard = () => {
                 return (
                   <div key={item.id} className={cn("flex items-center justify-between py-4", idx < Math.min(expiringSoon.length, 4) - 1 && "separator-dotted")}>
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center text-lg">
+                      <div className="h-10 w-10 rounded-2xl bg-[hsl(var(--surface-inset))] flex items-center justify-center text-lg">
                         {getCategoryEmoji(item.items?.category)}
                       </div>
                       <div>
@@ -219,7 +219,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ PANTRY COMPOSITION ═══ */}
-        <div className="col-span-1 md:col-span-4 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-4 lg:col-span-4 surface-panel rounded-3xl p-4 sm:p-6">
           <h3 className="label-small mb-4">Pantry Composition</h3>
           {composition.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No data yet</p>
@@ -231,7 +231,7 @@ const Dashboard = () => {
                     <span className="text-sm text-muted-foreground">{cat.name}</span>
                     <span className="text-sm font-medium text-foreground">{cat.pct}%</span>
                   </div>
-                  <div className="w-full h-1 bg-white/[0.1] rounded-sm">
+                  <div className="w-full h-1 bg-[hsl(var(--surface-inset))] rounded-sm">
                     <div className="h-full rounded-sm transition-all" style={{ width: `${cat.pct}%`, backgroundColor: compositionColors[i % compositionColors.length] }} />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ SPEND TREND ═══ */}
-        <div className="col-span-1 md:col-span-4 lg:col-span-4 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-4 lg:col-span-4 surface-panel rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">Spend Trend</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -257,7 +257,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ TODAY'S LOG ═══ */}
-        <div className="col-span-1 md:col-span-6 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-6 lg:col-span-6 surface-panel rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🍽 Today's Food Log</h3>
             <button onClick={() => navigate("/nutrition")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -280,7 +280,7 @@ const Dashboard = () => {
                 return (
                   <div key={log.id} className={cn("flex items-center justify-between py-3", idx < recentLogs.length - 1 && "separator-dotted")}>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center text-lg">
+                      <div className="h-10 w-10 rounded-2xl bg-[hsl(var(--surface-inset))] flex items-center justify-center text-lg">
                         {getCategoryEmoji(item?.category)}
                       </div>
                       <div>
@@ -301,7 +301,7 @@ const Dashboard = () => {
         </div>
 
         {/* ═══ RECENT PURCHASES ═══ */}
-        <div className="col-span-1 md:col-span-6 lg:col-span-6 glass-card glass-card-hover p-4 sm:p-6">
+        <div className="col-span-1 md:col-span-6 lg:col-span-6 surface-panel rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="label-small">🧾 Recent Purchases</h3>
             <button onClick={() => navigate("/purchases")} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
@@ -321,7 +321,7 @@ const Dashboard = () => {
               {recentPurchases.map((p, idx) => (
                 <div key={p.id} className={cn("flex items-center justify-between py-3 cursor-pointer", idx < recentPurchases.length - 1 && "separator-dotted")} onClick={() => navigate("/purchases")}>
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-white/[0.05] flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-2xl bg-[hsl(var(--surface-inset))] flex items-center justify-center">
                       <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
@@ -368,7 +368,7 @@ const QuickStat = ({
   icon: any; label: string; value: string | number; sub?: string; onClick?: () => void;
 }) => (
   <div
-    className="rounded-2xl bg-white/[0.05] p-3.5 cursor-pointer hover:bg-white/[0.08] transition-all"
+    className="rounded-2xl bg-[hsl(var(--surface-subtle))] p-3.5 cursor-pointer transition-colors hover:bg-[hsl(var(--surface-inset))]"
     onClick={onClick}
   >
     <Icon className="h-4 w-4 text-muted-foreground mb-2" />
@@ -421,7 +421,7 @@ const SpendBars = ({ purchases }: { purchases: any[] | undefined }) => {
             key={i}
             className={cn(
               "flex-1 rounded-t transition-all duration-500",
-              i === todayIdx ? "gradient-warm" : "bg-white/[0.1] hover:bg-white/[0.2]"
+              i === todayIdx ? "gradient-warm" : "bg-[hsl(var(--surface-inset))]"
             )}
             style={{ height: `${Math.max((s / maxSpend) * 100, 4)}%` }}
           />
