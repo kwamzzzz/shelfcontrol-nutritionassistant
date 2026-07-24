@@ -34,7 +34,7 @@ const MobileBottomNav = ({ onAdd, onMore, moreBadge = 0 }: MobileBottomNavProps)
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 backdrop-blur-xl pb-safe pl-safe pr-safe"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-panel)/0.94)] shadow-[0_-8px_24px_-20px_hsl(var(--surface-shadow))] backdrop-blur-xl pb-safe pl-safe pr-safe"
     >
       <div className="mx-auto flex h-16 max-w-md items-stretch px-1">
         {/* Home + Pantry */}

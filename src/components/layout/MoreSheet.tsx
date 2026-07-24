@@ -43,7 +43,9 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
                 <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                   {section.label}
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                {/* Two columns normally; a single column once text scaling makes
+                    two columns too narrow (≈200% text). */}
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
                   {items.map((item) => {
                     const active = isNavItemActive(item, pathname);
                     return (
@@ -60,7 +62,9 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
                         )}
                       >
                         <item.icon className="h-5 w-5 shrink-0 text-primary" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{item.label}</span>
+                        {/* Wrap rather than truncate — long labels such as
+                            "Pantry Intelligence" must stay fully readable. */}
+                        <span className="min-w-0 flex-1 text-sm font-medium leading-tight">{item.label}</span>
                         {item.hasBadge && pendingCount > 0 && (
                           <Badge className="h-4 min-w-4 border-0 bg-[#FF5A25] px-1 text-[10px] font-bold text-white">
                             {pendingCount}

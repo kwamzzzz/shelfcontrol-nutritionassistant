@@ -20,7 +20,7 @@ const PhoneHeader = () => {
   const { pathname } = useLocation();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 h-phone-header border-b border-border bg-background/90 px-4 pt-safe backdrop-blur-xl">
+    <header className="fixed inset-x-0 top-0 z-40 h-phone-header border-b border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-panel)/0.92)] px-4 pt-safe backdrop-blur-xl">
       <div className="flex h-14 items-center justify-between gap-3">
         <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
           {titleForPath(pathname)}
