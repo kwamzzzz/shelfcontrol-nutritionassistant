@@ -226,13 +226,15 @@ const Pantry = () => {
             </button>
           ))}
         </div>
+        {/* Labelled, never icon-only: an unlabelled glyph here reads as
+            decoration and gives screen readers nothing to announce. */}
         <button
           type="button"
           onClick={() => setToolsOpen(true)}
-          aria-label="Pantry tools"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+          className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:bg-accent"
         >
-          <Settings2 className="h-5 w-5" />
+          <Settings2 className="h-5 w-5" aria-hidden />
+          Tools
         </button>
       </div>
 
@@ -251,11 +253,17 @@ const Pantry = () => {
           type="button"
           onClick={() => setFiltersOpen(true)}
           aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
-          className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+          className={cn(
+            "inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[0.9375rem] font-medium transition-colors",
+            activeFilterCount > 0
+              ? "border-primary bg-primary/10 text-foreground"
+              : "border-border bg-card text-foreground hover:bg-accent",
+          )}
         >
-          <SlidersHorizontal className="h-5 w-5" />
+          <SlidersHorizontal className="h-5 w-5" aria-hidden />
+          Filters
           {activeFilterCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
               {activeFilterCount}
             </span>
           )}

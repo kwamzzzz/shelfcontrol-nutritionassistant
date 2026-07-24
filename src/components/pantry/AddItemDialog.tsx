@@ -56,7 +56,7 @@ const AddItemDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0">
           <Plus className="mr-1.5 h-4 w-4" />
           New Item
         </Button>

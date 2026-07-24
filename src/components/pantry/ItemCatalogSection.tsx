@@ -80,7 +80,7 @@ const ItemCatalogSection = () => {
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mt-8">
         <div className="flex items-center justify-between">
           <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <button className="flex min-h-[44px] items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors sm:min-h-0">
               {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               <BookOpen className="h-4 w-4" />
               Item Catalog
