@@ -14,7 +14,10 @@ import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
 import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
-import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users, ChevronLeft, ChevronRight, Archive } from "lucide-react";
+import PantryToolsSheet from "@/components/pantry/PantryToolsSheet";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users, ChevronLeft, ChevronRight, Archive, SlidersHorizontal, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -53,6 +56,13 @@ const Pantry = () => {
   const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
   // Purchase-date filter: "all" | "archived" | "YYYY-MM"
   const [purchaseFilter, setPurchaseFilter] = useState<string>("all");
+  // Phone scope: Current = what is in the pantry now; History = a past month or
+  // the archive. Keeping these apart stops "Archived" (an item state) from
+  // living inside the month axis (a time scale), which made the row read as
+  // navigation rather than a filter.
+  const [mode, setMode] = useState<"current" | "history">("all" === purchaseFilter ? "current" : "history");
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Deep-link from Intelligence cards
   useEffect(() => {
@@ -96,28 +106,56 @@ const Pantry = () => {
     return { label: format(parseISO(`${purchaseFilter}-01`), "MMMM yyyy"), trips: ps.length, items };
   }, [purchaseFilter, isArchivedView, purchases]);
 
-  const filtered = useMemo(() => {
+  // Search / category / location narrowing, WITHOUT the status filter applied.
+  // Status counts are derived from this so selecting a status does not zero out
+  // the other counts and strand the user.
+  const scoped = useMemo(() => {
     return sourceItems.filter((entry) => {
       const matchesSearch = entry.items.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = filterCategory === "all" || entry.items.category === filterCategory;
       const matchesLocation = filterLocation === "All" || entry.storage_location === filterLocation;
-      // Deep-link expiry/nutrition filters
+      return matchesSearch && matchesCategory && matchesLocation;
+    });
+  }, [sourceItems, search, filterCategory, filterLocation]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<ExpiryStatus, number> = { expired: 0, expiring: 0, fresh: 0, "no-date": 0 };
+    scoped.forEach((e) => { counts[getExpiryStatus(e.expiry_date)]++; });
+    return counts;
+  }, [scoped]);
+
+  const filtered = useMemo(() => {
+    return scoped.filter((entry) => {
+      // Status / nutrition filters (also used by deep links from Intelligence)
       if (expiryFilter === "expired" && getExpiryStatus(entry.expiry_date) !== "expired") return false;
       if (expiryFilter === "expiring" && getExpiryStatus(entry.expiry_date) !== "expiring") return false;
+      if (expiryFilter === "fresh" && getExpiryStatus(entry.expiry_date) !== "fresh") return false;
       if (expiryFilter === "no_expiry" && entry.expiry_date) return false;
       if (expiryFilter === "missing_nutrition") {
         const hasData = Number(entry.items?.calories_per_unit ?? 0) > 0 || Number(entry.items?.protein_g ?? 0) > 0;
         if (hasData) return false;
       }
-      return matchesSearch && matchesCategory && matchesLocation;
+      return true;
     });
-  }, [sourceItems, search, filterCategory, filterLocation, expiryFilter]);
+  }, [scoped, expiryFilter]);
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<ExpiryStatus, number> = { expired: 0, expiring: 0, fresh: 0, "no-date": 0 };
-    (filtered ?? []).forEach((e) => { counts[getExpiryStatus(e.expiry_date)]++; });
-    return counts;
-  }, [filtered]);
+  // Phone status ribbon: summary + one-tap filter, replacing the 2x2 tile block.
+  const statusChips: { key: string; label: string; count: number; filter: string | null; tone: string }[] = [
+    { key: "all", label: "All", count: scoped.length, filter: null, tone: "" },
+    { key: "expiring", label: "Use soon", count: statusCounts.expiring, filter: "expiring", tone: "text-warning" },
+    { key: "expired", label: "Expired", count: statusCounts.expired, filter: "expired", tone: "text-destructive" },
+    { key: "fresh", label: "Fresh", count: statusCounts.fresh, filter: "fresh", tone: "text-success" },
+    { key: "no-date", label: "No date", count: statusCounts["no-date"], filter: "no_expiry", tone: "text-muted-foreground" },
+  ];
+
+  const activeFilterCount = (filterCategory !== "all" ? 1 : 0) + (expiryFilter ? 1 : 0);
+
+  const enterMode = (next: "current" | "history") => {
+    setMode(next);
+    setExpiryFilter(null);
+    if (next === "current") setPurchaseFilter("all");
+    else setPurchaseFilter(purchaseMonths[0] ?? "archived");
+  };
 
   const grouped = useMemo(() => {
     const groups: Record<ExpiryStatus, InventoryRow[]> = { expired: [], expiring: [], fresh: [], "no-date": [] };
@@ -135,7 +173,10 @@ const Pantry = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── Header: full toolbar from sm: up, unchanged. The phone drops the
+             duplicate <h1> (the app's PhoneHeader already renders "Pantry") and
+             the duplicate Add button (Quick Add in the bottom nav covers it). ── */}
+      <div className="hidden sm:flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
@@ -166,8 +207,107 @@ const Pantry = () => {
         </div>
       </div>
 
-      {/* Location Pill Tabs — scroll on phone, wrap on larger screens */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0">
+      {/* ── Phone row 1: scope + tools ─────────────────────────────────────── */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <div className="flex flex-1 rounded-xl bg-secondary p-1" role="tablist" aria-label="Pantry scope">
+          {(["current", "history"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => enterMode(m)}
+              className={cn(
+                "min-h-[44px] flex-1 rounded-lg px-3 text-[0.9375rem] font-medium transition-colors",
+                mode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+              )}
+            >
+              {m === "current" ? "Current" : "History"}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setToolsOpen(true)}
+          aria-label="Pantry tools"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+        >
+          <Settings2 className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* ── Phone row 2: search + filters ──────────────────────────────────── */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search items..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11 pl-9"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
+          className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-accent"
+        >
+          <SlidersHorizontal className="h-5 w-5" />
+          {activeFilterCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ── Phone row 3: locations (chips, full labels, one selected style) ── */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {LOCATION_TABS.map((loc) => (
+          <button
+            key={loc}
+            type="button"
+            onClick={() => setFilterLocation(loc)}
+            aria-pressed={filterLocation === loc}
+            className={cn(
+              "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
+              filterLocation === loc
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground",
+            )}
+          >
+            {loc}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Phone row 4: status ribbon — summary and one-tap filter ─────────── */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {statusChips.map((c) => {
+          const active = expiryFilter === c.filter || (c.filter === null && !expiryFilter);
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setExpiryFilter(c.filter)}
+              aria-pressed={active}
+              className={cn(
+                "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[0.9375rem] font-medium transition-colors",
+                active
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border bg-card text-muted-foreground",
+              )}
+            >
+              <span className={cn("font-bold tabular-nums", active ? "text-primary" : c.tone)}>{c.count}</span>
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Location Pill Tabs — tablet/desktop (the phone has its own chip row) */}
+      <div className="hidden sm:flex gap-2 sm:flex-wrap">
         {LOCATION_TABS.map((loc) => (
           <button
             key={loc}
@@ -184,8 +324,8 @@ const Pantry = () => {
         ))}
       </div>
 
-      {/* Purchase-Date (Month) Filter */}
-      <div className="flex items-center gap-2">
+      {/* Purchase-Date (Month) Filter — tablet/desktop keeps the full row */}
+      <div className="hidden sm:flex items-center gap-2">
         <button
           type="button" onClick={() => navMonth(-1)} disabled={monthOptions.indexOf(purchaseFilter) <= 0}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
@@ -220,6 +360,45 @@ const Pantry = () => {
         </button>
       </div>
 
+      {/* ── Phone: month picker, revealed only in History. "Archived" is kept
+             off the month axis and separated by a divider, because it is an
+             item state rather than a point in time. ── */}
+      {mode === "history" && (
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {purchaseMonths.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setPurchaseFilter(m)}
+              aria-pressed={purchaseFilter === m}
+              className={cn(
+                "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
+                purchaseFilter === m
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground",
+              )}
+            >
+              {format(parseISO(`${m}-01`), "MMM yyyy")}
+            </button>
+          ))}
+          <span aria-hidden className="h-6 w-px shrink-0 bg-border" />
+          <button
+            type="button"
+            onClick={() => setPurchaseFilter("archived")}
+            aria-pressed={isArchivedView}
+            className={cn(
+              "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
+              isArchivedView
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground",
+            )}
+          >
+            <Archive className="h-4 w-4" />
+            Archived
+          </button>
+        </div>
+      )}
+
       {monthSummary && (
         <div className="rounded-xl border border-primary/20 bg-primary/[0.05] px-4 py-2.5 text-sm">
           <span className="font-semibold text-foreground">{monthSummary.label}</span>
@@ -235,8 +414,8 @@ const Pantry = () => {
         </div>
       )}
 
-      {/* Search + Category */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* Search + Category — tablet/desktop (the phone has its own row + sheet) */}
+      <div className="hidden sm:flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
@@ -250,8 +429,8 @@ const Pantry = () => {
         </Select>
       </div>
 
-      {/* Intelligence Strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* Intelligence Strip — tablet/desktop (the phone uses the status ribbon) */}
+      <div className="hidden sm:grid grid-cols-2 gap-3 sm:grid-cols-4">
         {intelligenceCards.map((card) => (
           <div key={card.key} className={cn("rounded-2xl p-4 shadow-sm", card.bg)}>
             <div className={cn("mb-1", card.accent)}>{card.icon}</div>
@@ -325,6 +504,40 @@ const Pantry = () => {
       )}
 
       <ItemCatalogSection />
+
+      {/* Phone progressive disclosure */}
+      <PantryToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
+
+      <Drawer open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-center">
+            <DrawerTitle>Filters</DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-4 px-4 pb-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Category</label>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="h-11 w-full"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                className="h-11 flex-1"
+                onClick={() => { setFilterCategory("all"); setExpiryFilter(null); }}
+                disabled={activeFilterCount === 0}
+              >
+                Clear
+              </Button>
+              <Button className="h-11 flex-1" onClick={() => setFiltersOpen(false)}>Done</Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

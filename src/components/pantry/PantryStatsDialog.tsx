@@ -21,7 +21,15 @@ interface MonthStat {
   archived: number;
 }
 
-const PantryStatsDialog = () => {
+export interface PantryToolDialogProps {
+  /** Omit to keep the dialog self-managed (desktop toolbar usage). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in trigger when opened from the phone Tools menu. */
+  hideTrigger?: boolean;
+}
+
+const PantryStatsDialog = ({ open, onOpenChange, hideTrigger }: PantryToolDialogProps) => {
   const { data: purchases } = usePurchases();
   const { data: inventory } = useAllInventory();
 
@@ -81,12 +89,14 @@ const PantryStatsDialog = () => {
   }, [purchases, inventory]);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <BarChart3 className="h-4 w-4" /> Stats
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Stats
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[88vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">

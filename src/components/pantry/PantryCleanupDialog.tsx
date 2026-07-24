@@ -4,6 +4,7 @@ import { useAllInventory, useArchiveInventory, useUndoCleanup, useUpdateInventor
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import type { PantryToolDialogProps } from "@/components/pantry/PantryStatsDialog";
 import { Recycle, Archive, RotateCcw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,14 +19,23 @@ const Stat = ({ label, value, tone }: { label: string; value: number; tone?: str
   </div>
 );
 
-const PantryCleanupDialog = () => {
+const PantryCleanupDialog = ({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger,
+}: PantryToolDialogProps) => {
   const { data: all } = useAllInventory();
   const archive = useArchiveInventory();
   const undo = useUndoCleanup();
   const updateInv = useUpdateInventory();
   const { toast } = useToast();
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [done, setDone] = useState<{ batch: string; count: number } | null>(null);
   const [lastBatch, setLastBatch] = useState<string | null>(() => localStorage.getItem(LAST_BATCH_KEY));
 
@@ -74,11 +84,13 @@ const PantryCleanupDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setDone(null); }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Recycle className="h-4 w-4" /> Cleanup
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Recycle className="h-4 w-4" /> Cleanup
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">

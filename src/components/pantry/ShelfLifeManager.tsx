@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import type { PantryToolDialogProps } from "@/components/pantry/PantryStatsDialog";
 import { CalendarClock, Minus, Plus, AlertTriangle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +136,7 @@ const ShelfLifeRow = ({ entry }: { entry: InventoryRow }) => {
   );
 };
 
-const ShelfLifeManager = () => {
+const ShelfLifeManager = ({ open, onOpenChange, hideTrigger }: PantryToolDialogProps) => {
   const { data: inventory } = useInventory();
   const updateInventory = useUpdateInventory();
 
@@ -175,12 +176,14 @@ const ShelfLifeManager = () => {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <CalendarClock className="h-4 w-4" /> Shelf-Life
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <CalendarClock className="h-4 w-4" /> Shelf-Life
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
