@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
+import { useIsPhone } from "@/hooks/use-shell-mode";
 import { Badge } from "@/components/ui/badge";
 
 const LOCATION_TABS = ["All", ...STORAGE_LOCATIONS] as const;
@@ -45,6 +46,7 @@ const Pantry = () => {
   const { data: allInventory } = useAllInventory();
   const { data: purchases } = usePurchases();
   const { activeGroupId, isPersonalMode } = useGroupContext();
+  const isPhone = useIsPhone();
   const { groups } = useGroups();
   const activeGroup = groups.find((g) => g.id === activeGroupId);
   const contextLabel = isPersonalMode ? "Personal Pantry" : `${activeGroup?.name ?? "Group"} Pantry`;
@@ -59,8 +61,10 @@ const Pantry = () => {
   // Phone scope: Current = what is in the pantry now; History = a past month or
   // the archive. Keeping these apart stops "Archived" (an item state) from
   // living inside the month axis (a time scale), which made the row read as
-  // navigation rather than a filter.
-  const [mode, setMode] = useState<"current" | "history">("all" === purchaseFilter ? "current" : "history");
+  // navigation rather than a filter. Derive the scope from the actual data
+  // filter so it stays correct when the viewport changes between desktop and
+  // phone after a desktop month/archive selection.
+  const mode: "current" | "history" = purchaseFilter === "all" ? "current" : "history";
   const [toolsOpen, setToolsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -73,6 +77,15 @@ const Pantry = () => {
     }
     if (searchParam) setSearch(searchParam);
   }, [searchParams]);
+
+  // A phone drawer should not silently reopen after rotating into a wider
+  // shell and back again.
+  useEffect(() => {
+    if (!isPhone) {
+      setToolsOpen(false);
+      setFiltersOpen(false);
+    }
+  }, [isPhone]);
 
   // Attribution
   const userIds = useMemo(() => (inventory ?? []).map((e) => e.user_id), [inventory]);
@@ -151,7 +164,6 @@ const Pantry = () => {
   const activeFilterCount = (filterCategory !== "all" ? 1 : 0) + (expiryFilter ? 1 : 0);
 
   const enterMode = (next: "current" | "history") => {
-    setMode(next);
     setExpiryFilter(null);
     if (next === "current") setPurchaseFilter("all");
     else setPurchaseFilter(purchaseMonths[0] ?? "archived");
@@ -171,208 +183,219 @@ const Pantry = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={cn(isPhone ? "space-y-4" : "space-y-6")}>
       {/* Header */}
-      {/* ── Header: full toolbar from sm: up, unchanged. The phone drops the
+      {/* ── Header: full toolbar outside the phone shell. The phone drops the
              duplicate <h1> (the app's PhoneHeader already renders "Pantry") and
              the duplicate Add button (Quick Add in the bottom nav covers it). ── */}
-      <div className="hidden sm:flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
-            {!isPersonalMode && (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <Users className="h-3 w-3" />
-                Shared
-              </Badge>
-            )}
+      {!isPhone && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-foreground font-[Outfit,var(--font-heading),sans-serif]">Pantry</h1>
+              {!isPersonalMode && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  <Users className="h-3 w-3" />
+                  Shared
+                </Badge>
+              )}
+            </div>
+            <p className="mt-1 text-muted-foreground">
+              Viewing: {contextLabel} · {inventory?.length ?? 0} items in stock
+              {expiryFilter && (
+                <button
+                  onClick={() => setExpiryFilter(null)}
+                  className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                >
+                  Filter: {expiryFilter.replace("_", " ")} ✕
+                </button>
+              )}
+            </p>
           </div>
-          <p className="mt-1 text-muted-foreground">
-            Viewing: {contextLabel} · {inventory?.length ?? 0} items in stock
-            {expiryFilter && (
-              <button
-                onClick={() => setExpiryFilter(null)}
-                className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-              >
-                Filter: {expiryFilter.replace("_", " ")} ✕
-              </button>
-            )}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <PantryStatsDialog />
+            <PantryCleanupDialog />
+            <ShelfLifeManager />
+            <AddInventoryDialog />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <PantryStatsDialog />
-          <PantryCleanupDialog />
-          <ShelfLifeManager />
-          <AddInventoryDialog />
-        </div>
-      </div>
+      )}
 
-      {/* ── Phone row 1: scope + tools ─────────────────────────────────────── */}
-      <div className="flex items-center gap-2 sm:hidden">
-        <div className="flex flex-1 rounded-xl bg-secondary p-1" role="tablist" aria-label="Pantry scope">
-          {(["current", "history"] as const).map((m) => (
+      {isPhone && (
+        <>
+          {/* ── Phone row 1: scope + tools ─────────────────────────────────── */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 rounded-xl bg-secondary p-1" role="group" aria-label="Pantry scope">
+              {(["current", "history"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  onClick={() => enterMode(m)}
+                  className={cn(
+                    "min-h-[44px] flex-1 rounded-lg px-3 text-[0.9375rem] font-medium transition-colors",
+                    mode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                  )}
+                >
+                  {m === "current" ? "Current" : "History"}
+                </button>
+              ))}
+            </div>
+            {/* Labelled, never icon-only: an unlabelled glyph here reads as
+                decoration and gives screen readers nothing to announce. */}
             <button
-              key={m}
               type="button"
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => enterMode(m)}
+              onClick={() => setToolsOpen(true)}
+              className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              <Settings2 className="h-5 w-5" aria-hidden />
+              Tools
+            </button>
+          </div>
+
+          {/* ── Phone row 2: search + filters ──────────────────────────────── */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search items..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-11 pl-9"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
               className={cn(
-                "min-h-[44px] flex-1 rounded-lg px-3 text-[0.9375rem] font-medium transition-colors",
-                mode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                "inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[0.9375rem] font-medium transition-colors",
+                activeFilterCount > 0
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border bg-card text-foreground hover:bg-accent",
               )}
             >
-              {m === "current" ? "Current" : "History"}
+              <SlidersHorizontal className="h-5 w-5" aria-hidden />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* ── Phone row 3: locations ────────────────────────────────────── */}
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {LOCATION_TABS.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => setFilterLocation(loc)}
+                aria-pressed={filterLocation === loc}
+                className={cn(
+                  "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
+                  filterLocation === loc
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground",
+                )}
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Phone row 4: status ribbon ────────────────────────────────── */}
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {statusChips.map((c) => {
+              const active = expiryFilter === c.filter || (c.filter === null && !expiryFilter);
+              return (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setExpiryFilter(c.filter)}
+                  aria-pressed={active}
+                  className={cn(
+                    "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[0.9375rem] font-medium transition-colors",
+                    active
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-card text-muted-foreground",
+                  )}
+                >
+                  <span className={cn("font-bold tabular-nums", active ? "text-primary" : c.tone)}>{c.count}</span>
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Location Pill Tabs — tablet/desktop (the phone has its own chip row) */}
+      {!isPhone && (
+        <div className="flex flex-wrap gap-2">
+          {LOCATION_TABS.map((loc) => (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => setFilterLocation(loc)}
+              aria-pressed={filterLocation === loc}
+              className={cn(
+                "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                filterLocation === loc
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              {loc === "All" ? "All Locations" : loc}
             </button>
           ))}
         </div>
-        {/* Labelled, never icon-only: an unlabelled glyph here reads as
-            decoration and gives screen readers nothing to announce. */}
-        <button
-          type="button"
-          onClick={() => setToolsOpen(true)}
-          className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:bg-accent"
-        >
-          <Settings2 className="h-5 w-5" aria-hidden />
-          Tools
-        </button>
-      </div>
-
-      {/* ── Phone row 2: search + filters ──────────────────────────────────── */}
-      <div className="flex items-center gap-2 sm:hidden">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-11 pl-9"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => setFiltersOpen(true)}
-          aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
-          className={cn(
-            "inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[0.9375rem] font-medium transition-colors",
-            activeFilterCount > 0
-              ? "border-primary bg-primary/10 text-foreground"
-              : "border-border bg-card text-foreground hover:bg-accent",
-          )}
-        >
-          <SlidersHorizontal className="h-5 w-5" aria-hidden />
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* ── Phone row 3: locations (chips, full labels, one selected style) ── */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {LOCATION_TABS.map((loc) => (
-          <button
-            key={loc}
-            type="button"
-            onClick={() => setFilterLocation(loc)}
-            aria-pressed={filterLocation === loc}
-            className={cn(
-              "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
-              filterLocation === loc
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground",
-            )}
-          >
-            {loc}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Phone row 4: status ribbon — summary and one-tap filter ─────────── */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {statusChips.map((c) => {
-          const active = expiryFilter === c.filter || (c.filter === null && !expiryFilter);
-          return (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => setExpiryFilter(c.filter)}
-              aria-pressed={active}
-              className={cn(
-                "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[0.9375rem] font-medium transition-colors",
-                active
-                  ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border bg-card text-muted-foreground",
-              )}
-            >
-              <span className={cn("font-bold tabular-nums", active ? "text-primary" : c.tone)}>{c.count}</span>
-              {c.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Location Pill Tabs — tablet/desktop (the phone has its own chip row) */}
-      <div className="hidden sm:flex gap-2 sm:flex-wrap">
-        {LOCATION_TABS.map((loc) => (
-          <button
-            key={loc}
-            onClick={() => setFilterLocation(loc)}
-            className={cn(
-              "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-              filterLocation === loc
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            )}
-          >
-            {loc === "All" ? "All Locations" : loc}
-          </button>
-        ))}
-      </div>
+      )}
 
       {/* Purchase-Date (Month) Filter — tablet/desktop keeps the full row */}
-      <div className="hidden sm:flex items-center gap-2">
-        <button
-          type="button" onClick={() => navMonth(-1)} disabled={monthOptions.indexOf(purchaseFilter) <= 0}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <div className="flex flex-1 gap-2 overflow-x-auto py-0.5">
-          {monthOptions.map((opt) => {
-            const label = opt === "all" ? "All Items" : opt === "archived" ? "Archived" : format(parseISO(`${opt}-01`), "MMM yyyy");
-            const active = purchaseFilter === opt;
-            return (
-              <button
-                key={opt} type="button" onClick={() => setPurchaseFilter(opt)}
-                className={cn(
-                  "flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                  active ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                )}
-              >
-                {opt === "archived" && <Archive className="h-3.5 w-3.5" />}
-                {label}
-              </button>
-            );
-          })}
+      {!isPhone && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button" onClick={() => navMonth(-1)} disabled={monthOptions.indexOf(purchaseFilter) <= 0}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex flex-1 gap-2 overflow-x-auto py-0.5">
+            {monthOptions.map((opt) => {
+              const label = opt === "all" ? "All Items" : opt === "archived" ? "Archived" : format(parseISO(`${opt}-01`), "MMM yyyy");
+              const active = purchaseFilter === opt;
+              return (
+                <button
+                  key={opt} type="button" onClick={() => setPurchaseFilter(opt)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                    active ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  {opt === "archived" && <Archive className="h-3.5 w-3.5" />}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button" onClick={() => navMonth(1)} disabled={monthOptions.indexOf(purchaseFilter) >= monthOptions.length - 1}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
-        <button
-          type="button" onClick={() => navMonth(1)} disabled={monthOptions.indexOf(purchaseFilter) >= monthOptions.length - 1}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
-          aria-label="Next month"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+      )}
 
       {/* ── Phone: month picker, revealed only in History. "Archived" is kept
              off the month axis and separated by a divider, because it is an
              item state rather than a point in time. ── */}
-      {mode === "history" && (
-        <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {isPhone && mode === "history" && (
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {purchaseMonths.map((m) => (
             <button
               key={m}
@@ -423,32 +446,36 @@ const Pantry = () => {
       )}
 
       {/* Search + Category — tablet/desktop (the phone has its own row + sheet) */}
-      <div className="hidden sm:flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      {!isPhone && (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-          </SelectContent>
-        </Select>
-      </div>
+      )}
 
       {/* Intelligence Strip — tablet/desktop (the phone uses the status ribbon) */}
-      <div className="hidden sm:grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {intelligenceCards.map((card) => (
-          <div key={card.key} className={cn("rounded-2xl p-4 shadow-sm", card.bg)}>
-            <div className={cn("mb-1", card.accent)}>{card.icon}</div>
-            <p className={cn("text-2xl font-bold tabular-nums font-[Outfit,var(--font-heading),sans-serif]", card.accent)}>
-              {statusCounts[card.key]}
-            </p>
-            <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
-          </div>
-        ))}
-      </div>
+      {!isPhone && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {intelligenceCards.map((card) => (
+            <div key={card.key} className={cn("rounded-2xl p-4 shadow-sm", card.bg)}>
+              <div className={cn("mb-1", card.accent)}>{card.icon}</div>
+              <p className={cn("text-2xl font-bold tabular-nums font-[Outfit,var(--font-heading),sans-serif]", card.accent)}>
+                {statusCounts[card.key]}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Grouped Sections */}
       {isLoading ? (
@@ -514,38 +541,42 @@ const Pantry = () => {
       <ItemCatalogSection />
 
       {/* Phone progressive disclosure */}
-      <PantryToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
+      {isPhone && (
+        <>
+          <PantryToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
 
-      <Drawer open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <DrawerContent>
-          <DrawerHeader className="text-center">
-            <DrawerTitle>Filters</DrawerTitle>
-          </DrawerHeader>
-          <div className="space-y-4 px-4 pb-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Category</label>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="h-11 w-full"><SelectValue placeholder="Category" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <Button
-                variant="outline"
-                className="h-11 flex-1"
-                onClick={() => { setFilterCategory("all"); setExpiryFilter(null); }}
-                disabled={activeFilterCount === 0}
-              >
-                Clear
-              </Button>
-              <Button className="h-11 flex-1" onClick={() => setFiltersOpen(false)}>Done</Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+          <Drawer open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <DrawerContent>
+              <DrawerHeader className="text-center">
+                <DrawerTitle>Filters</DrawerTitle>
+              </DrawerHeader>
+              <div className="space-y-4 px-4 pb-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Category</label>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="h-11 w-full"><SelectValue placeholder="Category" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    className="h-11 flex-1"
+                    onClick={() => { setFilterCategory("all"); setExpiryFilter(null); }}
+                    disabled={activeFilterCount === 0}
+                  >
+                    Clear
+                  </Button>
+                  <Button className="h-11 flex-1" onClick={() => setFiltersOpen(false)}>Done</Button>
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        </>
+      )}
     </div>
   );
 };
