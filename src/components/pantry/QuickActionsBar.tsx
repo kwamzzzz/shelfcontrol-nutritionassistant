@@ -75,7 +75,10 @@ const QuickActionsBar = ({ entry }: Props) => {
 
   return (
     <>
-      <div className="flex items-center gap-1 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Tablet/desktop only: five compact icon actions would be sub-44px and
+          collide in the three-column phone grid. On phone the card opens the
+          detail sheet, which exposes the same actions at full size. */}
+      <div className="hidden sm:flex items-center gap-1 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
           size="icon"
