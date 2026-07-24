@@ -10,7 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Plus, ShoppingBag, Sparkles, Camera, Loader2, ScanLine, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -30,9 +37,17 @@ interface AddPurchaseDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  triggerClassName?: string;
+  triggerLabel?: string;
 }
 
-const AddPurchaseDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: AddPurchaseDialogProps) => {
+const AddPurchaseDialog = ({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger,
+  triggerClassName,
+  triggerLabel = "Log Purchase",
+}: AddPurchaseDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = (v: boolean) => {
@@ -130,8 +145,12 @@ const AddPurchaseDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: 
       toast({ title: "Purchase saved", description: `${n} item${n !== 1 ? "s" : ""} added to your Pantry.` });
       reset();
       setOpen(false);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't save purchase",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -144,32 +163,35 @@ const AddPurchaseDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: 
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
       {!hideTrigger && (
         <DialogTrigger asChild>
-          <Button size="sm">
+          <Button className={cn("min-h-11 rounded-full px-5", triggerClassName)}>
             <Plus className="mr-1.5 h-4 w-4" />
-            Log Purchase
+            {triggerLabel}
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className={cn("max-h-[88vh] overflow-y-auto", inReview ? "max-w-3xl" : "max-w-lg")}>
+      <DialogContent className={cn("max-h-[88vh] overflow-y-auto rounded-[1.75rem]", inReview ? "max-w-3xl" : "max-w-lg")}>
         <DialogHeader>
           <DialogTitle className="font-display">Log Purchase</DialogTitle>
+          <DialogDescription>
+            Capture a shopping trip and add its items to your pantry.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Session fields — apply to every item */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Store / Market</Label>
-              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="e.g. Waterfront Market" />
+              <Input className="min-h-11 rounded-xl" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="e.g. Waterfront Market" />
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
-              <Input type="date" value={purchasedAt} onChange={(e) => setPurchasedAt(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" type="date" value={purchasedAt} onChange={(e) => setPurchasedAt(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="General notes for this trip…" className="h-14 max-h-28 resize-y" />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="General notes for this trip…" className="min-h-20 max-h-28 resize-y rounded-xl" />
           </div>
         </div>
 
@@ -191,10 +213,18 @@ const AddPurchaseDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: 
           </div>
         ) : (
           <Tabs value={tab} onValueChange={(v) => { setTab(v as Tab); setReviewRows(null); }} className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="bulk"><Sparkles className="mr-1.5 h-3.5 w-3.5" /> Bulk Paste</TabsTrigger>
-              <TabsTrigger value="scan"><ScanLine className="mr-1.5 h-3.5 w-3.5" /> Scan Receipt</TabsTrigger>
-              <TabsTrigger value="manual">Manual</TabsTrigger>
+            <TabsList className="grid min-h-12 w-full grid-cols-3 rounded-xl">
+              <TabsTrigger value="bulk" className="min-h-10 rounded-lg">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                <span className="sm:hidden">Paste</span>
+                <span className="hidden sm:inline">Bulk Paste</span>
+              </TabsTrigger>
+              <TabsTrigger value="scan" className="min-h-10 rounded-lg">
+                <ScanLine className="mr-1.5 h-3.5 w-3.5" />
+                <span className="sm:hidden">Scan</span>
+                <span className="hidden sm:inline">Scan Receipt</span>
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="min-h-10 rounded-lg">Manual</TabsTrigger>
             </TabsList>
 
             {/* Bulk paste */}

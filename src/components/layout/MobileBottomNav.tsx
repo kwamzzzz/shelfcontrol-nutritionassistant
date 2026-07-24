@@ -11,7 +11,8 @@ interface MobileBottomNavProps {
 }
 
 /**
- * Phone bottom navigation: Home · Pantry · Add · Shopping · More.
+ * Phone bottom navigation:
+ * Home · Pantry · Purchases · Add · Shopping · Cookbook · More.
  * Add is a prominent action (opens Quick Add), never a selected route.
  * Rendered only in phone shell mode by AppLayout.
  */
@@ -20,7 +21,7 @@ const MobileBottomNav = ({ onAdd, onMore, moreBadge = 0 }: MobileBottomNavProps)
   const { pathname } = useLocation();
   const activeSlot = activeSlotForPath(pathname);
 
-  const slots = (["home", "pantry", "shopping"] as const).map((slot) => ({
+  const slots = (["home", "pantry", "purchases", "shopping", "recipes"] as const).map((slot) => ({
     slot,
     item: navItemBySlot(slot)!,
   }));
@@ -36,18 +37,24 @@ const MobileBottomNav = ({ onAdd, onMore, moreBadge = 0 }: MobileBottomNavProps)
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-panel)/0.94)] shadow-[0_-8px_24px_-20px_hsl(var(--surface-shadow))] backdrop-blur-xl pb-safe pl-safe pr-safe"
     >
-      <div className="mx-auto flex h-16 max-w-md items-stretch px-1">
-        {/* Home + Pantry */}
-        {slots.slice(0, 2).map(({ slot, item }) => (
+      <div className="mx-auto flex h-16 max-w-lg items-stretch">
+        {/* Home + Pantry + Purchases */}
+        {slots.slice(0, 3).map(({ slot, item }) => (
           <button
             key={slot}
             type="button"
             onClick={() => navigate(item.path)}
+            aria-label={item.label}
             aria-current={activeSlot === slot ? "page" : undefined}
             className={tabClass(activeSlot === slot)}
           >
             <item.icon className={cn("h-5 w-5", activeSlot === slot && "scale-110")} />
-            <span className="text-[10px] font-medium leading-none">{item.shortLabel ?? item.label}</span>
+            <span className="text-[9px] font-medium leading-none min-[360px]:hidden">
+              {item.shortLabel ?? item.label}
+            </span>
+            <span className="hidden text-[9px] font-medium leading-none min-[360px]:inline min-[390px]:text-[10px]">
+              {item.shortLabel ?? item.label}
+            </span>
           </button>
         ))}
 
@@ -63,17 +70,23 @@ const MobileBottomNav = ({ onAdd, onMore, moreBadge = 0 }: MobileBottomNavProps)
           </button>
         </div>
 
-        {/* Shopping */}
-        {slots.slice(2).map(({ slot, item }) => (
+        {/* Shopping + Cookbook */}
+        {slots.slice(3).map(({ slot, item }) => (
           <button
             key={slot}
             type="button"
             onClick={() => navigate(item.path)}
+            aria-label={item.label}
             aria-current={activeSlot === slot ? "page" : undefined}
             className={tabClass(activeSlot === slot)}
           >
             <item.icon className={cn("h-5 w-5", activeSlot === slot && "scale-110")} />
-            <span className="text-[10px] font-medium leading-none">{item.shortLabel ?? item.label}</span>
+            <span className="text-[9px] font-medium leading-none min-[360px]:hidden">
+              {slot === "shopping" ? "Shop" : "Cook"}
+            </span>
+            <span className="hidden text-[9px] font-medium leading-none min-[360px]:inline min-[390px]:text-[10px]">
+              {item.shortLabel ?? item.label}
+            </span>
           </button>
         ))}
 
@@ -85,7 +98,7 @@ const MobileBottomNav = ({ onAdd, onMore, moreBadge = 0 }: MobileBottomNavProps)
           className={cn("relative", tabClass(activeSlot === "more"))}
         >
           <MoreHorizontal className="h-5 w-5" />
-          <span className="text-[10px] font-medium leading-none">More</span>
+          <span className="text-[9px] font-medium leading-none min-[390px]:text-[10px]">More</span>
           {moreBadge > 0 && (
             <span className="absolute right-[26%] top-2 h-2 w-2 rounded-full bg-[#FF5A25]" />
           )}

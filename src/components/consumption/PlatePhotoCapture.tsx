@@ -65,15 +65,19 @@ const PlatePhotoCapture = ({ triggerVariant = "default", triggerLabel = "Snap a 
       toast({ title: "Logged", description: "Plate items added to your consumption diary." });
       setOpen(false);
       setCountry("");
-    } catch (err: any) {
-      toast({ title: "Failed to save", description: err?.message ?? "Try again", variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to save",
+        description: err instanceof Error ? err.message : "Try again",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant} className="gap-2 rounded-xl">
+        <Button variant={triggerVariant} className="min-h-11 w-full gap-2 rounded-xl sm:w-auto">
           <Camera className="h-4 w-4" />
           {triggerLabel}
         </Button>

@@ -12,7 +12,7 @@ import {
  */
 
 export type NavSection = "primary" | "activity" | "intelligence" | "community" | "account";
-export type MobileSlot = "home" | "pantry" | "shopping" | "more";
+export type MobileSlot = "home" | "pantry" | "purchases" | "shopping" | "recipes" | "more";
 export type DesktopGroup = "MAIN" | "INTELLIGENCE" | "GROUP" | "SYSTEM";
 
 export interface AppNavItem {
@@ -37,10 +37,10 @@ export interface AppNavItem {
 export const NAV_ITEMS: AppNavItem[] = [
   { path: "/",                  label: "Dashboard",           shortLabel: "Home",     icon: LayoutDashboard,  section: "primary",      desktopGroup: "MAIN",         mobileSlot: "home" },
   { path: "/pantry",            label: "Pantry",                                      icon: Package,          section: "primary",      desktopGroup: "MAIN",         mobileSlot: "pantry" },
-  { path: "/purchases",         label: "Purchases",           icon: Receipt,          section: "activity",     desktopGroup: "MAIN",         activeFor: ["/purchases"] },
+  { path: "/purchases",         label: "Purchases",                                   icon: Receipt,          section: "activity",     desktopGroup: "MAIN",         mobileSlot: "purchases", activeFor: ["/purchases"] },
   { path: "/consumption",       label: "Consumption",         icon: Heart,            section: "activity",     desktopGroup: "MAIN" },
   { path: "/shopping",          label: "Shopping List",       shortLabel: "Shopping", icon: ShoppingCart,     section: "primary",      desktopGroup: "MAIN",         mobileSlot: "shopping" },
-  { path: "/recipes",           label: "My Cook Book",        shortLabel: "Recipes",  icon: UtensilsCrossed,  section: "activity",     desktopGroup: "MAIN",         activeFor: ["/recipes"] },
+  { path: "/recipes",           label: "My Cook Book",        shortLabel: "Cookbook", icon: UtensilsCrossed,  section: "activity",     desktopGroup: "MAIN",         mobileSlot: "recipes", activeFor: ["/recipes"] },
   { path: "/kitchen-story",     label: "Kitchen Story",       icon: BookHeart,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
   { path: "/analytics",         label: "Analytics",           icon: BarChart3,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
   { path: "/intelligence",      label: "Pantry Intelligence", icon: Lightbulb,        section: "intelligence", desktopGroup: "INTELLIGENCE" },
@@ -87,7 +87,7 @@ export function isNavItemActive(item: AppNavItem, pathname: string): boolean {
 
 /** Which bottom-nav slot is selected for a path. Non-slot routes select "more". */
 export function activeSlotForPath(pathname: string): MobileSlot {
-  for (const slot of ["home", "pantry", "shopping"] as const) {
+  for (const slot of ["home", "pantry", "purchases", "shopping", "recipes"] as const) {
     const item = navItemBySlot(slot);
     if (item && isNavItemActive(item, pathname)) return slot;
   }

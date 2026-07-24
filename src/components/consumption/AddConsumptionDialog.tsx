@@ -1,14 +1,23 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { useCreateConsumptionLog } from "@/hooks/useConsumption";
 import { useItems } from "@/hooks/usePantry";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Plus, Check, ChevronsUpDown, Utensils } from "lucide-react";
+import { Plus, Check, ChevronsUpDown, Package, Utensils } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -16,9 +25,18 @@ interface AddConsumptionDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  triggerLabel?: string;
 }
 
-const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger }: AddConsumptionDialogProps) => {
+const localDateTimeValue = () => format(new Date(), "yyyy-MM-dd'T'HH:mm");
+
+const AddConsumptionDialog = ({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger,
+  triggerLabel = "Log food",
+}: AddConsumptionDialogProps) => {
+  const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = (v: boolean) => {
@@ -27,7 +45,7 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
   };
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
-  const [consumedAt, setConsumedAt] = useState(new Date().toISOString().slice(0, 16));
+  const [consumedAt, setConsumedAt] = useState(localDateTimeValue);
   const [openCombobox, setOpenCombobox] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { data: items } = useItems();
@@ -43,7 +61,7 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
   const reset = () => {
     setItemId("");
     setQuantity("1");
-    setConsumedAt(new Date().toISOString().slice(0, 16));
+    setConsumedAt(localDateTimeValue());
   };
 
   const handleItemSelect = (id: string) => {
@@ -67,8 +85,12 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
       toast({ title: "Logged", description: `${itemMap.get(itemId) ?? "Item"} consumption recorded.` });
       reset();
       setOpen(false);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't save this food log",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -76,23 +98,29 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
       {!hideTrigger && (
         <DialogTrigger asChild>
-          <Button size="sm">
+          <Button className="min-h-11 rounded-xl">
             <Plus className="mr-1.5 h-4 w-4" />
-            Log Consumption
+            {triggerLabel}
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-sm">
+      <DialogContent className="rounded-[1.75rem] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display">Log Consumption</DialogTitle>
+          <span className="mb-1 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Utensils className="h-5 w-5" />
+          </span>
+          <DialogTitle className="font-display text-xl">Log what you ate</DialogTitle>
+          <DialogDescription>
+            Add an item from your food catalog to the consumption journal.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Catalog Item *</Label>
+            <Label>Food item *</Label>
             <Popover open={openCombobox} onOpenChange={(v) => { setOpenCombobox(v); if (!v) setShowQuickAdd(false); }}>
               <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="h-9 w-full justify-between text-sm font-normal">
-                  {itemId ? itemMap.get(itemId) ?? "Select" : "Select item..."}
+                <Button variant="outline" role="combobox" className="min-h-11 w-full justify-between rounded-xl text-sm font-normal">
+                  {itemId ? itemMap.get(itemId) ?? "Select" : "Choose a catalog item"}
                   <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -117,7 +145,7 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
                       </CommandEmpty>
                       <CommandGroup>
                         {items?.map((item) => (
-                          <CommandItem key={item.id} value={item.name} onSelect={() => handleItemSelect(item.id)}>
+                          <CommandItem key={item.id} value={item.name} onSelect={() => handleItemSelect(item.id)} className="min-h-10">
                             <Check className={cn("mr-2 h-3.5 w-3.5", itemId === item.id ? "opacity-100" : "opacity-0")} />
                             <span>{item.name}</span>
                             {item.category && <span className="ml-auto text-xs text-muted-foreground">{item.category}</span>}
@@ -136,20 +164,42 @@ const AddConsumptionDialog = ({ open: controlledOpen, onOpenChange, hideTrigger 
             </Popover>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Quantity</Label>
-              <Input type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Date / Time</Label>
-              <Input type="datetime-local" value={consumedAt} onChange={(e) => setConsumedAt(e.target.value)} />
+              <Input className="min-h-11 rounded-xl" type="datetime-local" value={consumedAt} onChange={(e) => setConsumedAt(e.target.value)} />
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={createLog.isPending}>
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3">
+            <div className="flex items-start gap-2.5">
+              <Package className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Need to reduce pantry stock too?</p>
+                <p className="mt-0.5 text-[0.7rem] leading-relaxed text-muted-foreground">
+                  Use the consume action on a Pantry item so the journal and remaining quantity update together.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/pantry");
+                  }}
+                  className="mt-1.5 text-xs font-semibold text-primary hover:text-primary/80"
+                >
+                  Open Pantry
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <Button type="submit" className="min-h-11 w-full rounded-xl" disabled={createLog.isPending}>
             <Utensils className="mr-1.5 h-4 w-4" />
-            {createLog.isPending ? "Saving..." : "Log"}
+            {createLog.isPending ? "Saving..." : "Add to food journal"}
           </Button>
         </form>
       </DialogContent>
