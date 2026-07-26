@@ -5,7 +5,7 @@ import { NAV_ITEMS } from "@/config/navigation";
 function titleForPath(pathname: string): string {
   const exact = NAV_ITEMS.find((i) => i.path === pathname);
   if (exact) return exact.label;
-  if (/^\/pantry\/[^/]+\/prices$/.test(pathname)) return "Price Passport";
+  if (/^\/pantry\/[^/]+\/prices$/.test(pathname)) return "Comparison";
   if (pathname.startsWith("/recipes/")) return "Recipe";
   if (pathname.startsWith("/groups/")) return "Group";
   if (pathname.startsWith("/invite/")) return "Invitation";

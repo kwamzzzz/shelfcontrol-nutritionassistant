@@ -92,7 +92,7 @@ const QuickActionsBar = ({ entry }: Props) => {
             e.stopPropagation();
             navigate(`/pantry/${entry.item_id}/prices`);
           }}
-          title="Open Price Passport"
+          title="Open Comparison"
         >
           <BadgeDollarSign className="h-3.5 w-3.5" />
         </Button>

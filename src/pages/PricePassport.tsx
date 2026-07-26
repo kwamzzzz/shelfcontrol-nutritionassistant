@@ -285,7 +285,7 @@ const PricePassport = () => {
         </div>
         <h1 className="mt-4 text-xl font-bold">Item not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This Price Passport is no longer connected to an item in your pantry.
+          This comparison is no longer connected to an item in your pantry.
         </p>
         <Button className="mt-5" onClick={() => navigate("/pantry")}>Back to Pantry</Button>
       </div>
@@ -489,7 +489,7 @@ const PricePassport = () => {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <CircleDollarSign className="h-6 w-6" />
               </div>
-              <h2 className="mt-4 text-xl font-bold">Start this Price Passport</h2>
+              <h2 className="mt-4 text-xl font-bold">Start this comparison</h2>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                 Add a price you spot in a store. Future receipts for {item.name} will join the comparison automatically.
               </p>
