@@ -19,9 +19,13 @@ interface ProductAsset {
 const hasWord = (name: string, word: string) =>
   new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?\\b`, "i").test(name);
 
+const isProduceCategory = (category: string) =>
+  !category ||
+  ["produce", "fresh produce", "fruit", "fruits", "vegetable", "vegetables", "herb", "herbs"].includes(category);
+
 const isDerivedOrPackagedProduct = (name: string, category: string) =>
-  category === "canned goods" ||
-  /\b(baby food|cake|candy|canned|cereal|chips|chutney|dried|drink|flavou?red|flavou?r|frozen meal|ice cream|jam|juice|milk|oil|paste|powder|puree|sauce|soda|soup|spread|tea|yogh?urt)\b/i.test(name);
+  !isProduceCategory(category) ||
+  /\b(baby food|cake|candy|canned|cereal|chips|chutney|dried|drink|flavou?red|flavou?r|frozen meal|ice cream|jam|juice|milk|oil|paste|powder|puffed|puree|sauce|soda|soup|spread|tea|yogh?urt)\b/i.test(name);
 
 /**
  * This bank is deliberately product-specific. A match may cover spelling or
@@ -31,7 +35,7 @@ const isDerivedOrPackagedProduct = (name: string, category: string) =>
  */
 const PRODUCT_ASSETS: ProductAsset[] = [
   { src: "/media/products/sweet-potato.jpg", label: "Sweet potato", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && /\bsweet potatoes?\b/i.test(n) },
-  { src: "/media/products/bell-pepper.jpg", label: "Bell pepper", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && /\b(bell pepper|capsicum)\b/i.test(n) },
+  { src: "/media/products/bell-pepper.jpg", label: "Bell pepper", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && /\b(bell peppers?|capsicum)\b/i.test(n) },
   { src: "/media/products/pomegranate.jpg", label: "Pomegranate", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && hasWord(n, "pomegranate") },
   { src: "/media/products/cauliflower.jpg", label: "Cauliflower", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && hasWord(n, "cauliflower") },
   { src: "/media/products/pineapple.jpg", label: "Pineapple", matches: (n, c) => !isDerivedOrPackagedProduct(n, c) && hasWord(n, "pineapple") },

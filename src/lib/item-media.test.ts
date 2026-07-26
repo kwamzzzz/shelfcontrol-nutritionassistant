@@ -26,6 +26,12 @@ describe("getItemMedia", () => {
       category: null,
       image_url: "",
     }).src).toBe("/media/products/eggplant.jpg");
+
+    expect(getItemMedia({
+      name: "Bell Peppers",
+      category: "Produce",
+      image_url: null,
+    }).src).toBe("/media/products/bell-pepper.jpg");
   });
 
   it("uses a neutral missing state instead of a misleading category photo", () => {
@@ -48,6 +54,12 @@ describe("getItemMedia", () => {
     expect(getItemMedia({
       name: "Mango Yogurt",
       category: "Dairy",
+      image_url: null,
+    }).source).toBe("missing");
+
+    expect(getItemMedia({
+      name: "Oman Pofak Cheese Puffed Corn",
+      category: "Snacks",
       image_url: null,
     }).source).toBe("missing");
   });
