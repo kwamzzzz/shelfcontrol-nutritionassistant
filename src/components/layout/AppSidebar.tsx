@@ -128,8 +128,8 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                       end={item.to === "/"}
                       className={({ isActive }) =>
                         cn(
-                          "relative flex items-center rounded-full text-sm font-medium transition-all duration-200",
-                          isCompact ? "justify-center px-0 py-2.5 mx-auto w-11 h-11" : "gap-3 px-4 py-2.5",
+                          "relative flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
+                          isCompact ? "mx-auto h-11 w-11 shrink-0 p-0" : "gap-3 px-4 py-2.5",
                           isActive
                             ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-inset ring-white/10"
                             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
