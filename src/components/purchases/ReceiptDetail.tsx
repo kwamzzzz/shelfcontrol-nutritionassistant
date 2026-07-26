@@ -5,6 +5,7 @@ import {
   Pencil,
   Receipt,
   ShoppingBag,
+  Share2,
   StickyNote,
   Trash2,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 
 interface Props {
   purchase: PurchaseWithItems | null;
@@ -37,6 +39,7 @@ const TORN_BOTTOM =
 
 const ReceiptDetail = ({ purchase }: Props) => {
   const [editing, setEditing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const deletePurchase = useDeletePurchase();
   const { toast } = useToast();
 
@@ -182,7 +185,7 @@ const ReceiptDetail = ({ purchase }: Props) => {
             </div>
           )}
 
-          <footer className="mt-4 flex items-center gap-2 border-t border-dashed border-border pt-4">
+          <footer className="mt-4 flex flex-wrap items-center gap-2 border-t border-dashed border-border pt-4">
             <Button
               variant="secondary"
               onClick={() => setEditing(true)}
@@ -191,6 +194,16 @@ const ReceiptDetail = ({ purchase }: Props) => {
               <Pencil className="mr-2 h-4 w-4" />
               Edit receipt
             </Button>
+            {purchase.group_id === null && (
+              <Button
+                variant="outline"
+                onClick={() => setSharing(true)}
+                className="min-h-11 flex-1 rounded-xl"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share to group
+              </Button>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -238,6 +251,11 @@ const ReceiptDetail = ({ purchase }: Props) => {
           onClose={() => setEditing(false)}
         />
       )}
+      <ShareToGroupDialog
+        open={sharing}
+        onOpenChange={setSharing}
+        payload={{ kind: "purchase", purchase }}
+      />
     </>
   );
 };

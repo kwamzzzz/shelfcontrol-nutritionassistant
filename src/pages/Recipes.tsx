@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
+import { useGroupContext } from "@/contexts/GroupContext";
+import { useGroups } from "@/hooks/useGroups";
+import { useProfileNames } from "@/hooks/useProfileNames";
 import AddRecipeDialog from "@/components/recipes/AddRecipeDialog";
 import EditRecipeDialog from "@/components/recipes/EditRecipeDialog";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import RecipeImportDialog from "@/components/recipes/RecipeImportDialog";
+import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Search, Sparkles } from "lucide-react";
+import { BookOpen, Search, Share2, Sparkles, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_RECIPES } from "@/data/cookbookMockData";
 import { DEFAULT_TAGS } from "@/components/recipes/RecipeTagEditor";
@@ -34,16 +38,30 @@ const loadFavorites = (): Set<string> => {
 
 const Recipes = () => {
   const { data: recipes, isLoading, isError, refetch } = useRecipes();
+  const { activeGroupId, isPersonalMode } = useGroupContext();
+  const { groups } = useGroups();
+  const activeGroup = groups.find((group) => group.id === activeGroupId);
   const [editing, setEditing] = useState<RecipeWithIngredients | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [shareEntries, setShareEntries] = useState<RecipeWithIngredients[] | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All Recipes");
   const [sort, setSort] = useState<"recent" | "name" | "ingredients">("recent");
   const [favorites, setFavorites] = useState<Set<string>>(() => loadFavorites());
 
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setShareEntries(null);
+    setEditing(null);
+  }, [activeGroupId]);
+
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       localStorage.setItem(FAV_KEY, JSON.stringify([...next]));
       return next;
     });
@@ -52,7 +70,7 @@ const Recipes = () => {
   const knownTags = useMemo(() => {
     const set = new Set<string>(DEFAULT_TAGS);
     for (const r of recipes ?? []) {
-      for (const t of ((r as any).tags as string[] | null) ?? []) set.add(t);
+      for (const t of r.tags ?? []) set.add(t);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [recipes]);
@@ -72,7 +90,7 @@ const Recipes = () => {
     if (category === "Favourites") {
       list = list.filter((r) => favorites.has(r.id));
     } else if (category !== "All Recipes") {
-      list = list.filter((r) => (((r as any).tags as string[] | null) ?? []).includes(category));
+      list = list.filter((r) => (r.tags ?? []).includes(category));
     }
     const sorted = [...list];
     if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -86,19 +104,71 @@ const Recipes = () => {
 
   const gridList = filtered;
   const totalCount = recipes?.length ?? 0;
+  const selectedEntries = useMemo(
+    () => (recipes ?? []).filter((recipe) => selectedIds.has(recipe.id)),
+    [recipes, selectedIds],
+  );
+  const userIds = useMemo(() => (recipes ?? []).map((recipe) => recipe.user_id), [recipes]);
+  const { data: profileMap } = useProfileNames(userIds);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const startSelection = () => {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  };
+
+  const selectVisible = () => {
+    setSelectedIds(new Set(gridList.map((recipe) => recipe.id)));
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-serif text-foreground">My Cook Book</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-serif text-foreground">
+              {isPersonalMode ? "My Cook Book" : "Group Cook Book"}
+            </h1>
+            {!isPersonalMode && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                <Users className="h-3.5 w-3.5" />
+                Shared
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {totalCount} recipe{totalCount !== 1 ? "s" : ""} saved
             {favorites.size > 0 && ` · ${favorites.size} favourite${favorites.size !== 1 ? "s" : ""}`}
+            {!isPersonalMode && ` · shared with ${activeGroup?.name ?? "your group"}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isPersonalMode && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={startSelection}
+              disabled={totalCount === 0}
+              className="rounded-full"
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Share recipes
+            </Button>
+          )}
           <Link
             to={`/recipes/${MOCK_RECIPES[0].id}`}
             className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors"
@@ -109,6 +179,42 @@ const Recipes = () => {
           <AddRecipeDialog />
         </div>
       </div>
+
+      {selectionMode && isPersonalMode && (
+        <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/20 bg-card/95 p-3 shadow-lg backdrop-blur">
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-sm font-semibold text-foreground">
+              {selectedIds.size} selected
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Choose recipes to add to one shared cookbook.
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="sm" className="rounded-xl" onClick={selectVisible}>
+            Select visible
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="rounded-xl"
+            disabled={selectedEntries.length === 0}
+            onClick={() => setShareEntries(selectedEntries)}
+          >
+            <Share2 className="mr-1.5 h-4 w-4" />
+            Share selected
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-xl"
+            onClick={cancelSelection}
+            aria-label="Cancel recipe selection"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Search + sort */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -202,6 +308,11 @@ const Recipes = () => {
               onToggleFavorite={() => toggleFavorite(recipe.id)}
               onEdit={() => setEditing(recipe)}
               knownTags={knownTags}
+              onShare={isPersonalMode ? () => setShareEntries([recipe]) : undefined}
+              selectionMode={selectionMode}
+              selected={selectedIds.has(recipe.id)}
+              onToggleSelected={() => toggleSelected(recipe.id)}
+              addedBy={activeGroupId ? profileMap?.get(recipe.user_id) : undefined}
             />
           ))}
         </div>
@@ -210,6 +321,15 @@ const Recipes = () => {
       {editing && (
         <EditRecipeDialog recipe={editing} open={!!editing} onClose={() => setEditing(null)} />
       )}
+
+      <ShareToGroupDialog
+        open={!!shareEntries}
+        onOpenChange={(open) => {
+          if (!open) setShareEntries(null);
+        }}
+        payload={shareEntries ? { kind: "recipe", entries: shareEntries } : null}
+        onShared={() => cancelSelection()}
+      />
     </div>
   );
 };

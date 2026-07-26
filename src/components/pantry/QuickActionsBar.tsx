@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { type InventoryRow, useUpdateInventory } from "@/hooks/usePantry";
 import { useCreateConsumptionLog } from "@/hooks/useConsumption";
 import { Button } from "@/components/ui/button";
-import { BadgeDollarSign, PackageOpen, Minus, Plus, Utensils, Trash2 } from "lucide-react";
+import { BadgeDollarSign, PackageOpen, Minus, Plus, Share2, Utensils, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STORAGE_LOCATIONS } from "@/lib/pantry-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -11,12 +11,13 @@ import DiscardDialog from "@/components/pantry/DiscardDialog";
 
 interface Props {
   entry: InventoryRow;
+  onShare?: () => void;
 }
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong.";
 
-const QuickActionsBar = ({ entry }: Props) => {
+const QuickActionsBar = ({ entry, onShare }: Props) => {
   const updateInventory = useUpdateInventory();
   const createConsumption = useCreateConsumptionLog();
   const navigate = useNavigate();
@@ -96,6 +97,20 @@ const QuickActionsBar = ({ entry }: Props) => {
         >
           <BadgeDollarSign className="h-3.5 w-3.5" />
         </Button>
+        {onShare && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare();
+            }}
+            title="Share to group"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

@@ -40,9 +40,11 @@ const RecipeBreadcrumb = ({ title, onEdit, onShare, onPrint, onNew, onDuplicate 
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onShare} className="gap-2">
-            <Share2 className="h-4 w-4" /> Share
-          </DropdownMenuItem>
+          {onShare && (
+            <DropdownMenuItem onClick={onShare} className="gap-2">
+              <Share2 className="h-4 w-4" /> Share to Group
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={onPrint} className="gap-2">
             <Printer className="h-4 w-4" /> Print
           </DropdownMenuItem>

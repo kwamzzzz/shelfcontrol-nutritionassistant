@@ -31,10 +31,15 @@ import {
   CalendarPlus,
   ShoppingCart,
   ImageIcon,
+  Check,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import RecipeTagEditor from "./RecipeTagEditor";
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Please try again.";
 
 interface Props {
   recipe: RecipeWithIngredients;
@@ -42,9 +47,25 @@ interface Props {
   favorite?: boolean;
   onToggleFavorite?: () => void;
   knownTags?: string[];
+  onShare?: () => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelected?: () => void;
+  addedBy?: string;
 }
 
-const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: Props) => {
+const RecipeCard = ({
+  recipe,
+  onEdit,
+  favorite,
+  onToggleFavorite,
+  knownTags,
+  onShare,
+  selectionMode = false,
+  selected = false,
+  onToggleSelected,
+  addedBy,
+}: Props) => {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const deleteRecipe = useDeleteRecipe();
@@ -52,15 +73,15 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
   const { toast } = useToast();
 
   const ingCount = recipe.recipe_ingredients?.length ?? 0;
-  const tags: string[] = ((recipe as any).tags as string[] | null) ?? [];
+  const tags = recipe.tags ?? [];
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   const handleDelete = async () => {
     try {
       await deleteRecipe.mutateAsync(recipe.id);
       toast({ title: "Recipe deleted" });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -78,8 +99,8 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
         })),
       });
       toast({ title: "Recipe duplicated" });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -88,14 +109,25 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
   return (
     <>
       <div
-        onClick={() => navigate(`/recipes/${recipe.id}`)}
-        className="group relative flex flex-row sm:flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 cursor-pointer focus-within:ring-2 focus-within:ring-primary/40"
+        onClick={
+          selectionMode
+            ? onToggleSelected
+            : () => navigate(`/recipes/${recipe.id}`)
+        }
+        className={cn(
+          "group relative flex cursor-pointer flex-row overflow-hidden rounded-2xl border bg-card shadow-sm transition-all focus-within:ring-2 focus-within:ring-primary/40 sm:flex-col",
+          selected
+            ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+            : "border-border/60 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+        )}
         role="button"
         tabIndex={0}
+        aria-pressed={selectionMode ? selected : undefined}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            navigate(`/recipes/${recipe.id}`);
+            if (selectionMode) onToggleSelected?.();
+            else navigate(`/recipes/${recipe.id}`);
           }
         }}
       >
@@ -116,58 +148,79 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
             </div>
           )}
 
-          <button
-            onClick={(e) => {
-              stop(e);
-              onToggleFavorite?.();
-            }}
-            aria-label={favorite ? "Unfavorite" : "Favorite"}
-            className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/85 backdrop-blur shadow-sm hover:bg-background transition-colors"
-          >
-            <Heart
+          {selectionMode ? (
+            <span
+              aria-hidden
               className={cn(
-                "h-4 w-4 text-muted-foreground transition-colors",
-                favorite && "fill-rose-500 text-rose-500",
+                "absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-sm backdrop-blur",
+                selected
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-white/90 bg-background/85 text-transparent",
               )}
-            />
-          </button>
+            >
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </span>
+          ) : (
+            <button
+              onClick={(e) => {
+                stop(e);
+                onToggleFavorite?.();
+              }}
+              aria-label={favorite ? "Unfavorite" : "Favorite"}
+              className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/85 shadow-sm backdrop-blur transition-colors hover:bg-background"
+            >
+              <Heart
+                className={cn(
+                  "h-4 w-4 text-muted-foreground transition-colors",
+                  favorite && "fill-rose-500 text-rose-500",
+                )}
+              />
+            </button>
+          )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={stop}>
-              <button
-                aria-label="Recipe actions"
-                className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/85 backdrop-blur shadow-sm hover:bg-background transition-colors"
-              >
-                <MoreHorizontal className="h-4 w-4 text-foreground" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={stop} className="w-52">
-              <DropdownMenuItem onClick={notImpl("Add to Meal Plan")}>
-                <CalendarPlus className="mr-2 h-4 w-4" /> Add to Meal Plan
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={notImpl("Add to Shopping List")}>
-                <ShoppingCart className="mr-2 h-4 w-4" /> Add to Shopping List
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onToggleFavorite?.()}>
-                <Heart className={cn("mr-2 h-4 w-4", favorite && "fill-rose-500 text-rose-500")} />
-                {favorite ? "Remove Favorite" : "Mark as Favorite"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit Recipe
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDuplicate} disabled={createRecipe.isPending}>
-                <Copy className="mr-2 h-4 w-4" /> Duplicate Recipe
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Recipe
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!selectionMode && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={stop}>
+                <button
+                  aria-label="Recipe actions"
+                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/85 shadow-sm backdrop-blur transition-colors hover:bg-background"
+                >
+                  <MoreHorizontal className="h-4 w-4 text-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={stop} className="w-52">
+                <DropdownMenuItem onClick={notImpl("Add to Meal Plan")}>
+                  <CalendarPlus className="mr-2 h-4 w-4" /> Add to Meal Plan
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={notImpl("Add to Shopping List")}>
+                  <ShoppingCart className="mr-2 h-4 w-4" /> Add to Shopping List
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onToggleFavorite?.()}>
+                  <Heart className={cn("mr-2 h-4 w-4", favorite && "fill-rose-500 text-rose-500")} />
+                  {favorite ? "Remove Favorite" : "Mark as Favorite"}
+                </DropdownMenuItem>
+                {onShare && (
+                  <DropdownMenuItem onClick={onShare}>
+                    <Share2 className="mr-2 h-4 w-4" /> Share to Group
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onEdit}>
+                  <Pencil className="mr-2 h-4 w-4" /> Edit Recipe
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDuplicate} disabled={createRecipe.isPending}>
+                  <Copy className="mr-2 h-4 w-4" /> Duplicate Recipe
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Recipe
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <div className="absolute bottom-3 left-3">
             <Badge className="bg-background/85 text-foreground backdrop-blur hover:bg-background/85 border-0 font-normal">
@@ -187,7 +240,13 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
             </p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={stop}>
+          {addedBy && (
+            <p className="mt-2 truncate text-xs font-medium text-primary/80">
+              Shared by {addedBy}
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-1.5" onClick={selectionMode ? undefined : stop}>
             {tags.slice(0, 3).map((t) => (
               <span
                 key={t}
@@ -199,7 +258,9 @@ const RecipeCard = ({ recipe, onEdit, favorite, onToggleFavorite, knownTags }: P
             {tags.length > 3 && (
               <span className="text-[11px] text-muted-foreground">+{tags.length - 3}</span>
             )}
-            <RecipeTagEditor recipeId={recipe.id} tags={tags} knownTags={knownTags} compact />
+            {!selectionMode && (
+              <RecipeTagEditor recipeId={recipe.id} tags={tags} knownTags={knownTags} compact />
+            )}
           </div>
 
           <div className="mt-auto flex items-center gap-4 pt-4 text-xs text-muted-foreground">
