@@ -160,14 +160,6 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                       )}
                     </NavLink>
                   );
-                  // remove the old duplicated inner content below by matching next lines
-                      {!isCompact && item.hasBadge && pendingCount > 0 && (
-                        <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
-                          {pendingCount}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  );
 
                   if (isCompact) {
                     return (
