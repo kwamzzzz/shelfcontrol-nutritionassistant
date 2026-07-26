@@ -33,7 +33,7 @@ const navSections = [
     accent: "text-amber-600 dark:text-amber-400",
     items: [
       { to: "/kitchen-story", label: "Kitchen Story", icon: BookHeart },
-      { to: "/analytics", label: "Analytics", icon: BarChart3, accent: "" },
+      { to: "/analytics", label: "Analytics", icon: BarChart3, accent: "text-cyan-400 dark:text-cyan-300" },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
       { to: "/nutrition", label: "Nutrition", icon: Apple },
