@@ -271,7 +271,7 @@ function KPI({
   return (
     <div
       className="rounded-2xl border border-border/70 bg-card p-3 shadow-[0_1px_0_hsl(0_0%_100%/0.4)_inset]"
-      style={{ ["--tone" as any]: tone }}
+      style={{ "--tone": tone } as ToneStyle}
     >
       <div className="flex items-center gap-2">
         <span
