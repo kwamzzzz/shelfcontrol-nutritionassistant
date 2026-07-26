@@ -107,6 +107,22 @@
     --tablet-rail-width: 68px;
     --desktop-sidebar-width: 230px;
     --desktop-sidebar-collapsed-width: 68px;
+
+    /* ---- Garden Glow overlay system (light) ---- */
+    --garden-mint: 142 60% 92%;
+    --garden-aqua: 174 55% 90%;
+    --garden-peach: 24 90% 92%;
+    --garden-lilac: 268 45% 94%;
+    --garden-ink: 155 40% 10%;
+    --garden-scrim: 155 40% 14% / 0.42;
+    --garden-shadow: 155 30% 12% / 0.18;
+
+    /* Bento Market accents */
+    --bento-emerald: 152 68% 38%;
+    --bento-cobalt: 218 88% 55%;
+    --bento-amber: 32 95% 50%;
+    --bento-coral: 8 85% 60%;
+    --bento-slate: 215 20% 45%;
   }
 
   .dark {
@@ -186,6 +202,21 @@
     --surface-border: 150 15% 21%;
     --surface-highlight: 150 30% 100% / 0.07;
     --surface-shadow: 0 0% 0% / 0.55;
+
+    /* ---- Garden Glow overlay system (dark) ---- */
+    --garden-mint: 155 40% 15%;
+    --garden-aqua: 174 42% 15%;
+    --garden-peach: 24 45% 15%;
+    --garden-lilac: 268 30% 17%;
+    --garden-ink: 150 40% 96%;
+    --garden-scrim: 155 45% 4% / 0.72;
+    --garden-shadow: 0 0% 0% / 0.6;
+
+    --bento-emerald: 152 62% 55%;
+    --bento-cobalt: 218 82% 66%;
+    --bento-amber: 32 92% 62%;
+    --bento-coral: 8 82% 68%;
+    --bento-slate: 215 18% 68%;
   }
 }
 
