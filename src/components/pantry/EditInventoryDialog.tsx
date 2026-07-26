@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { type InventoryRow, useUpdateInventory, useDeleteInventory, useUpdateItem } from "@/hooks/usePantry";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import ImageUpload from "@/components/shared/ImageUpload";
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { STORAGE_LOCATIONS, CATEGORIES } from "@/lib/pantry-utils";
 import { classifyFood, estimateShelfLifeDays, estimateExpiryDate, type StorageLocation } from "@/lib/shelf-life";
-import { Trash2, Sparkles } from "lucide-react";
+import { BadgeDollarSign, ChevronRight, Trash2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -18,6 +19,9 @@ interface Props {
   open: boolean;
   onClose: () => void;
 }
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Something went wrong.";
 
 const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
   // Inventory fields
@@ -35,12 +39,13 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
   const [protein, setProtein] = useState(String(entry.items.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(entry.items.carbs_g ?? 0));
   const [fat, setFat] = useState(String(entry.items.fat_g ?? 0));
-  const [imageUrl, setImageUrl] = useState<string | null>((entry.items as any).image_url ?? null);
+  const [imageUrl, setImageUrl] = useState<string | null>(entry.items.image_url ?? null);
 
   const updateInventory = useUpdateInventory();
   const updateItem = useUpdateItem();
   const deleteInventory = useDeleteInventory();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Changing storage location recalculates the expected shelf life — but never
   // over an expiry the user has typed/kept (e.g. a printed use-by date).
@@ -81,12 +86,12 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
         image_url: imageUrl,
-      } as any);
+      });
 
       toast({ title: "Updated", description: `${itemName} updated.` });
       onClose();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -95,8 +100,8 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
       await deleteInventory.mutateAsync(entry.id);
       toast({ title: "Removed", description: `${entry.items.name} removed from pantry.` });
       onClose();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -106,6 +111,23 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
         <DialogHeader>
           <DialogTitle className="font-display">Edit: {entry.items.name}</DialogTitle>
         </DialogHeader>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            navigate(`/pantry/${entry.item_id}/prices`);
+          }}
+          className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-primary/20 bg-primary/[0.06] px-4 text-left transition-colors hover:bg-primary/10"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <BadgeDollarSign className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">Open Price Passport</span>
+            <span className="block truncate text-xs text-muted-foreground">Compare stores and add a price</span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
         <form onSubmit={handleSave} className="space-y-4">
           <ImageUpload
             currentUrl={imageUrl}
