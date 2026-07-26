@@ -206,6 +206,37 @@ describe("food rescue", () => {
     expect(build().rescue.longestNoWasteRun).toBeNull();
     expect(build().rescue.neverWastedShare).toBeNull();
   });
+
+  it("splits eaten vs thrown out by event count", () => {
+    const story = build({
+      consumption: [
+        { consumed_at: at(2026, 7, 1) },
+        { consumed_at: at(2026, 7, 2) },
+        { consumed_at: at(2026, 7, 3) },
+      ],
+      waste: [{ item_id: "a", discarded_at: at(2026, 7, 4) }],
+    });
+    expect(story.rescue.eatenCount).toBe(3);
+    expect(story.rescue.thrownOutCount).toBe(1);
+    expect(story.rescue.eatenShare).toBe(75);
+  });
+
+  it("has no eaten share when nothing has left the kitchen", () => {
+    expect(build().rescue.eatenShare).toBeNull();
+  });
+
+  it("respects the range when splitting eaten vs thrown out", () => {
+    const story = build(
+      {
+        consumption: [{ consumed_at: at(2026, 7, 10) }, { consumed_at: at(2026, 3, 1) }],
+        waste: [{ item_id: "a", discarded_at: at(2026, 7, 12) }],
+      },
+      "month",
+    );
+    expect(story.rescue.eatenCount).toBe(1);
+    expect(story.rescue.thrownOutCount).toBe(1);
+    expect(story.rescue.eatenShare).toBe(50);
+  });
 });
 
 describe("shopping", () => {

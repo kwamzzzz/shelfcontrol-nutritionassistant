@@ -118,6 +118,12 @@ export interface KitchenStory {
     longestNoWasteRun: number | null;
     daysSinceLastDiscard: number | null;
     discardCount: number;
+    /** Times something was logged as eaten. */
+    eatenCount: number;
+    /** Times something was logged as thrown out (= discardCount). */
+    thrownOutCount: number;
+    /** Of what left the kitchen (eaten + thrown out), the share eaten, 0–100. */
+    eatenShare: number | null;
   };
 
   shopping: {
@@ -293,6 +299,13 @@ export function buildKitchenStory(input: StoryInput, range: StoryRange): Kitchen
 
   const lastDiscard = discardDates[discardDates.length - 1] ?? null;
 
+  // Eaten vs thrown out — each log is one recorded decision, so this counts
+  // events (unit-safe), not summed quantities.
+  const eatenCount = consumption.length;
+  const thrownOutCount = waste.length;
+  const leftKitchen = eatenCount + thrownOutCount;
+  const eatenShare = leftKitchen > 0 ? Math.round((eatenCount / leftKitchen) * 100) : null;
+
   /* shopping */
   const spent = purchases.reduce((sum, p) => sum + (p.total_cost ?? 0), 0);
 
@@ -392,6 +405,9 @@ export function buildKitchenStory(input: StoryInput, range: StoryRange): Kitchen
       longestNoWasteRun,
       daysSinceLastDiscard: lastDiscard ? differenceInCalendarDays(now, lastDiscard) : null,
       discardCount: waste.length,
+      eatenCount,
+      thrownOutCount,
+      eatenShare,
     },
 
     shopping: {

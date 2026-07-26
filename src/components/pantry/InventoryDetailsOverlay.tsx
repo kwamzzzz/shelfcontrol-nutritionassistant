@@ -12,6 +12,8 @@ import {
   Share2,
   ShieldCheck,
   Sparkles,
+  Trash2,
+  Utensils,
 } from "lucide-react";
 import type { InventoryRow } from "@/hooks/usePantry";
 import { useIsPhone } from "@/hooks/use-shell-mode";
@@ -32,6 +34,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PantryExitDialog, { type PantryExitMode } from "@/components/pantry/PantryExitDialog";
 
 interface Props {
   entry: InventoryRow;
@@ -69,6 +72,8 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
   );
   const [imageSrc, setImageSrc] = useState<string | null>(media.src);
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
+  const [exitMode, setExitMode] = useState<PantryExitMode | null>(null);
+  const canExit = entry.status === "active";
 
   useEffect(() => {
     setImageSrc(media.src);
@@ -326,7 +331,27 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,var(--safe-bottom))] pt-3 backdrop-blur sm:px-6 sm:pb-4">
+      <div className="shrink-0 space-y-2 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,var(--safe-bottom))] pt-3 backdrop-blur sm:px-6 sm:pb-4">
+        {canExit && (
+          <div className="mx-auto flex max-w-3xl gap-2">
+            <Button
+              variant="outline"
+              className="min-h-12 flex-1 rounded-xl border-success/40 text-success hover:bg-success/10 hover:text-success"
+              onClick={() => setExitMode("consume")}
+            >
+              <Utensils className="h-4 w-4" />
+              Consumed
+            </Button>
+            <Button
+              variant="outline"
+              className="min-h-12 flex-1 rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setExitMode("dispose")}
+            >
+              <Trash2 className="h-4 w-4" />
+              Disposed
+            </Button>
+          </div>
+        )}
         <div className="mx-auto flex max-w-3xl gap-2">
           <Button variant="outline" className="min-h-12 flex-1 rounded-xl" onClick={openCompare}>
             <BadgeDollarSign className="h-4 w-4" />
@@ -343,6 +368,16 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
           </Button>
         </div>
       </div>
+
+      {exitMode && (
+        <PantryExitDialog
+          entry={entry}
+          mode={exitMode}
+          open={exitMode !== null}
+          onClose={() => setExitMode(null)}
+          onCompleted={onClose}
+        />
+      )}
     </div>
   );
 };

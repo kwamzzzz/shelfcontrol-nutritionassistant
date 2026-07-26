@@ -144,6 +144,17 @@ export default function KitchenStory() {
                     a11yLabel={`${rescue.foodsNeverWasted} of the ${rescue.foodsBought} foods you bought were never thrown away, or ${rescue.neverWastedShare} percent.`}
                   />
                 )}
+                {rescue.eatenShare !== null && (
+                  <StoryCard
+                    label="Eaten, not binned"
+                    value={rescue.eatenShare}
+                    format={percent}
+                    context={`${rescue.eatenCount} eaten · ${rescue.thrownOutCount} thrown out`}
+                    art="sprout"
+                    tone="success"
+                    a11yLabel={`Of everything that left your kitchen, ${rescue.eatenShare} percent was eaten: ${rescue.eatenCount} eaten and ${rescue.thrownOutCount} thrown out.`}
+                  />
+                )}
                 {rescue.longestNoWasteRun !== null && (
                   <StoryCard
                     label="Longest clear run"

@@ -36,6 +36,11 @@ const METHODS: { term: string; detail: string }[] = [
       "Of the distinct foods you bought in this range, the ones that never show up in a discard log.",
   },
   {
+    term: "Eaten, not binned",
+    detail:
+      "Of everything you logged as leaving the kitchen — eaten or thrown out — the share you ate. Counts each log as one decision, so mixed units (grams vs pieces) never skew it.",
+  },
+  {
     term: "Longest clear run",
     detail:
       "The longest stretch with no discard logged, measured between the start of the range (or your first activity, for all time) and today.",

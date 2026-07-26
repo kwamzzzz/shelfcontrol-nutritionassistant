@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StoryArt } from "@/components/story/StoryArt";
+import RescueSummaryCard from "@/components/analytics/RescueSummaryCard";
 
 const Analytics = () => {
   const data = useAnalytics();
@@ -52,6 +53,10 @@ const Analytics = () => {
         </span>
         <ChevronRight className="relative z-10 h-5 w-5 shrink-0 text-muted-foreground" />
       </button>
+
+      <div className="mb-6">
+        <RescueSummaryCard />
+      </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="mb-6 flex w-full overflow-x-auto bg-muted/50 p-1 rounded-xl sm:w-auto">
