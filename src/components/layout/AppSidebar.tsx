@@ -18,6 +18,7 @@ import appIcon from "@/assets/brand/ShelfControl_AppIcon_Transparent_1024.png.as
 const navSections = [
   {
     label: "MAIN",
+    accent: "text-emerald-600 dark:text-emerald-400",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       { to: "/pantry", label: "Pantry", icon: Package },
@@ -29,6 +30,7 @@ const navSections = [
   },
   {
     label: "INTELLIGENCE",
+    accent: "text-amber-600 dark:text-amber-400",
     items: [
       { to: "/kitchen-story", label: "Kitchen Story", icon: BookHeart },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
@@ -40,6 +42,7 @@ const navSections = [
   },
   {
     label: "GROUP",
+    accent: "text-sky-600 dark:text-sky-400",
     items: [
       { to: "/groups", label: "Groups", icon: Users },
       { to: "/invitations", label: "Invitations", icon: Mail, hasBadge: true },
@@ -48,6 +51,7 @@ const navSections = [
   },
   {
     label: "SYSTEM",
+    accent: "text-slate-500 dark:text-slate-400",
     items: [
       { to: "/profile", label: "Profile", icon: UserCircle },
       { to: "/settings", label: "Settings", icon: Settings },
@@ -124,20 +128,35 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                       end={item.to === "/"}
                       className={({ isActive }) =>
                         cn(
-                          "flex items-center rounded-full text-sm font-medium transition-all duration-200",
+                          "relative flex items-center rounded-full text-sm font-medium transition-all duration-200",
                           isCompact ? "justify-center px-0 py-2.5 mx-auto w-11 h-11" : "gap-3 px-4 py-2.5",
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-inset ring-white/10"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         )
                       }
                     >
-                      <item.icon className="h-[18px] w-[18px] shrink-0" />
-                      {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
-                      {!isCompact && item.hasBadge && pendingCount > 0 && (
-                        <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
-                          {pendingCount}
-                        </Badge>
+                      {({ isActive }: { isActive: boolean }) => (
+                        <>
+                          {isActive && !isCompact && (
+                            <span
+                              aria-hidden
+                              className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-sidebar-primary"
+                            />
+                          )}
+                          <item.icon
+                            className={cn(
+                              "h-[18px] w-[18px] shrink-0 transition-colors",
+                              !isActive && section.accent,
+                            )}
+                          />
+                          {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
+                          {!isCompact && item.hasBadge && pendingCount > 0 && (
+                            <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
+                              {pendingCount}
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </NavLink>
                   );
