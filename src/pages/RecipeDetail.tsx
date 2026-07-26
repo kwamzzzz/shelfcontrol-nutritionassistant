@@ -10,21 +10,24 @@ import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
 import StepByStepMode from "@/components/cookbook/StepByStepMode";
 import AddIngredientDialog from "@/components/cookbook/AddIngredientDialog";
+import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, ShoppingCart } from "lucide-react";
 import { MOCK_RECIPES, type MockRecipe } from "@/data/cookbookMockData";
 import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Please try again.";
 
 function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
   const rawInstr = (r.instructions ?? "").trim();
   const steps = rawInstr
     ? rawInstr
         .split(/\n+/)
-        .map((s) => s.replace(/^\s*\d+[\.\)]\s*/, "").trim())
+        .map((s) => s.replace(/^\s*\d+[.)]\s*/, "").trim())
         .filter(Boolean)
     : [];
   const servings = r.servings ?? 1;
-  const anyR = r as any;
   return {
     id: r.id,
     title: r.name,
@@ -35,8 +38,8 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
     prepMins: 10,
     cookMins: 20,
     servings,
-    caloriesPerServing: Number(anyR.calories_per_serving ?? 0),
-    tags: [],
+    caloriesPerServing: Number(r.calories_per_serving ?? 0),
+    tags: r.tags ?? [],
     ingredients: (r.recipe_ingredients ?? []).map((ing, i) => ({
       id: ing.id ?? `ing-${i}`,
       name: ing.items?.name ?? "Ingredient",
@@ -45,13 +48,13 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
     })),
     instructions: steps,
     nutrition: {
-      calories: Number(anyR.calories_per_serving ?? 0),
-      carbs: Number(anyR.carbs_g_per_serving ?? 0),
-      protein: Number(anyR.protein_g_per_serving ?? 0),
-      fat: Number(anyR.fat_g_per_serving ?? 0),
-      fiber: Number(anyR.fiber_g_per_serving ?? 0),
-      sugar: Number(anyR.sugar_g_per_serving ?? 0),
-      sodium: Number(anyR.sodium_mg_per_serving ?? 0),
+      calories: Number(r.calories_per_serving ?? 0),
+      carbs: Number(r.carbs_g_per_serving ?? 0),
+      protein: Number(r.protein_g_per_serving ?? 0),
+      fat: Number(r.fat_g_per_serving ?? 0),
+      fiber: Number(r.fiber_g_per_serving ?? 0),
+      sugar: Number(r.sugar_g_per_serving ?? 0),
+      sodium: Number(r.sodium_mg_per_serving ?? 0),
     },
   };
 }
@@ -65,14 +68,18 @@ const RecipeDetail = () => {
   const [savingNutrition, setSavingNutrition] = useState(false);
   const [savingSteps, setSavingSteps] = useState(false);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const databaseRecipe = useMemo(
+    () => recipes?.find((candidate) => candidate.id === id) ?? null,
+    [recipes, id],
+  );
   const recipe = useMemo<MockRecipe | null>(() => {
-    const dbMatch = recipes?.find((r) => r.id === id);
-    if (dbMatch) return adaptRecipe(dbMatch);
+    if (databaseRecipe) return adaptRecipe(databaseRecipe);
     const mock = MOCK_RECIPES.find((r) => r.id === id);
     return mock ?? null;
-  }, [recipes, id]);
+  }, [databaseRecipe, id]);
 
   const [servings, setServings] = useState(recipe?.servings ?? 1);
   const [favorite, setFavorite] = useState(false);
@@ -80,7 +87,7 @@ const RecipeDetail = () => {
 
   useEffect(() => {
     if (recipe) setServings(recipe.servings);
-  }, [recipe?.id, recipe?.servings]);
+  }, [recipe]);
 
   const notImpl = (label: string) => () => toast.info(`${label} — coming soon`);
 
@@ -122,8 +129,8 @@ const RecipeDetail = () => {
 
       await qc.invalidateQueries({ queryKey: ["recipes"] });
       toast.success("Recipe image updated");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not upload image");
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -142,11 +149,12 @@ const RecipeDetail = () => {
         body: { recipe_id: recipe.id },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const response = data as { error?: string } | null;
+      if (response?.error) throw new Error(response.error);
       await qc.invalidateQueries({ queryKey: ["recipes"] });
       toast.success("Nutrition calculated");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not calculate nutrition");
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
     } finally {
       setCalculating(false);
     }
@@ -164,8 +172,8 @@ const RecipeDetail = () => {
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: ["recipes"] });
       toast.success("Instructions updated");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not save instructions");
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
     } finally {
       setSavingSteps(false);
     }
@@ -185,13 +193,13 @@ const RecipeDetail = () => {
           fiber_g_per_serving: n.fiber,
           sugar_g_per_serving: n.sugar,
           sodium_mg_per_serving: n.sodium,
-        } as any)
+        })
         .eq("id", recipe.id);
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: ["recipes"] });
       toast.success("Nutrition updated");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not save nutrition");
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
     } finally {
       setSavingNutrition(false);
     }
@@ -210,7 +218,11 @@ const RecipeDetail = () => {
       <RecipeBreadcrumb
         title={recipe.title}
         onEdit={notImpl("Edit recipe")}
-        onShare={notImpl("Share recipe")}
+        onShare={
+          databaseRecipe?.group_id === null
+            ? () => setSharing(true)
+            : undefined
+        }
         onPrint={() => window.print()}
         onNew={() => navigate("/recipes")}
         onDuplicate={notImpl("Duplicate recipe")}
@@ -300,6 +312,19 @@ const RecipeDetail = () => {
         recipeId={recipe.id}
         open={addIngredientOpen}
         onOpenChange={setAddIngredientOpen}
+      />
+
+      <ShareToGroupDialog
+        open={sharing}
+        onOpenChange={setSharing}
+        payload={
+          databaseRecipe
+            ? { kind: "recipe", entries: [databaseRecipe] }
+            : null
+        }
+        onShared={(mode) => {
+          if (mode === "move") navigate("/recipes");
+        }}
       />
     </div>
   );

@@ -11,19 +11,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { STORAGE_LOCATIONS, CATEGORIES } from "@/lib/pantry-utils";
 import { classifyFood, estimateShelfLifeDays, estimateExpiryDate, type StorageLocation } from "@/lib/shelf-life";
-import { BadgeDollarSign, ChevronRight, Trash2, Sparkles } from "lucide-react";
+import { BadgeDollarSign, ChevronRight, Share2, Trash2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   entry: InventoryRow;
   open: boolean;
   onClose: () => void;
+  onShare?: () => void;
 }
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong.";
 
-const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
+const EditInventoryDialog = ({ entry, open, onClose, onShare }: Props) => {
   // Inventory fields
   const [quantity, setQuantity] = useState(String(entry.quantity));
   const [unit, setUnit] = useState(entry.unit);
@@ -128,6 +129,25 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
+        {onShare && (
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onShare();
+            }}
+            className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-primary/20 bg-primary/[0.06] px-4 text-left transition-colors hover:bg-primary/10"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Share2 className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-foreground">Share to group</span>
+              <span className="block truncate text-xs text-muted-foreground">Copy or move this pantry item</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
         <form onSubmit={handleSave} className="space-y-4">
           <ImageUpload
             currentUrl={imageUrl}

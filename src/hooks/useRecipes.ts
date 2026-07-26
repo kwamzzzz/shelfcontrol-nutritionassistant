@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useGroupContext } from "@/contexts/GroupContext";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type Recipe = Tables<"recipes">;
@@ -9,13 +10,20 @@ export type RecipeWithIngredients = Recipe & { recipe_ingredients: RecipeIngredi
 
 export const useRecipes = () => {
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useQuery({
-    queryKey: ["recipes", user?.id],
+    queryKey: ["recipes", user?.id, activeGroupId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("recipes")
         .select("*, recipe_ingredients(*, items(*))")
         .order("created_at", { ascending: false });
+
+      query = activeGroupId
+        ? query.eq("group_id", activeGroupId)
+        : query.is("group_id", null);
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as RecipeWithIngredients[];
     },
@@ -32,6 +40,7 @@ export type NewIngredientLine = {
 export const useCreateRecipe = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
   return useMutation({
     mutationFn: async (input: {
       name: string;
@@ -48,7 +57,8 @@ export const useCreateRecipe = () => {
           servings: input.servings,
           instructions: input.instructions,
           image_url: input.image_url ?? null,
-        } as any)
+          group_id: activeGroupId,
+        })
         .select()
         .single();
       if (rErr) throw rErr;
@@ -91,7 +101,7 @@ export const useUpdateRecipe = () => {
           servings: input.servings,
           instructions: input.instructions,
           image_url: input.image_url ?? null,
-        } as any)
+        })
         .eq("id", input.id);
       if (rErr) throw rErr;
 
@@ -166,7 +176,7 @@ export const useUpdateRecipeTags = () => {
     mutationFn: async (input: { id: string; tags: string[] }) => {
       const { error } = await supabase
         .from("recipes")
-        .update({ tags: input.tags } as any)
+        .update({ tags: input.tags })
         .eq("id", input.id);
       if (error) throw error;
     },
@@ -189,17 +199,23 @@ export const useUpdateRecipeTags = () => {
 export const useCookRecipe = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
 
   return useMutation({
     mutationFn: async (recipe: RecipeWithIngredients) => {
       const shortages: { name: string; needed: number; available: number }[] = [];
 
-      // Fetch user's full inventory once
-      const { data: inventory, error: invErr } = await supabase
+      // Cook against the pantry that matches the active cookbook.
+      let inventoryQuery = supabase
         .from("inventory")
         .select("*")
-        .eq("user_id", user!.id)
         .order("added_at", { ascending: true });
+
+      inventoryQuery = activeGroupId
+        ? inventoryQuery.eq("group_id", activeGroupId)
+        : inventoryQuery.is("group_id", null).eq("user_id", user!.id);
+
+      const { data: inventory, error: invErr } = await inventoryQuery;
       if (invErr) throw invErr;
 
       // Build a mutable copy for deduction tracking
@@ -232,6 +248,7 @@ export const useCookRecipe = () => {
           item_id: ing.item_id,
           quantity: Number(ing.quantity),
           recipe_id: recipe.id,
+          group_id: activeGroupId,
         });
         if (cErr) throw cErr;
       }

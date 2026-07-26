@@ -2,7 +2,7 @@ import { type InventoryRow } from "@/hooks/usePantry";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { MapPin, Package, PackageOpen, AlertTriangle } from "lucide-react";
+import { Check, MapPin, Package, PackageOpen, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 
@@ -10,6 +10,10 @@ interface Props {
   entry: InventoryRow;
   onClick: () => void;
   addedBy?: string;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelected?: () => void;
+  onShare?: () => void;
 }
 
 const statusBadge: Record<string, string> = {
@@ -19,11 +23,19 @@ const statusBadge: Record<string, string> = {
   "no-date": "bg-muted text-muted-foreground",
 };
 
-const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
+const InventoryCard = ({
+  entry,
+  onClick,
+  addedBy,
+  selectionMode = false,
+  selected = false,
+  onToggleSelected,
+  onShare,
+}: Props) => {
   const status = getExpiryStatus(entry.expiry_date);
   const label = getExpiryLabel(entry.expiry_date);
   const isOpened = entry.sealed_status === "opened";
-  const imageUrl = (entry.items as any)?.image_url;
+  const imageUrl = entry.items.image_url;
   const missingLocation = entry.status === "active" && !entry.storage_location;
 
   // Phone shows ONE overlay badge. Priority: expired → expiring → missing storage
@@ -53,11 +65,23 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
 
   return (
     <div
-      onClick={onClick}
+      onClick={selectionMode ? onToggleSelected : onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
-      className="group surface-panel flex flex-col rounded-2xl transition-shadow hover:shadow-md text-left overflow-hidden w-full cursor-pointer"
+      aria-pressed={selectionMode ? selected : undefined}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (selectionMode) onToggleSelected?.();
+          else onClick();
+        }
+      }}
+      className={cn(
+        "group surface-panel flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl text-left transition",
+        selected
+          ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md"
+          : "hover:shadow-md"
+      )}
       aria-label={a11yLabel}
     >
       {/* Image area — consistent media well whether or not an image exists */}
@@ -79,6 +103,20 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
           <Package aria-hidden className="h-10 w-10 text-[hsl(155_10%_62%)]" />
         )}
 
+        {selectionMode && (
+          <span
+            aria-hidden
+            className={cn(
+              "absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full border-2 shadow-sm transition",
+              selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-white/90 bg-background/85 text-transparent backdrop-blur"
+            )}
+          >
+            <Check className="h-4 w-4" strokeWidth={3} />
+          </span>
+        )}
+
         {/* Phone: a single prioritised status. Tablet/desktop: full badge set. */}
         <span
           aria-hidden
@@ -91,7 +129,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
         </span>
 
         {/* Secondary states — hidden on phone to avoid overlay collisions */}
-        {isOpened && (
+        {isOpened && !selectionMode && (
           <span className="hidden sm:flex absolute top-2.5 left-2.5 rounded-full bg-accent/90 px-2 py-0.5 text-xs font-medium text-accent-foreground shadow-sm items-center gap-1">
             <PackageOpen className="h-3 w-3" />
             Opened
@@ -171,7 +209,7 @@ const InventoryCard = ({ entry, onClick, addedBy }: Props) => {
         </div>
 
         {/* Quick Actions (visible on hover) */}
-        <QuickActionsBar entry={entry} />
+        {!selectionMode && <QuickActionsBar entry={entry} onShare={onShare} />}
       </div>
     </div>
   );

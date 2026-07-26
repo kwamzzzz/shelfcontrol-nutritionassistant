@@ -15,9 +15,10 @@ import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
 import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
 import PantryToolsSheet from "@/components/pantry/PantryToolsSheet";
+import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users, ChevronLeft, ChevronRight, Archive, SlidersHorizontal, Settings2 } from "lucide-react";
+import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users, ChevronLeft, ChevronRight, Archive, SlidersHorizontal, Settings2, Share2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -67,6 +68,9 @@ const Pantry = () => {
   const mode: "current" | "history" = purchaseFilter === "all" ? "current" : "history";
   const [toolsOpen, setToolsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [shareEntries, setShareEntries] = useState<InventoryRow[] | null>(null);
 
   // Deep-link from Intelligence cards
   useEffect(() => {
@@ -87,6 +91,14 @@ const Pantry = () => {
     }
   }, [isPhone]);
 
+  useEffect(() => {
+    if (!isPersonalMode) {
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setShareEntries(null);
+    }
+  }, [isPersonalMode]);
+
   // Attribution
   const userIds = useMemo(() => (inventory ?? []).map((e) => e.user_id), [inventory]);
   const { data: profileMap } = useProfileNames(userIds);
@@ -106,6 +118,13 @@ const Pantry = () => {
 
   // Item source depends on the purchase-date filter (view-only — never mutates data).
   const isArchivedView = purchaseFilter === "archived";
+  useEffect(() => {
+    if (isArchivedView) {
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+    }
+  }, [isArchivedView]);
+
   const sourceItems = useMemo<InventoryRow[]>(() => {
     if (isArchivedView) return (allInventory ?? []).filter((e) => e.status !== "active");
     if (purchaseFilter === "all") return inventory ?? [];
@@ -151,6 +170,34 @@ const Pantry = () => {
       return true;
     });
   }, [scoped, expiryFilter]);
+
+  const selectedEntries = useMemo(
+    () => (inventory ?? []).filter((entry) => selectedIds.has(entry.id)),
+    [inventory, selectedIds]
+  );
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const startSelection = () => {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  };
+
+  const selectVisible = () => {
+    setSelectedIds(new Set(filtered.map((entry) => entry.id)));
+  };
 
   // Phone status ribbon: summary + one-tap filter, replacing the 2x2 tile block.
   const statusChips: { key: string; label: string; count: number; filter: string | null; tone: string }[] = [
@@ -213,6 +260,18 @@ const Pantry = () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {isPersonalMode && !isArchivedView && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startSelection}
+                disabled={(inventory?.length ?? 0) === 0}
+                className="gap-1.5"
+              >
+                <Share2 className="h-4 w-4" />
+                Share items
+              </Button>
+            )}
             <PantryStatsDialog />
             <PantryCleanupDialog />
             <ShelfLifeManager />
@@ -241,6 +300,17 @@ const Pantry = () => {
                 </button>
               ))}
             </div>
+            {isPersonalMode && !isArchivedView && (
+              <button
+                type="button"
+                onClick={startSelection}
+                disabled={(inventory?.length ?? 0) === 0}
+                className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-45"
+              >
+                <Share2 className="h-5 w-5" aria-hidden />
+                Share
+              </button>
+            )}
             {/* Labelled, never icon-only: an unlabelled glyph here reads as
                 decoration and gives screen readers nothing to announce. */}
             <button
@@ -329,6 +399,40 @@ const Pantry = () => {
             })}
           </div>
         </>
+      )}
+
+      {selectionMode && isPersonalMode && (
+        <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/20 bg-card/95 p-3 shadow-lg backdrop-blur">
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-sm font-semibold text-foreground">
+              {selectedIds.size} selected
+            </p>
+            <p className="text-xs text-muted-foreground">Choose individual items or select everything visible.</p>
+          </div>
+          <Button type="button" variant="ghost" size="sm" className="rounded-xl" onClick={selectVisible}>
+            Select visible
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="rounded-xl"
+            disabled={selectedEntries.length === 0}
+            onClick={() => setShareEntries(selectedEntries)}
+          >
+            <Share2 className="mr-1.5 h-4 w-4" />
+            Share selected
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-xl"
+            onClick={cancelSelection}
+            aria-label="Cancel item selection"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       )}
 
       {/* Location Pill Tabs — tablet/desktop (the phone has its own chip row) */}
@@ -499,6 +603,10 @@ const Pantry = () => {
               entry={entry}
               onClick={() => setEditing(entry)}
               addedBy={activeGroupId ? profileMap?.get(entry.user_id) : undefined}
+              selectionMode={selectionMode}
+              selected={selectedIds.has(entry.id)}
+              onToggleSelected={() => toggleSelected(entry.id)}
+              onShare={isPersonalMode ? () => setShareEntries([entry]) : undefined}
             />
           ))}
         </div>
@@ -525,6 +633,10 @@ const Pantry = () => {
                       entry={entry}
                       onClick={() => setEditing(entry)}
                       addedBy={activeGroupId ? profileMap?.get(entry.user_id) : undefined}
+                      selectionMode={selectionMode}
+                      selected={selectedIds.has(entry.id)}
+                      onToggleSelected={() => toggleSelected(entry.id)}
+                      onShare={isPersonalMode ? () => setShareEntries([entry]) : undefined}
                     />
                   ))}
                 </div>
@@ -535,8 +647,29 @@ const Pantry = () => {
       )}
 
       {editing && (
-        <EditInventoryDialog entry={editing} open={!!editing} onClose={() => setEditing(null)} />
+        <EditInventoryDialog
+          entry={editing}
+          open={!!editing}
+          onClose={() => setEditing(null)}
+          onShare={
+            isPersonalMode
+              ? () => {
+                  setEditing(null);
+                  setShareEntries([editing]);
+                }
+              : undefined
+          }
+        />
       )}
+
+      <ShareToGroupDialog
+        open={!!shareEntries}
+        onOpenChange={(open) => {
+          if (!open) setShareEntries(null);
+        }}
+        payload={shareEntries ? { kind: "inventory", entries: shareEntries } : null}
+        onShared={() => cancelSelection()}
+      />
 
       <ItemCatalogSection />
 
