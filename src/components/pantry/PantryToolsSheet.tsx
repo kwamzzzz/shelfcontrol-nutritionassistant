@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { BarChart3, Recycle, CalendarClock, type LucideIcon } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
@@ -11,6 +11,7 @@ interface Props {
 }
 
 type Tool = "stats" | "cleanup" | "shelfLife";
+type ToneStyle = CSSProperties & { "--tone": string };
 
 const TOOLS: { key: Tool; label: string; desc: string; icon: LucideIcon; tone: string }[] = [
   { key: "stats", label: "Pantry pulse", desc: "Monthly spend, most-bought and totals", icon: BarChart3, tone: "var(--bento-emerald)" },
@@ -51,7 +52,7 @@ const PantryToolsSheet = ({ open, onOpenChange }: Props) => {
                 type="button"
                 onClick={() => launch(t.key)}
                 className="bento-action"
-                style={{ ["--tone" as any]: t.tone }}
+                style={{ "--tone": t.tone } as ToneStyle}
               >
                 <span className="bento-well">
                   <t.icon className="h-5 w-5" strokeWidth={2.2} />
