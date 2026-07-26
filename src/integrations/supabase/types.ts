@@ -488,6 +488,75 @@ export type Database = {
         }
         Relationships: []
       }
+      price_observations: {
+        Row: {
+          created_at: string
+          currency: string
+          group_id: string | null
+          id: string
+          item_brand: string | null
+          item_id: string
+          item_name: string
+          notes: string | null
+          observed_at: string
+          package_quantity: number
+          package_unit: string
+          price: number
+          share_with_community: boolean
+          store_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          group_id?: string | null
+          id?: string
+          item_brand?: string | null
+          item_id: string
+          item_name: string
+          notes?: string | null
+          observed_at?: string
+          package_quantity?: number
+          package_unit?: string
+          price: number
+          share_with_community?: boolean
+          store_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          group_id?: string | null
+          id?: string
+          item_brand?: string | null
+          item_id?: string
+          item_name?: string
+          notes?: string | null
+          observed_at?: string
+          package_quantity?: number
+          package_unit?: string
+          price?: number
+          share_with_community?: boolean
+          store_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_observations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_observations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -946,7 +1015,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_community_price_observations: {
+        Args: { p_item_brand?: string; p_item_name: string }
+        Returns: {
+          currency: string
+          id: string
+          item_id: string
+          observed_at: string
+          package_quantity: number
+          package_unit: string
+          price: number
+          store_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

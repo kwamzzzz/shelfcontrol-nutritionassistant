@@ -31,6 +31,7 @@ import Nutrition from "@/pages/Nutrition";
 import FoodIntelligence from "@/pages/FoodIntelligence";
 import Coach from "@/pages/Coach";
 import KitchenStory from "@/pages/KitchenStory";
+import PricePassport from "@/pages/PricePassport";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => (
           <Route element={<ProtectedRoutes />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/pantry" element={<Pantry />} />
+            <Route path="/pantry/:itemId/prices" element={<PricePassport />} />
             <Route path="/shopping" element={<ShoppingList />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/recipes" element={<Recipes />} />
