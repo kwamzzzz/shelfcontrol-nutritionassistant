@@ -731,7 +731,6 @@ export type Database = {
           created_at: string
           fat_g_per_serving: number | null
           fiber_g_per_serving: number | null
-          group_id: string | null
           id: string
           image_url: string | null
           instructions: string | null
@@ -751,7 +750,6 @@ export type Database = {
           created_at?: string
           fat_g_per_serving?: number | null
           fiber_g_per_serving?: number | null
-          group_id?: string | null
           id?: string
           image_url?: string | null
           instructions?: string | null
@@ -771,7 +769,6 @@ export type Database = {
           created_at?: string
           fat_g_per_serving?: number | null
           fiber_g_per_serving?: number | null
-          group_id?: string | null
           id?: string
           image_url?: string | null
           instructions?: string | null
@@ -785,15 +782,7 @@ export type Database = {
           tags?: string[]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "recipes_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       shopping_list: {
         Row: {
@@ -1038,30 +1027,6 @@ export type Database = {
           price: number
           store_name: string
         }[]
-      }
-      share_inventory_to_group: {
-        Args: {
-          _group_id: string
-          _inventory_ids: string[]
-          _mode?: string
-        }
-        Returns: Json
-      }
-      share_purchase_to_group: {
-        Args: {
-          _group_id: string
-          _mode?: string
-          _purchase_id: string
-        }
-        Returns: Json
-      }
-      share_recipes_to_group: {
-        Args: {
-          _group_id: string
-          _mode?: string
-          _recipe_ids: string[]
-        }
-        Returns: Json
       }
     }
     Enums: {
