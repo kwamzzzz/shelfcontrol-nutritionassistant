@@ -12,10 +12,10 @@ interface Props {
 
 type Tool = "stats" | "cleanup" | "shelfLife";
 
-const TOOLS: { key: Tool; label: string; desc: string; icon: LucideIcon }[] = [
-  { key: "stats", label: "Statistics", desc: "Monthly spend, most-bought and totals", icon: BarChart3 },
-  { key: "shelfLife", label: "Shelf-Life Manager", desc: "Set storage and estimate best-before dates", icon: CalendarClock },
-  { key: "cleanup", label: "Bulk Cleanup", desc: "Archive old items from your active pantry", icon: Recycle },
+const TOOLS: { key: Tool; label: string; desc: string; icon: LucideIcon; tone: string }[] = [
+  { key: "stats", label: "Pantry pulse", desc: "Monthly spend, most-bought and totals", icon: BarChart3, tone: "var(--bento-emerald)" },
+  { key: "shelfLife", label: "Shelf life", desc: "Set storage and estimate best-before dates", icon: CalendarClock, tone: "var(--bento-cobalt)" },
+  { key: "cleanup", label: "Tidy up", desc: "Archive old items from your active pantry", icon: Recycle, tone: "var(--bento-amber)" },
 ];
 
 /**
@@ -40,23 +40,24 @@ const PantryToolsSheet = ({ open, onOpenChange }: Props) => {
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent>
-          <DrawerHeader className="text-center">
-            <DrawerTitle>Pantry tools</DrawerTitle>
+          <DrawerHeader className="px-5 pt-4 pb-2 text-left">
+            <DrawerTitle className="font-serif text-2xl">Pantry tools</DrawerTitle>
             <DrawerDescription>Manage storage, tidy up, and review your history.</DrawerDescription>
           </DrawerHeader>
-          <div className="grid gap-2 px-4 pb-4">
+          <div className="grid gap-3 px-5 pb-5">
             {TOOLS.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => launch(t.key)}
-                className="flex min-h-[56px] items-center gap-4 rounded-2xl border border-border bg-card/60 p-4 text-left transition-colors hover:bg-accent active:bg-accent"
+                className="bento-action"
+                style={{ ["--tone" as any]: t.tone }}
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <t.icon className="h-5 w-5" />
+                <span className="bento-well">
+                  <t.icon className="h-5 w-5" strokeWidth={2.2} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[0.9375rem] font-medium text-foreground">{t.label}</span>
+                  <span className="block text-[15px] font-semibold text-foreground">{t.label}</span>
                   <span className="block text-sm text-muted-foreground">{t.desc}</span>
                 </span>
               </button>
