@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useItems } from "@/hooks/usePantry";
-import { useAddRecipeIngredient } from "@/hooks/useRecipes";
+import { useAddRecipeIngredient, useConsumeIngredientFromPantry } from "@/hooks/useRecipes";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
 import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ interface Props {
 const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
   const { data: items } = useItems();
   const addIngredient = useAddRecipeIngredient();
+  const consumeFromPantry = useConsumeIngredientFromPantry();
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("Unit");
@@ -42,6 +43,7 @@ const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
   const [quickAdd, setQuickAdd] = useState(false);
 
   const selectedName = items?.find((i) => i.id === itemId)?.name;
+  const busy = addIngredient.isPending || consumeFromPantry.isPending;
 
   const reset = () => {
     setItemId("");
@@ -69,6 +71,8 @@ const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
       toast.error("Quantity must be greater than 0");
       return;
     }
+    const itemName = items?.find((i) => i.id === itemId)?.name ?? "Ingredient";
+
     try {
       await addIngredient.mutateAsync({
         recipe_id: recipeId,
@@ -76,12 +80,41 @@ const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
         quantity: qty,
         unit,
       });
-      toast.success("Ingredient added");
-      reset();
-      onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not add ingredient");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not add ingredient");
+      return;
     }
+
+    // Adding an ingredient draws it down from the pantry. A failure here must
+    // not undo the ingredient that was just saved — surface it, keep going.
+    try {
+      const result = await consumeFromPantry.mutateAsync({
+        item_id: itemId,
+        quantity: qty,
+        unit,
+        recipe_id: recipeId,
+      });
+      if (!result.matchedInPantry) {
+        toast.success(`${itemName} added`, {
+          description: "Not in your pantry, so nothing was deducted.",
+        });
+      } else if (result.shortfall > 0) {
+        toast.success(`${itemName} added`, {
+          description: `Used the ${result.deducted} you had — ${result.shortfall} more than your pantry held.`,
+        });
+      } else {
+        toast.success(`${itemName} added`, {
+          description: `${result.deducted} ${unit} taken from your pantry.`,
+        });
+      }
+    } catch (err: unknown) {
+      toast.warning(`${itemName} added, but the pantry wasn't updated`, {
+        description: err instanceof Error ? err.message : "Adjust the pantry manually if needed.",
+      });
+    }
+
+    reset();
+    onOpenChange(false);
   };
 
   return (
@@ -222,12 +255,12 @@ const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              disabled={addIngredient.isPending}
+              disabled={busy}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={addIngredient.isPending}>
-              {addIngredient.isPending ? "Adding…" : "Add Ingredient"}
+            <Button type="submit" disabled={busy}>
+              {busy ? "Adding…" : "Add Ingredient"}
             </Button>
           </DialogFooter>
         </form>

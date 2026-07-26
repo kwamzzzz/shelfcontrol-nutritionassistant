@@ -281,3 +281,97 @@ export const useCookRecipe = () => {
     },
   });
 };
+
+export interface IngredientDeductionResult {
+  /** Amount actually taken out of the pantry (may be less than requested). */
+  deducted: number;
+  /** True if the item was in the active pantry at all. */
+  matchedInPantry: boolean;
+  /** Amount still needed after the pantry ran out (0 when fully covered). */
+  shortfall: number;
+}
+
+/**
+ * Logging an ingredient in the cookbook draws it down from the pantry.
+ *
+ * Deducts `quantity` from the active-scope inventory for this item, oldest
+ * batch first (FIFO). Matching is by item only — units are intentionally
+ * ignored, per the product decision. A batch that reaches zero is soft-deleted
+ * (status "consumed") so it leaves the pantry but still feeds the
+ * eaten-vs-thrown-out history, and the amount taken is logged against the
+ * recipe. If the item isn't stocked, nothing is deducted or logged.
+ */
+export const useConsumeIngredientFromPantry = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const { activeGroupId } = useGroupContext();
+
+  return useMutation({
+    mutationFn: async (input: {
+      item_id: string;
+      quantity: number;
+      unit: string;
+      recipe_id?: string;
+    }): Promise<IngredientDeductionResult> => {
+      let query = supabase
+        .from("inventory")
+        .select("id, quantity")
+        .eq("status", "active")
+        .eq("item_id", input.item_id)
+        .order("added_at", { ascending: true });
+
+      query = activeGroupId
+        ? query.eq("group_id", activeGroupId)
+        : query.is("group_id", null).eq("user_id", user!.id);
+
+      const { data: rows, error } = await query;
+      if (error) throw error;
+
+      const matchedInPantry = (rows ?? []).length > 0;
+      let needed = input.quantity;
+      let deducted = 0;
+
+      for (const row of rows ?? []) {
+        if (needed <= 0) break;
+        const have = Number(row.quantity);
+        const take = Math.min(have, needed);
+        if (take <= 0) continue;
+
+        if (take >= have) {
+          // Batch fully used — leave the pantry without destroying the row.
+          const { error: e } = await supabase
+            .from("inventory")
+            .update({ status: "consumed", archived_at: new Date().toISOString() })
+            .eq("id", row.id);
+          if (e) throw e;
+        } else {
+          const { error: e } = await supabase
+            .from("inventory")
+            .update({ quantity: have - take })
+            .eq("id", row.id);
+          if (e) throw e;
+        }
+        deducted += take;
+        needed -= take;
+      }
+
+      if (deducted > 0) {
+        const { error: e } = await supabase.from("consumption_logs").insert({
+          user_id: user!.id,
+          item_id: input.item_id,
+          quantity: deducted,
+          unit: input.unit,
+          recipe_id: input.recipe_id ?? null,
+          group_id: activeGroupId,
+        });
+        if (e) throw e;
+      }
+
+      return { deducted, matchedInPantry, shortfall: Math.max(0, input.quantity - deducted) };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["consumption_logs"] });
+    },
+  });
+};
