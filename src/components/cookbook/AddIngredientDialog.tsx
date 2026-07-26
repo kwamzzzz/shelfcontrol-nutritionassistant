@@ -90,6 +90,7 @@ const AddIngredientDialog = ({ recipeId, open, onOpenChange }: Props) => {
     try {
       const result = await consumeFromPantry.mutateAsync({
         item_id: itemId,
+        name: itemName,
         quantity: qty,
         unit,
         recipe_id: recipeId,

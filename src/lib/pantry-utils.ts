@@ -39,18 +39,6 @@ export const getIngredientAvailability = (
   return "ok";
 };
 
-/** Sum active pantry quantity per catalogue item id. */
-export const buildPantryQuantityByItem = (
-  rows: { item_id: string; quantity: number | string | null }[],
-): Map<string, number> => {
-  const totals = new Map<string, number>();
-  for (const row of rows) {
-    const qty = Number(row.quantity) || 0;
-    totals.set(row.item_id, (totals.get(row.item_id) ?? 0) + qty);
-  }
-  return totals;
-};
-
 export const CATEGORIES = [
   "Dairy",
   "Produce",

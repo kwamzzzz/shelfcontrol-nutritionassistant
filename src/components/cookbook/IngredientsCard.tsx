@@ -3,11 +3,8 @@ import { Check, Minus, Plus, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatQuantity, type Ingredient } from "@/data/cookbookMockData";
 import { useInventory } from "@/hooks/usePantry";
-import {
-  buildPantryQuantityByItem,
-  getIngredientAvailability,
-  type IngredientAvailability,
-} from "@/lib/pantry-utils";
+import { getIngredientAvailability, type IngredientAvailability } from "@/lib/pantry-utils";
+import { pantryStockForIngredient } from "@/lib/ingredient-match";
 
 interface Props {
   ingredients: Ingredient[];
@@ -27,10 +24,15 @@ const IngredientsCard = ({
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const scale = servings / baseServings;
 
-  // Match each ingredient against the current pantry (by item, units aside).
+  // Match each ingredient against the current pantry by name (units aside), so
+  // "medium eggplants" still finds "Eggplant" and "tomato paste" finds a brand.
   const { data: inventory } = useInventory();
-  const pantryByItem = useMemo(
-    () => buildPantryQuantityByItem(inventory ?? []),
+  const pantryStock = useMemo(
+    () =>
+      (inventory ?? []).map((r) => ({
+        name: r.items?.name ?? "",
+        quantity: Number(r.quantity) || 0,
+      })),
     [inventory],
   );
 
@@ -60,9 +62,9 @@ const IngredientsCard = ({
           const scaledQty = ing.quantity != null ? ing.quantity * scale : null;
 
           // Only real recipe ingredients carry an item_id; sample data doesn't.
-          const available = ing.item_id ? pantryByItem.get(ing.item_id) ?? 0 : null;
+          const available = pantryStockForIngredient(ing.name, pantryStock);
           const status: IngredientAvailability | null =
-            ing.item_id != null ? getIngredientAvailability(scaledQty, available!) : null;
+            ing.item_id != null ? getIngredientAvailability(scaledQty, available) : null;
           const lacking = status === "missing" || status === "short";
 
           return (

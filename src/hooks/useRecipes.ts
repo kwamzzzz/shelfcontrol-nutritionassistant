@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroupContext } from "@/contexts/GroupContext";
+import { ingredientMatchesItem } from "@/lib/ingredient-match";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type Recipe = Tables<"recipes">;
@@ -294,12 +295,13 @@ export interface IngredientDeductionResult {
 /**
  * Logging an ingredient in the cookbook draws it down from the pantry.
  *
- * Deducts `quantity` from the active-scope inventory for this item, oldest
- * batch first (FIFO). Matching is by item only — units are intentionally
- * ignored, per the product decision. A batch that reaches zero is soft-deleted
- * (status "consumed") so it leaves the pantry but still feeds the
- * eaten-vs-thrown-out history, and the amount taken is logged against the
- * recipe. If the item isn't stocked, nothing is deducted or logged.
+ * Deducts `quantity` from the active-scope inventory, matching the ingredient
+ * to pantry items by name (so "medium eggplants" finds "Eggplant"), oldest
+ * batch first (FIFO). Units are intentionally ignored, per the product
+ * decision. A batch that reaches zero is soft-deleted (status "consumed") so it
+ * leaves the pantry but still feeds the eaten-vs-thrown-out history, and the
+ * amount taken is logged against the recipe. If nothing matches, nothing is
+ * deducted or logged.
  */
 export const useConsumeIngredientFromPantry = () => {
   const qc = useQueryClient();
@@ -309,29 +311,34 @@ export const useConsumeIngredientFromPantry = () => {
   return useMutation({
     mutationFn: async (input: {
       item_id: string;
+      name: string;
       quantity: number;
       unit: string;
       recipe_id?: string;
     }): Promise<IngredientDeductionResult> => {
       let query = supabase
         .from("inventory")
-        .select("id, quantity")
+        .select("id, quantity, items(name)")
         .eq("status", "active")
-        .eq("item_id", input.item_id)
         .order("added_at", { ascending: true });
 
       query = activeGroupId
         ? query.eq("group_id", activeGroupId)
         : query.is("group_id", null).eq("user_id", user!.id);
 
-      const { data: rows, error } = await query;
+      const { data: allRows, error } = await query;
       if (error) throw error;
 
-      const matchedInPantry = (rows ?? []).length > 0;
+      // Name-match, then draw down oldest-first across the matches.
+      const rows = (allRows ?? []).filter((r) =>
+        ingredientMatchesItem(input.name, r.items?.name ?? ""),
+      );
+
+      const matchedInPantry = rows.length > 0;
       let needed = input.quantity;
       let deducted = 0;
 
-      for (const row of rows ?? []) {
+      for (const row of rows) {
         if (needed <= 0) break;
         const have = Number(row.quantity);
         const take = Math.min(have, needed);
