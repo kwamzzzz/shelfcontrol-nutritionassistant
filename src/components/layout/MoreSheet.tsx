@@ -8,6 +8,8 @@ import { useMyInvites } from "@/hooks/useMyInvites";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
+type ToneStyle = CSSProperties & { "--tone": string };
+
 const SECTION_TONE: Record<string, string> = {
   activity: "var(--bento-emerald)",
   intelligence: "var(--bento-amber)",
@@ -62,7 +64,7 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
                         onClick={() => go(item.path)}
                         aria-current={active ? "page" : undefined}
                         className={cn("bento-action", active && "ring-2 ring-primary/30")}
-                        style={{ ["--tone" as any]: tone } as CSSProperties}
+                        style={{ "--tone": tone } as ToneStyle}
                       >
                         <span className="bento-well">
                           <item.icon className="h-5 w-5" strokeWidth={2.2} />
@@ -89,7 +91,7 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
               type="button"
               onClick={() => setTheme(isDark ? "light" : "dark")}
               className="bento-action"
-              style={{ ["--tone" as any]: "var(--bento-amber)" } as CSSProperties}
+              style={{ "--tone": "var(--bento-amber)" } as ToneStyle}
             >
               <span className="bento-well">
                 {isDark ? <Sun className="h-5 w-5" strokeWidth={2.2} /> : <Moon className="h-5 w-5" strokeWidth={2.2} />}
