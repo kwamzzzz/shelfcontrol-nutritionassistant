@@ -123,7 +123,7 @@ const EditInventoryDialog = ({ entry, open, onClose }: Props) => {
             <BadgeDollarSign className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-foreground">Open Comparison</span>
+            <span className="block text-sm font-semibold text-foreground">Open Compare</span>
             <span className="block truncate text-xs text-muted-foreground">Compare stores and add a price</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />

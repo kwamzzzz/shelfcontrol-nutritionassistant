@@ -71,7 +71,7 @@ const AddPriceDialog = ({ item, open, onOpenChange }: AddPriceDialogProps) => {
       });
       toast({
         title: "Price added",
-        description: `${item.name} at ${storeName.trim()} is now in its comparison history.`,
+        description: `${item.name} at ${storeName.trim()} has been added to Compare.`,
       });
       setStoreName("");
       setPrice("");

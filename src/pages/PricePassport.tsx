@@ -285,7 +285,7 @@ const PricePassport = () => {
         </div>
         <h1 className="mt-4 text-xl font-bold">Item not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This comparison is no longer connected to an item in your pantry.
+          Compare is no longer connected to an item in your pantry.
         </p>
         <Button className="mt-5" onClick={() => navigate("/pantry")}>Back to Pantry</Button>
       </div>
@@ -427,7 +427,7 @@ const PricePassport = () => {
           {availableBases.length > 0 && (
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-muted-foreground">Compare by</p>
-              <div className="flex rounded-full bg-secondary p-1" role="group" aria-label="Price comparison unit">
+              <div className="flex rounded-full bg-secondary p-1" role="group" aria-label="Compare unit">
                 {availableBases.map((value) => (
                   <button
                     key={value}
@@ -489,9 +489,9 @@ const PricePassport = () => {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <CircleDollarSign className="h-6 w-6" />
               </div>
-              <h2 className="mt-4 text-xl font-bold">Start this comparison</h2>
+              <h2 className="mt-4 text-xl font-bold">Start Compare</h2>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                Add a price you spot in a store. Future receipts for {item.name} will join the comparison automatically.
+                Add a price you spot in a store. Future receipts for {item.name} will join Compare automatically.
               </p>
               <Button className="mt-5 h-11 rounded-full px-5" onClick={() => setAddPriceOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -504,7 +504,7 @@ const PricePassport = () => {
             <section className="surface-panel overflow-hidden rounded-3xl">
               <div className="flex items-center justify-between px-5 pb-3 pt-5 sm:px-6">
                 <div>
-                  <h2 className="text-lg font-bold">Store comparison</h2>
+                  <h2 className="text-lg font-bold">Compare stores</h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">Latest comparable price from each store</p>
                 </div>
                 <Store className="h-5 w-5 text-muted-foreground" />
