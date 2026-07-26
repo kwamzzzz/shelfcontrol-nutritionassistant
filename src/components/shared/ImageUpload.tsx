@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,13 +32,31 @@ const ImageUpload = ({
     if (!file) return;
 
     // Client-side validation
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+    if (!file.type.startsWith("image/")) {
+      toast.error("That file isn't an image. Please choose a photo.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("That image is over 5MB. Please choose a smaller one.");
+      return;
+    }
 
     setUploading(true);
     try {
+      // The item-images bucket's RLS INSERT policy requires the first path
+      // segment to equal the uploader's user id
+      // ((storage.foldername(name))[1] = auth.uid()). Uploading to anything else
+      // (e.g. "items/…") is rejected, so the user id must lead the path.
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in again to add a photo.");
+        return;
+      }
+
       const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+      const path = `${user.id}/${folder}/${crypto.randomUUID()}.${ext}`;
 
       const { error } = await supabase.storage.from(bucket).upload(path, file, {
         cacheControl: "3600",
@@ -52,6 +71,7 @@ const ImageUpload = ({
       onUploaded(publicUrl);
     } catch (err) {
       console.error("Upload failed:", err);
+      toast.error("Couldn't add the photo. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
