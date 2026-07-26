@@ -4,6 +4,7 @@ import { usePurchases } from "@/hooks/usePurchases";
 import { useConsumptionLogs } from "@/hooks/useConsumption";
 import { getExpiryStatus } from "@/lib/pantry-utils";
 import { formatCurrencyAlways } from "@/lib/currency";
+import { calculateNutrition } from "@/lib/nutrition";
 import {
   parseISO, isThisWeek, isThisMonth, isToday, startOfWeek,
   differenceInDays, format, formatDistanceToNow, subDays,
@@ -138,7 +139,7 @@ export const useAnalytics = () => {
       for (const log of logs) {
         const ld = startOfDay(parseISO(log.consumed_at));
         if (ld.getTime() === day.getTime()) {
-          cal += Number(log.quantity) * Number(log.items?.calories_per_unit ?? 0);
+          cal += calculateNutrition(log.items, Number(log.quantity), log.unit).calories;
         }
       }
       days.push({ label, value: Math.round(cal) });
@@ -165,14 +166,14 @@ export const useAnalytics = () => {
     if (!inventory) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
     let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
     for (const r of inventory) {
-      const qty = Number(r.quantity);
       const item = r.items;
       if (!item) continue;
-      calories += qty * Number(item.calories_per_unit ?? 0);
-      protein += qty * Number(item.protein_g ?? 0);
-      carbs += qty * Number(item.carbs_g ?? 0);
-      fat += qty * Number(item.fat_g ?? 0);
-      fiber += qty * Number((item as any).fiber_g ?? 0);
+      const nutrition = calculateNutrition(item, Number(r.quantity), r.unit);
+      calories += nutrition.calories;
+      protein += nutrition.protein;
+      carbs += nutrition.carbs;
+      fat += nutrition.fat;
+      fiber += nutrition.fiber;
     }
     return { calories, protein, carbs, fat, fiber };
   }, [inventory]);
@@ -184,15 +185,15 @@ export const useAnalytics = () => {
     for (const log of logs) {
       if (!isToday(parseISO(log.consumed_at))) continue;
       logCount++;
-      const qty = Number(log.quantity);
       const item = log.items;
       if (!item) continue;
       const cal = Number(item.calories_per_unit ?? 0);
       if (cal === 0 && Number(item.protein_g ?? 0) === 0) missingCount++;
-      calories += qty * cal;
-      protein += qty * Number(item.protein_g ?? 0);
-      carbs += qty * Number(item.carbs_g ?? 0);
-      fat += qty * Number(item.fat_g ?? 0);
+      const nutrition = calculateNutrition(item, Number(log.quantity), log.unit);
+      calories += nutrition.calories;
+      protein += nutrition.protein;
+      carbs += nutrition.carbs;
+      fat += nutrition.fat;
     }
     return { calories, protein, carbs, fat, logCount, missingCount };
   }, [logs]);
@@ -208,13 +209,13 @@ export const useAnalytics = () => {
     for (const log of logs) {
       if (!isThisWeek(parseISO(log.consumed_at), { weekStartsOn: 1 })) continue;
       weekLogs++;
-      const qty = Number(log.quantity);
       const item = log.items;
       if (!item) continue;
       const cal = Number(item.calories_per_unit ?? 0);
       if (cal === 0 && Number(item.protein_g ?? 0) === 0) missing++;
-      totalCal += qty * cal;
-      totalProtein += qty * Number(item.protein_g ?? 0);
+      const nutrition = calculateNutrition(item, Number(log.quantity), log.unit);
+      totalCal += nutrition.calories;
+      totalProtein += nutrition.protein;
     }
     return {
       weekLogs,
@@ -293,12 +294,16 @@ export const useAnalytics = () => {
         if (!item) continue;
         const price = Number(pi.unit_price ?? 0);
         if (price <= 0) continue;
-        const qty = Number(pi.quantity);
         const name = item.name;
         const ex = map.get(name) ?? { name, totalSpent: 0, totalProtein: 0, totalCal: 0 };
         ex.totalSpent += price;
-        ex.totalProtein += qty * Number(item.protein_g ?? 0);
-        ex.totalCal += qty * Number(item.calories_per_unit ?? 0);
+        const nutrition = calculateNutrition(
+          item,
+          Number(pi.weight ?? pi.quantity),
+          pi.weight_unit ?? pi.unit,
+        );
+        ex.totalProtein += nutrition.protein;
+        ex.totalCal += nutrition.calories;
         map.set(name, ex);
       }
     }

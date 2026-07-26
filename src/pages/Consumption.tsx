@@ -51,6 +51,7 @@ import { useProfileNames } from "@/hooks/useProfileNames";
 import { useRecipes } from "@/hooks/useRecipes";
 import { useShellMode } from "@/hooks/use-shell-mode";
 import { useToast } from "@/hooks/use-toast";
+import { nutrientAmount } from "@/lib/nutrition";
 import { cn } from "@/lib/utils";
 
 type SourceFilter = "all" | "recipes" | "items";
@@ -76,9 +77,7 @@ const nutritionValue = (
   log: ConsumptionLog,
   field: "calories_per_unit" | "protein_g" | "carbs_g" | "fat_g",
 ) => {
-  const quantity = Number(log.quantity);
-  const multiplier = log.items?.nutrition_basis === "per_100g" ? quantity / 100 : quantity;
-  return multiplier * Number(log.items?.[field] ?? 0);
+  return nutrientAmount(log.items, field, Number(log.quantity), log.unit);
 };
 
 const hasNutrition = (log: ConsumptionLog) =>

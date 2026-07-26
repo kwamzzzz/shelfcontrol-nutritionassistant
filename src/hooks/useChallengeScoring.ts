@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Challenge, ChallengeParticipant, ChallengeType } from "./useChallenges";
+import { nutrientAmount } from "@/lib/nutrition";
 
 export interface ParticipantScore {
   user_id: string;
@@ -70,7 +71,7 @@ async function computeProtein(userIds: string[], start: string, end: string, gro
   // Get consumption logs with item nutrition
   const { data: logs } = await supabase
     .from("consumption_logs")
-    .select("user_id, quantity, item_id")
+    .select("user_id, quantity, unit, item_id")
     .in("user_id", userIds)
     .gte("consumed_at", start)
     .lte("consumed_at", end);
@@ -80,18 +81,23 @@ async function computeProtein(userIds: string[], start: string, end: string, gro
   const itemIds = [...new Set(logs.map((l) => l.item_id))];
   const { data: items } = await supabase
     .from("items")
-    .select("id, protein_g")
+    .select("id, protein_g, nutrition_basis, nutrition_grams_per_unit, nutrition_ml_per_unit, default_unit")
     .in("id", itemIds);
 
-  const proteinMap = new Map((items ?? []).map((i) => [i.id, i.protein_g ?? 0]));
+  const itemMap = new Map((items ?? []).map((item) => [item.id, item]));
 
   const userScores = new Map<string, number>();
   userIds.forEach((id) => userScores.set(id, 0));
 
   logs.forEach((log) => {
-    const protein = proteinMap.get(log.item_id) ?? 0;
+    const protein = nutrientAmount(
+      itemMap.get(log.item_id),
+      "protein_g",
+      Number(log.quantity),
+      log.unit,
+    );
     const current = userScores.get(log.user_id) ?? 0;
-    userScores.set(log.user_id, current + protein * log.quantity);
+    userScores.set(log.user_id, current + protein);
   });
 
   return userIds.map((id) => ({

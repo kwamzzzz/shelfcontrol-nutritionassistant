@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Brain, TrendingUp, AlertTriangle, Lightbulb, Utensils, ShoppingCart, Shield, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import HardTruths from "@/components/nutrition/HardTruths";
+import { nutrientAmount } from "@/lib/nutrition";
 
 interface Insight {
   title: string;
@@ -36,7 +37,7 @@ const NutritionInsights = () => {
       const mealCals: Record<string, number> = { morning: 0, afternoon: 0, evening: 0, night: 0 };
       for (const log of allLogs) {
         const h = new Date(log.consumed_at).getHours();
-        const cal = Number(log.items?.calories_per_unit ?? 0) * Number(log.quantity);
+        const cal = nutrientAmount(log.items, "calories_per_unit", Number(log.quantity), log.unit);
         if (h < 11) mealCals.morning += cal;
         else if (h < 15) mealCals.afternoon += cal;
         else if (h < 20) mealCals.evening += cal;
@@ -100,7 +101,7 @@ const NutritionInsights = () => {
       const itemCals: Record<string, { name: string; total: number }> = {};
       for (const log of allLogs) {
         const name = log.items?.name ?? "Unknown";
-        const cal = Number(log.items?.calories_per_unit ?? 0) * Number(log.quantity);
+        const cal = nutrientAmount(log.items, "calories_per_unit", Number(log.quantity), log.unit);
         if (!itemCals[name]) itemCals[name] = { name, total: 0 };
         itemCals[name].total += cal;
       }

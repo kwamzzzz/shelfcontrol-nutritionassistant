@@ -1,16 +1,9 @@
 import { useMemo } from "react";
 import { useConsumptionLogs } from "@/hooks/useConsumption";
-import { isToday, parseISO, subDays, startOfDay, format, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
+import { parseISO, subDays, startOfDay, format, startOfWeek, endOfWeek } from "date-fns";
+import { calculateNutrition, EMPTY_NUTRITION_TOTALS, type NutritionTotals } from "@/lib/nutrition";
 
-interface DailyTotals {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-  sugar: number;
-  sodium: number;
-}
+type DailyTotals = NutritionTotals;
 
 interface MealGroup {
   label: string;
@@ -18,23 +11,7 @@ interface MealGroup {
   logs: any[];
 }
 
-const EMPTY_TOTALS: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 };
-
-function computeNutrients(item: any, qty: number): DailyTotals {
-  if (!item) return { ...EMPTY_TOTALS };
-  const basis = item.nutrition_basis ?? "per_unit";
-  let multiplier = qty;
-  if (basis === "per_100g") multiplier = qty / 100;
-  return {
-    calories: Number(item.calories_per_unit ?? 0) * multiplier,
-    protein: Number(item.protein_g ?? 0) * multiplier,
-    carbs: Number(item.carbs_g ?? 0) * multiplier,
-    fat: Number(item.fat_g ?? 0) * multiplier,
-    fiber: Number(item.fiber_g ?? 0) * multiplier,
-    sugar: Number(item.sugar_g ?? 0) * multiplier,
-    sodium: Number(item.sodium_mg ?? 0) * multiplier,
-  };
-}
+const EMPTY_TOTALS: DailyTotals = EMPTY_NUTRITION_TOTALS;
 
 export const useNutritionData = (date?: Date) => {
   const { data: logs, isLoading } = useConsumptionLogs();
@@ -51,7 +28,7 @@ export const useNutritionData = (date?: Date) => {
   const totals = useMemo(() => {
     const t = { ...EMPTY_TOTALS };
     for (const log of dayLogs) {
-      const n = computeNutrients(log.items, Number(log.quantity));
+      const n = calculateNutrition(log.items, Number(log.quantity), log.unit);
       t.calories += n.calories;
       t.protein += n.protein;
       t.carbs += n.carbs;
@@ -120,7 +97,7 @@ export const useNutritionData = (date?: Date) => {
       const t = { calories: 0, protein: 0, carbs: 0, fat: 0 };
       for (const log of logs) {
         if (startOfDay(parseISO(log.consumed_at)).getTime() === dayStart.getTime()) {
-          const n = computeNutrients(log.items, Number(log.quantity));
+          const n = calculateNutrition(log.items, Number(log.quantity), log.unit);
           t.calories += n.calories;
           t.protein += n.protein;
           t.carbs += n.carbs;
@@ -140,7 +117,7 @@ export const useNutritionData = (date?: Date) => {
     // Top calorie source
     let topCal = { name: "", cal: 0 };
     for (const log of dayLogs) {
-      const n = computeNutrients(log.items, Number(log.quantity));
+      const n = calculateNutrition(log.items, Number(log.quantity), log.unit);
       if (n.calories > topCal.cal) topCal = { name: log.items?.name ?? "Unknown", cal: n.calories };
     }
     if (topCal.cal > 0) items.push(`Top calorie source: ${topCal.name} (${topCal.cal.toFixed(0)} cal)`);
@@ -148,7 +125,7 @@ export const useNutritionData = (date?: Date) => {
     // Protein source
     let topProt = { name: "", val: 0 };
     for (const log of dayLogs) {
-      const n = computeNutrients(log.items, Number(log.quantity));
+      const n = calculateNutrition(log.items, Number(log.quantity), log.unit);
       if (n.protein > topProt.val) topProt = { name: log.items?.name ?? "Unknown", val: n.protein };
     }
     if (topProt.val > 0) items.push(`Highest protein from ${topProt.name} (${topProt.val.toFixed(0)}g)`);
@@ -174,6 +151,6 @@ export const useNutritionData = (date?: Date) => {
     weeklyTotals,
     highlights,
     isLoading,
-    computeNutrients,
+    computeNutrients: calculateNutrition,
   };
 };

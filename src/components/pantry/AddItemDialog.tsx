@@ -33,6 +33,7 @@ const AddItemDialog = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const hasNutrition = [calories, protein, carbs, fat].some((value) => Number(value) > 0);
     try {
       await createItem.mutateAsync({
         name,
@@ -43,6 +44,11 @@ const AddItemDialog = () => {
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
+        nutrition_basis: "per_unit",
+        nutrition_source: hasNutrition ? "User-entered values" : null,
+        nutrition_estimated: false,
+        nutrition_confidence: hasNutrition ? "high" : "needs_review",
+        nutrition_updated_at: hasNutrition ? new Date().toISOString() : null,
         image_url: imageUrl,
       });
       toast({ title: "Item added", description: `${name} added to catalog.` });

@@ -6,6 +6,7 @@ import HeroStatCard from "./HeroStatCard";
 import AnalyticsModule from "./AnalyticsModule";
 import InsightsRail from "./InsightsRail";
 import type { useAnalytics } from "@/hooks/useAnalytics";
+import { nutrientAmount } from "@/lib/nutrition";
 
 type Analytics = ReturnType<typeof useAnalytics>;
 
@@ -84,7 +85,7 @@ const ConsumptionHealthTab = ({ data }: { data: Analytics }) => {
                 <div className="space-y-1">
                   {group.items.map((log) => {
                     const item = log.items;
-                    const cal = item ? Number(item.calories_per_unit ?? 0) * Number(log.quantity) : 0;
+                    const cal = nutrientAmount(item, "calories_per_unit", Number(log.quantity), log.unit);
                     return (
                       <div key={log.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg hover:bg-muted/40 transition-colors">
                         <div className="flex items-center gap-2.5 truncate">

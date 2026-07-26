@@ -149,6 +149,19 @@ const updateItemOverrides = async (lineItems: NewPurchaseLineItem[]) => {
     if (o.protein_g !== undefined) update.protein_g = o.protein_g ?? 0;
     if (o.carbs_g !== undefined) update.carbs_g = o.carbs_g ?? 0;
     if (o.fat_g !== undefined) update.fat_g = o.fat_g ?? 0;
+    if (
+      o.calories_per_unit !== undefined
+      || o.protein_g !== undefined
+      || o.carbs_g !== undefined
+      || o.fat_g !== undefined
+    ) {
+      update.nutrition_source = "User-entered label values";
+      update.nutrition_source_url = null;
+      update.nutrition_source_id = null;
+      update.nutrition_estimated = false;
+      update.nutrition_confidence = "high";
+      update.nutrition_updated_at = new Date().toISOString();
+    }
     if (Object.keys(update).length > 0) {
       await supabase.from("items").update(update).eq("id", li.item_id);
     }

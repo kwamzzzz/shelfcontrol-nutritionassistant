@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES } from "@/lib/pantry-utils";
 import type { Tables } from "@/integrations/supabase/types";
+import { nutritionBasisLabel } from "@/lib/nutrition";
 
 export interface ItemOverrides {
   brand?: string;
@@ -77,7 +78,9 @@ const ItemDetailsSection = ({ item, overrides, onChange }: Props) => {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Nutrition per unit</Label>
+            <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Nutrition · {nutritionBasisLabel(item).toLowerCase()}
+            </Label>
             <div className="grid grid-cols-4 gap-2">
               <div>
                 <Label className="text-[10px]">Cal</Label>

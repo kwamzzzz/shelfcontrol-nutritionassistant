@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Check, ImagePlus, MapPin, PackageOpen, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
+import { nutritionBasisLabel } from "@/lib/nutrition";
 
 interface Props {
   entry: InventoryRow;
@@ -45,6 +46,7 @@ const InventoryCard = ({
   const [imageSrc, setImageSrc] = useState<string | null>(media.src);
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
   const missingLocation = entry.status === "active" && !entry.storage_location;
+  const nutritionBasis = nutritionBasisLabel(entry.items).replace(/^Per /, "per ");
   const nutritionSummary = [
     Number(entry.items.calories_per_unit ?? 0) > 0
       ? `${Number(entry.items.calories_per_unit).toLocaleString(undefined, { maximumFractionDigits: 0 })} kcal`
@@ -53,6 +55,7 @@ const InventoryCard = ({
       ? `${Number(entry.items.protein_g).toLocaleString(undefined, { maximumFractionDigits: 1 })}g protein`
       : null,
   ].filter(Boolean).join(" · ");
+  const nutritionWithBasis = nutritionSummary ? `${nutritionSummary} · ${nutritionBasis}` : "";
 
   useEffect(() => {
     setImageSrc(media.src);
@@ -195,9 +198,9 @@ const InventoryCard = ({
           <p className="mt-0.5 hidden sm:block text-xs text-muted-foreground truncate">{entry.items.brand}</p>
         )}
 
-        {nutritionSummary && (
+        {nutritionWithBasis && (
           <p className="mt-1 truncate text-[0.65rem] font-medium text-primary/90 sm:text-xs">
-            {nutritionSummary}
+            {nutritionWithBasis}
           </p>
         )}
 

@@ -23,7 +23,7 @@ const CalorieBudget = () => {
       let cals = 0;
       for (const log of allLogs ?? []) {
         if (startOfDay(parseISO(log.consumed_at)).getTime() === startOfDay(d).getTime()) {
-          cals += computeNutrients(log.items, Number(log.quantity)).calories;
+          cals += computeNutrients(log.items, Number(log.quantity), log.unit).calories;
         }
       }
       result.push({

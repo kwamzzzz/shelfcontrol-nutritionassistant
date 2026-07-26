@@ -45,7 +45,7 @@ export const useChatCoach = () => {
     const dayMap = new Map<string, { calories: number; protein: number; carbs: number; fat: number; items: Set<string> }>();
     for (const log of allLogs ?? []) {
       const day = format(startOfDay(parseISO(log.consumed_at)), "yyyy-MM-dd");
-      const n = computeNutrients(log.items, Number(log.quantity));
+      const n = computeNutrients(log.items, Number(log.quantity), log.unit);
       const entry = dayMap.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, items: new Set<string>() };
       entry.calories += n.calories;
       entry.protein += n.protein;

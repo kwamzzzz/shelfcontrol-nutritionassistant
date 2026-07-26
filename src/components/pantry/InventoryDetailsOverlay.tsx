@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import {
   BadgeDollarSign,
   CalendarDays,
+  ExternalLink,
   Globe2,
   ImagePlus,
   MapPin,
   Pencil,
   Share2,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import type { InventoryRow } from "@/hooks/usePantry";
@@ -50,6 +52,7 @@ const nutritionBasisLabel = (entry: InventoryRow) => {
   const { items } = entry;
   if (items.serving_size?.trim()) return items.serving_size.trim();
   if (items.nutrition_basis === "per_100g") return "100 g";
+  if (items.nutrition_basis === "per_100ml") return "100 ml";
   if (items.nutrition_basis === "per_serving") return "1 serving";
   return "Per unit";
 };
@@ -114,6 +117,15 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
     ];
     return candidates.filter((row) => Number.isFinite(row.value) && row.value > 0);
   }, [entry.items]);
+  const nutritionSourceUrl = entry.items.nutrition_source_url?.startsWith("https://")
+    ? entry.items.nutrition_source_url
+    : null;
+  const nutritionStatus =
+    entry.items.nutrition_confidence === "needs_review"
+      ? "Needs package label"
+      : entry.items.nutrition_estimated
+        ? `${entry.items.nutrition_confidence === "high" ? "High-confidence " : ""}reference estimate`
+        : "Confirmed by you";
 
   const metadata = [
     entry.items.country_of_origin?.trim()
@@ -223,6 +235,28 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
               </TabsList>
 
               <TabsContent value="nutrition" className="mt-4">
+                <div className="mb-3 flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/[0.055] px-3.5 py-3">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ShieldCheck className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-foreground">{nutritionStatus}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                      {entry.items.nutrition_source || "Add the product label to confirm these values."}
+                    </p>
+                  </div>
+                  {nutritionSourceUrl && (
+                    <a
+                      href={nutritionSourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                    >
+                      Source
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
                 {nutritionRows.length ? (
                   <div className="overflow-hidden rounded-2xl border border-border bg-card/80">
                     <div className="flex items-end justify-between gap-4 border-b border-border bg-muted/35 px-4 py-3">

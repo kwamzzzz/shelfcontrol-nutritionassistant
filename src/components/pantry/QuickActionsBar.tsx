@@ -57,6 +57,7 @@ const QuickActionsBar = ({ entry, onShare }: Props) => {
       await createConsumption.mutateAsync({
         item_id: entry.item_id,
         quantity: 1,
+        unit: entry.unit,
       });
       // Also reduce inventory by 1
       const newQty = Math.max(0, entry.quantity - 1);
