@@ -10,6 +10,7 @@ import { getExpiryStatus, type ExpiryStatus } from "@/lib/pantry-utils";
 import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
+import InventoryDetailsOverlay from "@/components/pantry/InventoryDetailsOverlay";
 import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
@@ -73,6 +74,7 @@ const Pantry = () => {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("All");
+  const [viewing, setViewing] = useState<InventoryRow | null>(null);
   const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
   // Purchase-date filter: "all" | "archived" | "YYYY-MM"
@@ -862,7 +864,7 @@ const Pantry = () => {
             <InventoryCard
               key={entry.id}
               entry={entry}
-              onClick={() => setEditing(entry)}
+              onClick={() => setViewing(entry)}
               addedBy={activeGroupId ? profileMap?.get(entry.user_id) : undefined}
               selectionMode={selectionMode}
               selected={selectedIds.has(entry.id)}
@@ -892,7 +894,7 @@ const Pantry = () => {
                     <InventoryCard
                       key={entry.id}
                       entry={entry}
-                      onClick={() => setEditing(entry)}
+                      onClick={() => setViewing(entry)}
                       addedBy={activeGroupId ? profileMap?.get(entry.user_id) : undefined}
                       selectionMode={selectionMode}
                       selected={selectedIds.has(entry.id)}
@@ -905,6 +907,26 @@ const Pantry = () => {
             );
           })}
         </div>
+      )}
+
+      {viewing && (
+        <InventoryDetailsOverlay
+          entry={viewing}
+          open={!!viewing}
+          onClose={() => setViewing(null)}
+          onEdit={() => {
+            setEditing(viewing);
+            setViewing(null);
+          }}
+          onShare={
+            isPersonalMode
+              ? () => {
+                  setShareEntries([viewing]);
+                  setViewing(null);
+                }
+              : undefined
+          }
+        />
       )}
 
       {editing && (

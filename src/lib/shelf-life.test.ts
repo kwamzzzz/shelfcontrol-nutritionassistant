@@ -14,6 +14,8 @@ describe("classifyFood", () => {
     expect(classifyFood("Strawberries").type).toBe("berries");
     expect(classifyFood("Potato").type).toBe("root_vegetables");
     expect(classifyFood("Tomato").type).toBe("vegetables");
+    expect(classifyFood("Sea Bass").type).toBe("fish_seafood");
+    expect(classifyFood("Water Crest").type).toBe("leafy_greens");
   });
 
   it("treats an explicitly frozen product as frozen", () => {

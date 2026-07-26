@@ -6,8 +6,10 @@ import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { STORAGE_LOCATIONS, CATEGORIES } from "@/lib/pantry-utils";
 import { classifyFood, estimateShelfLifeDays, estimateExpiryDate, type StorageLocation } from "@/lib/shelf-life";
@@ -33,13 +35,21 @@ const EditInventoryDialog = ({ entry, open, onClose, onShare }: Props) => {
 
   // Item reclassification fields
   const [itemName, setItemName] = useState(entry.items.name);
+  const [brand, setBrand] = useState(entry.items.brand ?? "");
   const [category, setCategory] = useState(entry.items.category ?? "");
+  const [countryOfOrigin, setCountryOfOrigin] = useState(entry.items.country_of_origin ?? "");
+  const [additionalInfo, setAdditionalInfo] = useState(entry.items.additional_info ?? "");
 
   // Inline nutrition
   const [calories, setCalories] = useState(String(entry.items.calories_per_unit ?? 0));
   const [protein, setProtein] = useState(String(entry.items.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(entry.items.carbs_g ?? 0));
   const [fat, setFat] = useState(String(entry.items.fat_g ?? 0));
+  const [fiber, setFiber] = useState(String(entry.items.fiber_g ?? 0));
+  const [sugar, setSugar] = useState(String(entry.items.sugar_g ?? 0));
+  const [sodium, setSodium] = useState(String(entry.items.sodium_mg ?? 0));
+  const [servingSize, setServingSize] = useState(entry.items.serving_size ?? "");
+  const [nutritionBasis, setNutritionBasis] = useState(entry.items.nutrition_basis ?? "per_unit");
   const [imageUrl, setImageUrl] = useState<string | null>(entry.items.image_url ?? null);
 
   const updateInventory = useUpdateInventory();
@@ -81,11 +91,19 @@ const EditInventoryDialog = ({ entry, open, onClose, onShare }: Props) => {
       await updateItem.mutateAsync({
         id: entry.items.id,
         name: itemName.trim() || entry.items.name,
+        brand: brand.trim() || null,
         category: category || null,
+        country_of_origin: countryOfOrigin.trim() || null,
+        additional_info: additionalInfo.trim() || null,
         calories_per_unit: calories ? Number(calories) : 0,
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
+        fiber_g: fiber ? Number(fiber) : 0,
+        sugar_g: sugar ? Number(sugar) : 0,
+        sodium_mg: sodium ? Number(sodium) : 0,
+        serving_size: servingSize.trim() || null,
+        nutrition_basis: nutritionBasis,
         image_url: imageUrl,
       });
 
@@ -108,7 +126,7 @@ const EditInventoryDialog = ({ entry, open, onClose, onShare }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">Edit: {entry.items.name}</DialogTitle>
         </DialogHeader>
@@ -149,88 +167,141 @@ const EditInventoryDialog = ({ entry, open, onClose, onShare }: Props) => {
           </button>
         )}
         <form onSubmit={handleSave} className="space-y-4">
-          <ImageUpload
-            currentUrl={imageUrl}
-            onUploaded={setImageUrl}
-            onRemoved={() => setImageUrl(null)}
-            folder="items"
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Item Name</Label>
-              <Input value={itemName} onChange={(e) => setItemName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+          <Tabs defaultValue="pantry">
+            <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
+              <TabsTrigger value="pantry" className="rounded-lg">Pantry batch</TabsTrigger>
+              <TabsTrigger value="product" className="rounded-lg">Product card</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pantry" className="mt-4 space-y-4">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                These details describe this specific batch in your pantry.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Quantity</Label>
+                  <Input type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unit</Label>
+                  <GroupedUnitSelect value={unit} onValueChange={setUnit} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Storage location</Label>
+                  <Select value={location} onValueChange={handleLocationChange}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {STORAGE_LOCATIONS.map((l) => (
+                        <SelectItem key={l} value={l}>{l}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Expiry date</Label>
+                  <Input type="date" value={expiryDate} onChange={(e) => { setExpiryDate(e.target.value); setAutoEstimated(false); setManualExpiry(!!e.target.value); }} />
+                  {autoEstimated && (
+                    <p className="flex items-center gap-1 text-[11px] text-primary">
+                      <Sparkles className="h-3 w-3" /> Estimated from {location}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="product" className="mt-4 space-y-5">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                These facts follow this catalogue item everywhere it appears.
+              </p>
+              <ImageUpload
+                currentUrl={imageUrl}
+                onUploaded={setImageUrl}
+                onRemoved={() => setImageUrl(null)}
+                folder="items"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Item name</Label>
+                  <Input value={itemName} onChange={(e) => setItemName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Brand</Label>
+                  <Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Optional" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Country of origin</Label>
+                  <Input value={countryOfOrigin} onChange={(e) => setCountryOfOrigin(e.target.value)} placeholder="Only shown when set" />
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Nutrition basis</Label>
+                    <Select value={nutritionBasis} onValueChange={setNutritionBasis}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="per_unit">Per unit</SelectItem>
+                        <SelectItem value="per_100g">Per 100 g</SelectItem>
+                        <SelectItem value="per_serving">Per serving</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Serving size</Label>
+                    <Input value={servingSize} onChange={(e) => setServingSize(e.target.value)} placeholder="e.g. 125 g" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    ["Calories", calories, setCalories],
+                    ["Protein (g)", protein, setProtein],
+                    ["Carbs (g)", carbs, setCarbs],
+                    ["Fat (g)", fat, setFat],
+                    ["Fiber (g)", fiber, setFiber],
+                    ["Sugar (g)", sugar, setSugar],
+                    ["Sodium (mg)", sodium, setSodium],
+                  ].map(([label, value, setter]) => (
+                    <div className="space-y-1.5" key={label as string}>
+                      <Label className="text-xs">{label as string}</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={value as string}
+                        onChange={(e) => (setter as (next: string) => void)(e.target.value)}
+                      />
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                </div>
+              </div>
 
-          {/* Stock details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Quantity</Label>
-              <Input type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Unit</Label>
-              <GroupedUnitSelect value={unit} onValueChange={setUnit} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Storage Location</Label>
-              <Select value={location} onValueChange={handleLocationChange}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {STORAGE_LOCATIONS.map((l) => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Expiry Date</Label>
-              <Input type="date" value={expiryDate} onChange={(e) => { setExpiryDate(e.target.value); setAutoEstimated(false); setManualExpiry(!!e.target.value); }} />
-              {autoEstimated && (
-                <p className="flex items-center gap-1 text-[11px] text-primary">
-                  <Sparkles className="h-3 w-3" /> Auto-estimated from {location}
-                </p>
-              )}
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label>Additional information</Label>
+                <Textarea
+                  value={additionalInfo}
+                  onChange={(e) => setAdditionalInfo(e.target.value)}
+                  placeholder="Ingredients, preparation, dietary or handling notes…"
+                  className="min-h-28 resize-y"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
 
-          {/* Inline nutrition editing */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs uppercase tracking-wide">Nutrition per unit</Label>
-            <div className="grid grid-cols-4 gap-2">
-              <div>
-                <Label className="text-xs">Cal</Label>
-                <Input type="number" min={0} step="any" value={calories} onChange={(e) => setCalories(e.target.value)} className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Protein</Label>
-                <Input type="number" min={0} step="any" value={protein} onChange={(e) => setProtein(e.target.value)} className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Carbs</Label>
-                <Input type="number" min={0} step="any" value={carbs} onChange={(e) => setCarbs(e.target.value)} className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Fat</Label>
-                <Input type="number" min={0} step="any" value={fat} onChange={(e) => setFat(e.target.value)} className="h-8 text-sm" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
+          <div className="sticky bottom-0 flex gap-2 border-t border-border bg-card/95 pt-3 backdrop-blur">
             <Button type="submit" className="flex-1" disabled={updateInventory.isPending || updateItem.isPending}>
               {updateInventory.isPending || updateItem.isPending ? "Saving..." : "Save"}
             </Button>

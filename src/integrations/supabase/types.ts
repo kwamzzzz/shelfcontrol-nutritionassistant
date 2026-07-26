@@ -394,10 +394,12 @@ export type Database = {
       }
       items: {
         Row: {
+          additional_info: string | null
           brand: string | null
           calories_per_unit: number | null
           carbs_g: number | null
           category: string | null
+          country_of_origin: string | null
           created_at: string
           default_unit: string | null
           fat_g: number | null
@@ -413,10 +415,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          additional_info?: string | null
           brand?: string | null
           calories_per_unit?: number | null
           carbs_g?: number | null
           category?: string | null
+          country_of_origin?: string | null
           created_at?: string
           default_unit?: string | null
           fat_g?: number | null
@@ -432,10 +436,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          additional_info?: string | null
           brand?: string | null
           calories_per_unit?: number | null
           carbs_g?: number | null
           category?: string | null
+          country_of_origin?: string | null
           created_at?: string
           default_unit?: string | null
           fat_g?: number | null
