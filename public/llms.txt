@@ -1,0 +1,10 @@
+# Shelf Control
+
+> Personal kitchen operating system — track pantry stock, purchases, recipes, consumption, and food insights.
+
+Shelf Control helps households manage groceries end-to-end: pantry inventory with expiry tracking, shopping lists, purchase logging with price history, a digital cookbook, nutrition and consumption analytics, and collaborative groups.
+
+## Pages
+
+- [Home](/): Product overview and sign-in entry point.
+- [Sign in](/auth): Sign in or create an account.
