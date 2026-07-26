@@ -408,3 +408,156 @@
   .h-phone-nav { height: calc(var(--phone-nav-height) + var(--safe-bottom)); }
   .pb-phone-nav { padding-bottom: calc(var(--phone-nav-height) + var(--safe-bottom)); }
 }
+
+/* ============================================================================
+ * Garden Glow + Bento Market overlay system
+ * ==========================================================================*/
+@layer utilities {
+  /* Softly-tinted scrim used behind every overlay. */
+  .garden-scrim {
+    background-color: hsl(var(--garden-scrim));
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+
+  /* Raised panel: mint/peach radial glows over the card surface. Uses only
+   * background-image (no pseudo-elements) so absolute close-button positioning
+   * inside overlays is never affected. */
+  .garden-overlay {
+    background-color: hsl(var(--card));
+    background-image:
+      radial-gradient(120% 80% at 0% 0%, hsl(var(--garden-mint) / 0.6), transparent 55%),
+      radial-gradient(100% 70% at 100% 100%, hsl(var(--garden-peach) / 0.42), transparent 60%);
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border) / 0.75);
+    box-shadow:
+      0 40px 90px -32px hsl(var(--garden-shadow)),
+      0 8px 24px -14px hsl(var(--garden-shadow)),
+      inset 0 1px 0 hsl(0 0% 100% / 0.55);
+  }
+  .dark .garden-overlay {
+    background-image:
+      radial-gradient(120% 80% at 0% 0%, hsl(var(--garden-mint) / 0.95), transparent 55%),
+      radial-gradient(100% 70% at 100% 100%, hsl(var(--garden-peach) / 0.55), transparent 60%);
+    border-color: hsl(var(--border));
+    box-shadow:
+      0 44px 110px -30px hsl(0 0% 0% / 0.72),
+      0 10px 28px -12px hsl(0 0% 0% / 0.5),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  /* Compact popovers/menus: same aesthetic, smaller radius, tighter shadow. */
+  .garden-popover {
+    background-color: hsl(var(--popover));
+    background-image:
+      radial-gradient(120% 80% at 0% 0%, hsl(var(--garden-mint) / 0.5), transparent 60%);
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow:
+      0 22px 44px -22px hsl(var(--garden-shadow)),
+      0 4px 12px -6px hsl(var(--garden-shadow));
+  }
+  .dark .garden-popover {
+    background-image:
+      radial-gradient(120% 80% at 0% 0%, hsl(var(--garden-mint) / 0.75), transparent 60%);
+    box-shadow:
+      0 26px 54px -22px hsl(0 0% 0% / 0.65),
+      0 6px 16px -6px hsl(0 0% 0% / 0.45);
+  }
+
+  /* Small green→aqua→peach accent used under modal titles. */
+  .garden-header {
+    position: relative;
+    padding-bottom: 14px;
+  }
+  .garden-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 72px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(142 72% 40%), hsl(174 60% 55%), hsl(24 92% 66%));
+    opacity: 0.9;
+  }
+
+  /* Elevated 40px circular close button used inside overlays. */
+  .garden-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 9999px;
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 6px 16px -8px hsl(var(--garden-shadow));
+    transition: background-color 0.2s ease, transform 0.15s ease;
+  }
+  .garden-close:hover { background: hsl(var(--accent)); transform: scale(1.04); }
+  .garden-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.6), 0 6px 16px -8px hsl(var(--garden-shadow));
+  }
+
+  /* Bento Market — mobile bottom drawer shell. */
+  .bento-sheet {
+    background-color: hsl(var(--card));
+    background-image:
+      radial-gradient(120% 60% at 50% 0%, hsl(var(--garden-mint) / 0.55), transparent 60%),
+      radial-gradient(80% 50% at 100% 100%, hsl(var(--garden-peach) / 0.35), transparent 65%);
+    color: hsl(var(--foreground));
+    border-top: 1px solid hsl(var(--border) / 0.7);
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
+    box-shadow: 0 -24px 60px -14px hsl(var(--garden-shadow));
+  }
+  .dark .bento-sheet {
+    background-image:
+      radial-gradient(120% 60% at 50% 0%, hsl(var(--garden-mint) / 0.85), transparent 60%),
+      radial-gradient(80% 50% at 100% 100%, hsl(var(--garden-peach) / 0.5), transparent 65%);
+  }
+
+  /* Bento Market — saturated but accessible action tile.
+   * Callers set a hue via inline style: `--tone: hsl var triple`.
+   * Defaults to primary emerald if unset. */
+  .bento-action {
+    --tone: var(--bento-emerald);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 68px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    border: 1px solid hsl(var(--border) / 0.7);
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    text-align: left;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.5),
+      0 8px 18px -14px hsl(var(--garden-shadow));
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .bento-action:hover { background: hsl(var(--tone) / 0.08); }
+  .bento-action:active { transform: scale(0.99); }
+  .bento-action .bento-well {
+    height: 44px;
+    width: 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: hsl(var(--tone) / 0.14);
+    color: hsl(var(--tone));
+    border: 1px solid hsl(var(--tone) / 0.22);
+  }
+  .dark .bento-action { box-shadow: 0 10px 24px -18px hsl(0 0% 0% / 0.6); }
+  .dark .bento-action .bento-well {
+    background: hsl(var(--tone) / 0.22);
+    border-color: hsl(var(--tone) / 0.28);
+  }
+}
