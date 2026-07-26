@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { format, parseISO } from "date-fns";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useAllInventory } from "@/hooks/usePantry";
@@ -15,6 +15,8 @@ import {
   Receipt as ReceiptIcon,
   Sparkles,
 } from "lucide-react";
+
+type ToneStyle = CSSProperties & { "--tone": string };
 
 interface MonthStat {
   month: string;
