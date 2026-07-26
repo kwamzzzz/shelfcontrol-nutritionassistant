@@ -18,7 +18,24 @@ import PantryToolsSheet from "@/components/pantry/PantryToolsSheet";
 import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Package, Search, AlertTriangle, Clock, ShieldCheck, HelpCircle, Users, ChevronLeft, ChevronRight, Archive, SlidersHorizontal, Settings2, Share2, X } from "lucide-react";
+import {
+  Package,
+  Search,
+  AlertTriangle,
+  Clock,
+  ShieldCheck,
+  HelpCircle,
+  Users,
+  Archive,
+  SlidersHorizontal,
+  Settings2,
+  Share2,
+  X,
+  CalendarDays,
+  ReceiptText,
+  Store,
+  RotateCcw,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -27,6 +44,7 @@ import { useIsPhone } from "@/hooks/use-shell-mode";
 import { Badge } from "@/components/ui/badge";
 
 const LOCATION_TABS = ["All", ...STORAGE_LOCATIONS] as const;
+const normalizeStoreName = (value: string | null | undefined) => value?.trim().toLowerCase() ?? "";
 
 interface StatusGroup {
   key: ExpiryStatus;
@@ -59,13 +77,21 @@ const Pantry = () => {
   const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
   // Purchase-date filter: "all" | "archived" | "YYYY-MM"
   const [purchaseFilter, setPurchaseFilter] = useState<string>("all");
+  // Purchase-source filters make receipt-backed pantry rows easy to revisit.
+  // "all" keeps every source; "unlinked" shows manual additions; otherwise
+  // the value is an exact purchase id.
+  const [storeFilter, setStoreFilter] = useState("all");
+  const [receiptFilter, setReceiptFilter] = useState("all");
   // Phone scope: Current = what is in the pantry now; History = a past month or
   // the archive. Keeping these apart stops "Archived" (an item state) from
   // living inside the month axis (a time scale), which made the row read as
   // navigation rather than a filter. Derive the scope from the actual data
   // filter so it stays correct when the viewport changes between desktop and
   // phone after a desktop month/archive selection.
-  const mode: "current" | "history" = purchaseFilter === "all" ? "current" : "history";
+  const mode: "current" | "history" =
+    purchaseFilter === "all" && storeFilter === "all" && receiptFilter === "all"
+      ? "current"
+      : "history";
   const [toolsOpen, setToolsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -99,6 +125,15 @@ const Pantry = () => {
     }
   }, [isPersonalMode]);
 
+  // Purchase and receipt options are scoped to the active kitchen. Resetting
+  // them when that kitchen changes prevents a hidden Personal receipt id from
+  // producing an empty Group pantry (and vice versa).
+  useEffect(() => {
+    setPurchaseFilter("all");
+    setStoreFilter("all");
+    setReceiptFilter("all");
+  }, [activeGroupId]);
+
   // Attribution
   const userIds = useMemo(() => (inventory ?? []).map((e) => e.user_id), [inventory]);
   const { data: profileMap } = useProfileNames(userIds);
@@ -109,11 +144,44 @@ const Pantry = () => {
     (purchases ?? []).forEach((p) => { const m = (p.purchased_at ?? "").slice(0, 7); if (m) set.add(m); });
     return [...set].sort().reverse();
   }, [purchases]);
-  const monthOptions = useMemo(() => ["all", ...purchaseMonths, "archived"], [purchaseMonths]);
-  const navMonth = (dir: number) => {
-    const i = monthOptions.indexOf(purchaseFilter);
-    const ni = Math.max(0, Math.min(monthOptions.length - 1, (i < 0 ? 0 : i) + dir));
-    setPurchaseFilter(monthOptions[ni]);
+  const purchaseStores = useMemo(() => {
+    const stores = new Map<string, string>();
+    (purchases ?? []).forEach((purchase) => {
+      const key = normalizeStoreName(purchase.store_name);
+      if (key && !stores.has(key)) stores.set(key, purchase.store_name!.trim());
+    });
+    return [...stores.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [purchases]);
+
+  const receiptOptions = useMemo(() => {
+    if (purchaseFilter === "archived") return [];
+    return (purchases ?? []).filter((purchase) => {
+      const matchesMonth =
+        purchaseFilter === "all" ||
+        (purchase.purchased_at ?? "").slice(0, 7) === purchaseFilter;
+      const matchesStore =
+        storeFilter === "all" ||
+        normalizeStoreName(purchase.store_name) === storeFilter;
+      return matchesMonth && matchesStore;
+    });
+  }, [purchases, purchaseFilter, storeFilter]);
+
+  const selectedReceipt = useMemo(
+    () => (purchases ?? []).find((purchase) => purchase.id === receiptFilter) ?? null,
+    [purchases, receiptFilter],
+  );
+
+  const updatePurchaseFilter = (value: string) => {
+    setPurchaseFilter(value);
+    setReceiptFilter("all");
+    if (value === "archived") setStoreFilter("all");
+  };
+
+  const updateStoreFilter = (value: string) => {
+    setStoreFilter(value);
+    setReceiptFilter("all");
   };
 
   // Item source depends on the purchase-date filter (view-only — never mutates data).
@@ -127,16 +195,67 @@ const Pantry = () => {
 
   const sourceItems = useMemo<InventoryRow[]>(() => {
     if (isArchivedView) return (allInventory ?? []).filter((e) => e.status !== "active");
-    if (purchaseFilter === "all") return inventory ?? [];
-    return (inventory ?? []).filter((e) => (e.purchases?.purchased_at ?? "").slice(0, 7) === purchaseFilter);
-  }, [isArchivedView, purchaseFilter, inventory, allInventory]);
+    return (inventory ?? []).filter((entry) => {
+      const matchesMonth =
+        purchaseFilter === "all" ||
+        (entry.purchases?.purchased_at ?? "").slice(0, 7) === purchaseFilter;
+      const matchesStore =
+        storeFilter === "all" ||
+        normalizeStoreName(entry.purchases?.store_name) === storeFilter;
+      const matchesReceipt =
+        receiptFilter === "all" ||
+        (receiptFilter === "unlinked"
+          ? !entry.purchase_id
+          : entry.purchase_id === receiptFilter);
+      return matchesMonth && matchesStore && matchesReceipt;
+    });
+  }, [isArchivedView, purchaseFilter, storeFilter, receiptFilter, inventory, allInventory]);
 
-  const monthSummary = useMemo(() => {
-    if (purchaseFilter === "all" || isArchivedView) return null;
-    const ps = (purchases ?? []).filter((p) => (p.purchased_at ?? "").slice(0, 7) === purchaseFilter);
-    const items = ps.reduce((s, p) => s + (p.purchase_items?.length ?? 0), 0);
-    return { label: format(parseISO(`${purchaseFilter}-01`), "MMMM yyyy"), trips: ps.length, items };
-  }, [purchaseFilter, isArchivedView, purchases]);
+  const purchaseSummary = useMemo(() => {
+    if (isArchivedView) return null;
+    const linkedReceiptIds = new Set(sourceItems.map((entry) => entry.purchase_id).filter(Boolean));
+
+    if (receiptFilter === "unlinked") {
+      return {
+        title: "Added without a receipt",
+        detail: `${sourceItems.length} active pantry item${sourceItems.length !== 1 ? "s" : ""}`,
+      };
+    }
+
+    if (selectedReceipt) {
+      const date = format(parseISO(selectedReceipt.purchased_at), "MMM d, yyyy");
+      const lines = selectedReceipt.purchase_items?.length ?? 0;
+      return {
+        title: selectedReceipt.store_name || "Store not recorded",
+        detail: `${date} · ${sourceItems.length} pantry item${sourceItems.length !== 1 ? "s" : ""} from ${lines} receipt line${lines !== 1 ? "s" : ""}`,
+      };
+    }
+
+    if (purchaseFilter !== "all" || storeFilter !== "all") {
+      const monthLabel =
+        purchaseFilter === "all"
+          ? "All purchase dates"
+          : format(parseISO(`${purchaseFilter}-01`), "MMMM yyyy");
+      const storeLabel =
+        storeFilter === "all"
+          ? null
+          : purchaseStores.find((store) => store.value === storeFilter)?.label;
+      return {
+        title: [monthLabel, storeLabel].filter(Boolean).join(" · "),
+        detail: `${sourceItems.length} pantry item${sourceItems.length !== 1 ? "s" : ""} from ${linkedReceiptIds.size} receipt${linkedReceiptIds.size !== 1 ? "s" : ""}`,
+      };
+    }
+
+    return null;
+  }, [
+    isArchivedView,
+    sourceItems,
+    receiptFilter,
+    selectedReceipt,
+    purchaseFilter,
+    storeFilter,
+    purchaseStores,
+  ]);
 
   // Search / category / location narrowing, WITHOUT the status filter applied.
   // Status counts are derived from this so selecting a status does not zero out
@@ -208,12 +327,29 @@ const Pantry = () => {
     { key: "no-date", label: "No date", count: statusCounts["no-date"], filter: "no_expiry", tone: "text-muted-foreground" },
   ];
 
+  // The phone's Filters button counts only the controls inside its drawer.
+  // Purchase filters are visible in the History panel and have their own reset.
   const activeFilterCount = (filterCategory !== "all" ? 1 : 0) + (expiryFilter ? 1 : 0);
+
+  const purchaseFilterCount =
+    (purchaseFilter !== "all" ? 1 : 0) +
+    (storeFilter !== "all" ? 1 : 0) +
+    (receiptFilter !== "all" ? 1 : 0);
+
+  const resetPurchaseFilters = () => {
+    setPurchaseFilter("all");
+    setStoreFilter("all");
+    setReceiptFilter("all");
+  };
 
   const enterMode = (next: "current" | "history") => {
     setExpiryFilter(null);
-    if (next === "current") setPurchaseFilter("all");
-    else setPurchaseFilter(purchaseMonths[0] ?? "archived");
+    if (next === "current") resetPurchaseFilters();
+    else {
+      setPurchaseFilter(purchaseMonths[0] ?? "archived");
+      setStoreFilter("all");
+      setReceiptFilter("all");
+    }
   };
 
   const grouped = useMemo(() => {
@@ -457,41 +593,123 @@ const Pantry = () => {
         </div>
       )}
 
-      {/* Purchase-Date (Month) Filter — tablet/desktop keeps the full row */}
+      {/* Purchase history filters — explicit month, store and receipt controls.
+          These replace the old month carousel, whose arrows implied navigation
+          and hid the fact that it was filtering the pantry. */}
       {!isPhone && (
-        <div className="flex items-center gap-2">
-          <button
-            type="button" onClick={() => navMonth(-1)} disabled={monthOptions.indexOf(purchaseFilter) <= 0}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="flex flex-1 gap-2 overflow-x-auto py-0.5">
-            {monthOptions.map((opt) => {
-              const label = opt === "all" ? "All Items" : opt === "archived" ? "Archived" : format(parseISO(`${opt}-01`), "MMM yyyy");
-              const active = purchaseFilter === opt;
-              return (
-                <button
-                  key={opt} type="button" onClick={() => setPurchaseFilter(opt)}
-                  className={cn(
-                    "flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                    active ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  )}
+        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ReceiptText className="h-5 w-5" aria-hidden />
+              </div>
+              <div>
+                <h2 className="font-display text-base font-semibold text-foreground">Find purchased stock</h2>
+                <p className="text-sm text-muted-foreground">Filter this pantry by month, store, or an exact receipt.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {purchaseFilterCount > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl text-muted-foreground"
+                  onClick={resetPurchaseFilters}
                 >
-                  {opt === "archived" && <Archive className="h-3.5 w-3.5" />}
-                  {label}
-                </button>
-              );
-            })}
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  Reset
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant={isArchivedView ? "default" : "outline"}
+                size="sm"
+                className="rounded-xl"
+                onClick={() => updatePurchaseFilter(isArchivedView ? "all" : "archived")}
+              >
+                <Archive className="mr-1.5 h-4 w-4" />
+                {isArchivedView ? "Viewing archived" : "Archived"}
+              </Button>
+            </div>
           </div>
-          <button
-            type="button" onClick={() => navMonth(1)} disabled={monthOptions.indexOf(purchaseFilter) >= monthOptions.length - 1}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary disabled:opacity-40"
-            aria-label="Next month"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+
+          <div className="grid gap-3 md:grid-cols-[0.85fr_1fr_1.5fr]">
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                Purchase month
+              </label>
+              <Select
+                value={isArchivedView ? "all" : purchaseFilter}
+                onValueChange={updatePurchaseFilter}
+                disabled={isArchivedView}
+              >
+                <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Filter by purchase month">
+                  <SelectValue placeholder="Any month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any month</SelectItem>
+                  {purchaseMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {format(parseISO(`${month}-01`), "MMMM yyyy")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Store className="h-3.5 w-3.5" aria-hidden />
+                Store
+              </label>
+              <Select value={storeFilter} onValueChange={updateStoreFilter} disabled={isArchivedView}>
+                <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Filter by store">
+                  <SelectValue placeholder="Any store" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any store</SelectItem>
+                  {purchaseStores.map((store) => (
+                    <SelectItem key={store.value} value={store.value}>{store.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <ReceiptText className="h-3.5 w-3.5" aria-hidden />
+                Exact receipt
+              </label>
+              <Select value={receiptFilter} onValueChange={setReceiptFilter} disabled={isArchivedView}>
+                <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Filter by exact receipt">
+                  <SelectValue placeholder="All receipts" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All receipts</SelectItem>
+                  {purchaseFilter === "all" && storeFilter === "all" && (
+                    <SelectItem value="unlinked">Added without a receipt</SelectItem>
+                  )}
+                  {receiptOptions.map((purchase) => (
+                    <SelectItem key={purchase.id} value={purchase.id}>
+                      {purchase.store_name || "Unknown store"} · {format(parseISO(purchase.purchased_at), "MMM d, yyyy")} · {purchase.purchase_items?.length ?? 0} items
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {!isArchivedView && purchaseSummary && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-primary/[0.06] px-3.5 py-3">
+              <ReceiptText className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <p className="text-sm">
+                <span className="font-semibold text-foreground">{purchaseSummary.title}</span>
+                <span className="text-muted-foreground"> — {purchaseSummary.detail}</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -504,7 +722,7 @@ const Pantry = () => {
             <button
               key={m}
               type="button"
-              onClick={() => setPurchaseFilter(m)}
+              onClick={() => updatePurchaseFilter(m)}
               aria-pressed={purchaseFilter === m}
               className={cn(
                 "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
@@ -519,7 +737,7 @@ const Pantry = () => {
           <span aria-hidden className="h-6 w-px shrink-0 bg-border" />
           <button
             type="button"
-            onClick={() => setPurchaseFilter("archived")}
+            onClick={() => updatePurchaseFilter("archived")}
             aria-pressed={isArchivedView}
             className={cn(
               "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
@@ -534,12 +752,55 @@ const Pantry = () => {
         </div>
       )}
 
-      {monthSummary && (
-        <div className="rounded-xl border border-primary/20 bg-primary/[0.05] px-4 py-2.5 text-sm">
-          <span className="font-semibold text-foreground">{monthSummary.label}</span>
-          <span className="text-muted-foreground">
-            {" "}— {monthSummary.items} item{monthSummary.items !== 1 ? "s" : ""} purchased across {monthSummary.trips} shopping trip{monthSummary.trips !== 1 ? "s" : ""}
-          </span>
+      {isPhone && mode === "history" && !isArchivedView && (
+        <div className="space-y-3 rounded-2xl border border-border/80 bg-card p-3.5 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Store className="h-3.5 w-3.5" aria-hidden />
+                Store
+              </label>
+              <Select value={storeFilter} onValueChange={updateStoreFilter}>
+                <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Filter purchase history by store">
+                  <SelectValue placeholder="Any store" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any store</SelectItem>
+                  {purchaseStores.map((store) => (
+                    <SelectItem key={store.value} value={store.value}>{store.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <ReceiptText className="h-3.5 w-3.5" aria-hidden />
+                Receipt
+              </label>
+              <Select value={receiptFilter} onValueChange={setReceiptFilter}>
+                <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Filter purchase history by receipt">
+                  <SelectValue placeholder="All receipts" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All receipts</SelectItem>
+                  {receiptOptions.map((purchase) => (
+                    <SelectItem key={purchase.id} value={purchase.id}>
+                      {purchase.store_name || "Unknown store"} · {format(parseISO(purchase.purchased_at), "MMM d")} · {purchase.purchase_items?.length ?? 0} items
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {purchaseSummary && (
+            <div className="flex items-start gap-2 rounded-xl bg-primary/[0.06] px-3 py-2.5">
+              <ReceiptText className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <p className="text-xs leading-relaxed">
+                <span className="font-semibold text-foreground">{purchaseSummary.title}</span>
+                <span className="text-muted-foreground"> — {purchaseSummary.detail}</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
       {isArchivedView && (
