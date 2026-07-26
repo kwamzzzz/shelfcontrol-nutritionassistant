@@ -8,8 +8,8 @@ import { formatQuantity } from "@/data/cookbookMockData";
 interface WakeLockSentinelLike {
   release: () => Promise<void>;
 }
-interface NavigatorWithWakeLock extends Navigator {
-  wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
+interface WakeLockLike {
+  request: (type: "screen") => Promise<WakeLockSentinelLike>;
 }
 
 interface Props {
@@ -36,9 +36,9 @@ const StepByStepMode = ({ open, onOpenChange, steps, ingredients, servingsScale 
   useEffect(() => {
     let sentinel: WakeLockSentinelLike | undefined;
     let cancelled = false;
-    const nav = navigator as NavigatorWithWakeLock;
-    if (awake && nav.wakeLock) {
-      nav.wakeLock
+    const wakeLock = (navigator as Navigator & { wakeLock?: WakeLockLike }).wakeLock;
+    if (awake && wakeLock) {
+      wakeLock
         .request("screen")
         .then((s) => {
           if (cancelled) void s.release().catch(() => undefined);
