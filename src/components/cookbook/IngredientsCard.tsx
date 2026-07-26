@@ -1,7 +1,13 @@
-import { useState } from "react";
-import { Check, Minus, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Minus, Plus, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatQuantity, type Ingredient } from "@/data/cookbookMockData";
+import { useInventory } from "@/hooks/usePantry";
+import {
+  buildPantryQuantityByItem,
+  getIngredientAvailability,
+  type IngredientAvailability,
+} from "@/lib/pantry-utils";
 
 interface Props {
   ingredients: Ingredient[];
@@ -20,6 +26,13 @@ const IngredientsCard = ({
 }: Props) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const scale = servings / baseServings;
+
+  // Match each ingredient against the current pantry (by item, units aside).
+  const { data: inventory } = useInventory();
+  const pantryByItem = useMemo(
+    () => buildPantryQuantityByItem(inventory ?? []),
+    [inventory],
+  );
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
@@ -45,6 +58,13 @@ const IngredientsCard = ({
         {ingredients.map((ing) => {
           const isChecked = !!checked[ing.id];
           const scaledQty = ing.quantity != null ? ing.quantity * scale : null;
+
+          // Only real recipe ingredients carry an item_id; sample data doesn't.
+          const available = ing.item_id ? pantryByItem.get(ing.item_id) ?? 0 : null;
+          const status: IngredientAvailability | null =
+            ing.item_id != null ? getIngredientAvailability(scaledQty, available!) : null;
+          const lacking = status === "missing" || status === "short";
+
           return (
             <li key={ing.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
               <button
@@ -62,7 +82,11 @@ const IngredientsCard = ({
               <span
                 className={cn(
                   "flex-1 text-sm",
-                  isChecked ? "text-muted-foreground line-through" : "text-foreground",
+                  isChecked
+                    ? "text-muted-foreground line-through"
+                    : lacking
+                      ? "font-medium text-destructive"
+                      : "text-foreground",
                 )}
               >
                 {ing.name}
@@ -70,6 +94,39 @@ const IngredientsCard = ({
                   <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">optional</span>
                 )}
               </span>
+
+              {status && !isChecked && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0",
+                    status === "ok"
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive",
+                  )}
+                  title={
+                    status === "missing"
+                      ? "Not in your pantry"
+                      : status === "short"
+                        ? `Only ${available} in your pantry`
+                        : "In your pantry"
+                  }
+                >
+                  {status === "ok" ? (
+                    <>
+                      <Check className="h-3 w-3" /> In pantry
+                    </>
+                  ) : status === "short" ? (
+                    <>
+                      <AlertCircle className="h-3 w-3" /> Have {available}
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-3 w-3" /> Not in pantry
+                    </>
+                  )}
+                </span>
+              )}
+
               <span className="text-xs font-medium text-muted-foreground tabular-nums shrink-0">
                 {formatQuantity(scaledQty, ing.unit, { toTaste: ing.toTaste, optional: ing.optional })}
               </span>

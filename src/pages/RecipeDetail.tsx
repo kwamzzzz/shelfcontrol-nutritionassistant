@@ -45,6 +45,7 @@ function adaptRecipe(r: RecipeWithIngredients): MockRecipe {
       name: ing.items?.name ?? "Ingredient",
       quantity: ing.quantity ?? null,
       unit: ing.unit ?? "",
+      item_id: ing.item_id,
     })),
     instructions: steps,
     nutrition: {

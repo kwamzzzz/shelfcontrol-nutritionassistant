@@ -19,6 +19,38 @@ export const getExpiryLabel = (expiryDate: string | null): string => {
   return `${days}d left`;
 };
 
+/* ── Recipe ingredient availability ──────────────── */
+
+export type IngredientAvailability = "missing" | "short" | "ok";
+
+/**
+ * Whether the pantry can cover a recipe ingredient.
+ *
+ * Matched by item and compared as plain quantities, ignoring units — the same
+ * rule the cookbook deduction uses. "missing" = none in stock, "short" = some
+ * but less than the recipe needs, "ok" = enough (or no specific amount asked).
+ */
+export const getIngredientAvailability = (
+  required: number | null | undefined,
+  available: number,
+): IngredientAvailability => {
+  if (available <= 0) return "missing";
+  if (required != null && available < required) return "short";
+  return "ok";
+};
+
+/** Sum active pantry quantity per catalogue item id. */
+export const buildPantryQuantityByItem = (
+  rows: { item_id: string; quantity: number | string | null }[],
+): Map<string, number> => {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const qty = Number(row.quantity) || 0;
+    totals.set(row.item_id, (totals.get(row.item_id) ?? 0) + qty);
+  }
+  return totals;
+};
+
 export const CATEGORIES = [
   "Dairy",
   "Produce",

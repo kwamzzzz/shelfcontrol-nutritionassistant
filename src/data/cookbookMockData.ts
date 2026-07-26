@@ -5,6 +5,8 @@ export type Ingredient = {
   unit: string;
   optional?: boolean;
   toTaste?: boolean;
+  /** Catalogue item id — present for real recipes, absent for sample data. */
+  item_id?: string;
 };
 
 export type MockRecipe = {
