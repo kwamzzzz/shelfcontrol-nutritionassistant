@@ -33,7 +33,7 @@ const navSections = [
     accent: "text-amber-600 dark:text-amber-400",
     items: [
       { to: "/kitchen-story", label: "Kitchen Story", icon: BookHeart },
-      { to: "/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/analytics", label: "Analytics", icon: BarChart3, accent: "" },
       { to: "/intelligence", label: "Pantry Intelligence", icon: Lightbulb },
       { to: "/food-intelligence", label: "Food Intelligence", icon: Newspaper },
       { to: "/nutrition", label: "Nutrition", icon: Apple },
@@ -147,7 +147,7 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                           <item.icon
                             className={cn(
                               "h-[18px] w-[18px] shrink-0 transition-colors",
-                              !isActive && section.accent,
+                              !isActive && (item.accent ?? section.accent),
                             )}
                           />
                           {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
