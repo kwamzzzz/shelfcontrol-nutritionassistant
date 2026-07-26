@@ -1,8 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import { type InventoryRow } from "@/hooks/usePantry";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
+import { getItemMedia, type ItemMediaSource } from "@/lib/item-media";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, MapPin, Package, PackageOpen, AlertTriangle } from "lucide-react";
+import { Check, ImagePlus, MapPin, PackageOpen, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 
@@ -35,8 +37,27 @@ const InventoryCard = ({
   const status = getExpiryStatus(entry.expiry_date);
   const label = getExpiryLabel(entry.expiry_date);
   const isOpened = entry.sealed_status === "opened";
-  const imageUrl = entry.items.image_url;
+  const media = useMemo(() => getItemMedia(entry.items), [entry.items]);
+  const fallbackMedia = useMemo(
+    () => getItemMedia({ ...entry.items, image_url: null }),
+    [entry.items],
+  );
+  const [imageSrc, setImageSrc] = useState<string | null>(media.src);
+  const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
   const missingLocation = entry.status === "active" && !entry.storage_location;
+  const nutritionSummary = [
+    Number(entry.items.calories_per_unit ?? 0) > 0
+      ? `${Number(entry.items.calories_per_unit).toLocaleString(undefined, { maximumFractionDigits: 0 })} kcal`
+      : null,
+    Number(entry.items.protein_g ?? 0) > 0
+      ? `${Number(entry.items.protein_g).toLocaleString(undefined, { maximumFractionDigits: 1 })}g protein`
+      : null,
+  ].filter(Boolean).join(" · ");
+
+  useEffect(() => {
+    setImageSrc(media.src);
+    setMediaSource(media.source);
+  }, [media]);
 
   // Phone shows ONE overlay badge. Priority: expired → expiring → missing storage
   // → opened → no expiry. Secondary states stay available in the detail sheet and
@@ -86,21 +107,34 @@ const InventoryCard = ({
     >
       {/* Image area — consistent media well whether or not an image exists */}
       <div className="media-well relative isolate aspect-[3/4] sm:aspect-[4/3] w-full flex items-center justify-center overflow-hidden">
-        {imageUrl ? (
-          /* Product shots are supplied on white studio backgrounds. Multiplying
-             them into the well makes that white read as the well's own surface,
-             so the photo sits on the neutral slot instead of on a white plate.
-             The slot is a light neutral in both themes so this works either way. */
+        {imageSrc ? (
           <img
-            src={imageUrl}
-            alt={entry.items.name}
+            src={imageSrc}
+            alt={mediaSource === "uploaded" ? entry.items.name : media.label}
             loading="lazy"
-            className="h-full w-full object-contain p-1.5 sm:p-2 mix-blend-multiply"
+            className={cn(
+              "h-full w-full transition duration-300 group-hover:scale-[1.025]",
+              mediaSource === "uploaded"
+                ? "object-contain p-1.5 mix-blend-multiply sm:p-2"
+                : "object-contain p-1.5 sm:p-2",
+            )}
+            onError={() => {
+              if (mediaSource === "uploaded" && fallbackMedia.src) {
+                setImageSrc(fallbackMedia.src);
+                setMediaSource(fallbackMedia.source);
+              } else {
+                setImageSrc(null);
+                setMediaSource("missing");
+              }
+            }}
           />
         ) : (
-          /* Fixed neutral: the slot is light in both themes, so a theme-aware
-             muted colour would disappear in dark mode. */
-          <Package aria-hidden className="h-10 w-10 text-[hsl(155_10%_62%)]" />
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[linear-gradient(145deg,hsl(var(--media-well-start)),hsl(var(--media-well-mid))_55%,hsl(var(--media-well-end)))] px-3 text-center">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/80 bg-card/85 shadow-sm">
+              <ImagePlus aria-hidden className="h-5 w-5 text-primary" />
+            </span>
+            <span className="text-[0.65rem] font-medium text-muted-foreground">Photo needed</span>
+          </div>
         )}
 
         {selectionMode && (
@@ -159,6 +193,12 @@ const InventoryCard = ({
 
         {entry.items.brand && (
           <p className="mt-0.5 hidden sm:block text-xs text-muted-foreground truncate">{entry.items.brand}</p>
+        )}
+
+        {nutritionSummary && (
+          <p className="mt-1 truncate text-[0.65rem] font-medium text-primary/90 sm:text-xs">
+            {nutritionSummary}
+          </p>
         )}
 
         {/* Phone: one concise metadata line (location preferred, else category).

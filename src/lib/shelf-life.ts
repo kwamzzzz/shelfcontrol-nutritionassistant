@@ -59,7 +59,7 @@ export const FOOD_TYPES: Record<FoodType, FoodDef> = {
     shelf: { Counter: 0, Fridge: 2, Freezer: 270 }, recommend: { location: "Fridge", confidence: "high" }, openedFactor: 0.5,
   },
   fish_seafood: {
-    label: "Fish & seafood", keywords: ["fish", "salmon", "tuna", "cod", "prawn", "shrimp", "seafood", "crab", "lobster", "squid", "sardine", "mackerel", "tilapia"],
+    label: "Fish & seafood", keywords: ["fish", "salmon", "tuna", "cod", "bass", "mullet", "prawn", "shrimp", "seafood", "crab", "lobster", "squid", "sardine", "mackerel", "tilapia"],
     shelf: { Counter: 0, Fridge: 2, Freezer: 120 }, recommend: { location: "Fridge", confidence: "high" }, openedFactor: 0.5,
   },
   cooked_meat: {
@@ -88,7 +88,7 @@ export const FOOD_TYPES: Record<FoodType, FoodDef> = {
     shelf: { Counter: 7, Fridge: 60, Freezer: 270 }, recommend: { location: "Fridge", confidence: "high" }, openedFactor: 0.8,
   },
   leafy_greens: {
-    label: "Leafy greens", keywords: ["lettuce", "spinach", "kale", "arugula", "rocket", "salad", "cabbage", "chard", "greens", "coriander leaf"],
+    label: "Leafy greens", keywords: ["lettuce", "spinach", "kale", "arugula", "rocket", "salad", "cabbage", "chard", "greens", "coriander leaf", "water crest", "watercress"],
     shelf: { Counter: 2, Fridge: 7, Freezer: 240 }, recommend: { location: "Fridge", confidence: "high" }, openedFactor: 0.6,
   },
   herbs: {

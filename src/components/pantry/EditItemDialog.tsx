@@ -5,6 +5,7 @@ import ImageUpload from "@/components/shared/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -18,16 +19,26 @@ interface Props {
   onClose: () => void;
 }
 
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Something went wrong.";
+
 const EditItemDialog = ({ item, open, onClose }: Props) => {
   const [name, setName] = useState(item.name);
   const [brand, setBrand] = useState(item.brand ?? "");
   const [category, setCategory] = useState(item.category ?? "");
+  const [countryOfOrigin, setCountryOfOrigin] = useState(item.country_of_origin ?? "");
+  const [additionalInfo, setAdditionalInfo] = useState(item.additional_info ?? "");
   const [defaultUnit, setDefaultUnit] = useState(item.default_unit ?? "Unit");
   const [calories, setCalories] = useState(String(item.calories_per_unit ?? 0));
   const [protein, setProtein] = useState(String(item.protein_g ?? 0));
   const [carbs, setCarbs] = useState(String(item.carbs_g ?? 0));
   const [fat, setFat] = useState(String(item.fat_g ?? 0));
-  const [imageUrl, setImageUrl] = useState<string | null>((item as any).image_url ?? null);
+  const [fiber, setFiber] = useState(String(item.fiber_g ?? 0));
+  const [sugar, setSugar] = useState(String(item.sugar_g ?? 0));
+  const [sodium, setSodium] = useState(String(item.sodium_mg ?? 0));
+  const [servingSize, setServingSize] = useState(item.serving_size ?? "");
+  const [nutritionBasis, setNutritionBasis] = useState(item.nutrition_basis ?? "per_unit");
+  const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
   const { toast } = useToast();
@@ -40,17 +51,24 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
         name,
         brand: brand || null,
         category: category || null,
+        country_of_origin: countryOfOrigin.trim() || null,
+        additional_info: additionalInfo.trim() || null,
         default_unit: defaultUnit,
         calories_per_unit: calories ? Number(calories) : 0,
         protein_g: protein ? Number(protein) : 0,
         carbs_g: carbs ? Number(carbs) : 0,
         fat_g: fat ? Number(fat) : 0,
+        fiber_g: fiber ? Number(fiber) : 0,
+        sugar_g: sugar ? Number(sugar) : 0,
+        sodium_mg: sodium ? Number(sodium) : 0,
+        serving_size: servingSize.trim() || null,
+        nutrition_basis: nutritionBasis,
         image_url: imageUrl,
-      } as any);
+      });
       toast({ title: "Updated", description: `${name} updated.` });
       onClose();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
   };
 
@@ -59,13 +77,16 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
       await deleteItem.mutateAsync(item.id);
       toast({ title: "Deleted", description: `${item.name} removed from catalog.` });
       onClose();
-    } catch (err: any) {
-      const isFkError = err.message?.includes("violates foreign key constraint") || err.code === "23503";
+    } catch (error: unknown) {
+      const isFkError = typeof error === "object" && error !== null && (
+        ("message" in error && typeof error.message === "string" && error.message.includes("violates foreign key constraint"))
+        || ("code" in error && error.code === "23503")
+      );
       toast({
         title: isFkError ? "Cannot delete" : "Error",
         description: isFkError
           ? "This item is still used in your pantry. Remove the linked inventory entries first."
-          : err.message,
+          : errorMessage(error),
         variant: "destructive",
       });
     }
@@ -73,7 +94,7 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">Edit: {item.name}</DialogTitle>
         </DialogHeader>
@@ -112,25 +133,63 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs uppercase tracking-wide">Nutrition per unit</Label>
-            <div className="grid grid-cols-4 gap-2">
-              <div>
-                <Label className="text-xs">Cal</Label>
-                <Input type="number" min={0} step="any" value={calories} onChange={(e) => setCalories(e.target.value)} />
+            <Label>Country of origin</Label>
+            <Input
+              value={countryOfOrigin}
+              onChange={(e) => setCountryOfOrigin(e.target.value)}
+              placeholder="Only shown when set"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs uppercase tracking-wide">Nutrition</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Basis</Label>
+                <Select value={nutritionBasis} onValueChange={setNutritionBasis}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="per_unit">Per unit</SelectItem>
+                    <SelectItem value="per_100g">Per 100 g</SelectItem>
+                    <SelectItem value="per_serving">Per serving</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <Label className="text-xs">Protein</Label>
-                <Input type="number" min={0} step="any" value={protein} onChange={(e) => setProtein(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Carbs</Label>
-                <Input type="number" min={0} step="any" value={carbs} onChange={(e) => setCarbs(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Fat</Label>
-                <Input type="number" min={0} step="any" value={fat} onChange={(e) => setFat(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Serving size</Label>
+                <Input value={servingSize} onChange={(e) => setServingSize(e.target.value)} placeholder="e.g. 125 g" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                ["Calories", calories, setCalories],
+                ["Protein (g)", protein, setProtein],
+                ["Carbs (g)", carbs, setCarbs],
+                ["Fat (g)", fat, setFat],
+                ["Fiber (g)", fiber, setFiber],
+                ["Sugar (g)", sugar, setSugar],
+                ["Sodium (mg)", sodium, setSodium],
+              ].map(([label, value, setter]) => (
+                <div key={label as string}>
+                  <Label className="text-xs">{label as string}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={value as string}
+                    onChange={(e) => (setter as (next: string) => void)(e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Additional information</Label>
+            <Textarea
+              value={additionalInfo}
+              onChange={(e) => setAdditionalInfo(e.target.value)}
+              placeholder="Ingredients, preparation, dietary or handling notes…"
+              className="min-h-28 resize-y"
+            />
           </div>
           <div className="flex gap-2">
             <Button type="submit" className="flex-1" disabled={updateItem.isPending}>
