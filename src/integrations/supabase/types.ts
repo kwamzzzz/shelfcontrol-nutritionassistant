@@ -1040,27 +1040,15 @@ export type Database = {
         }[]
       }
       share_inventory_to_group: {
-        Args: {
-          _group_id: string
-          _inventory_ids: string[]
-          _mode?: string
-        }
+        Args: { _group_id: string; _inventory_ids: string[]; _mode?: string }
         Returns: Json
       }
       share_purchase_to_group: {
-        Args: {
-          _group_id: string
-          _mode?: string
-          _purchase_id: string
-        }
+        Args: { _group_id: string; _mode?: string; _purchase_id: string }
         Returns: Json
       }
       share_recipes_to_group: {
-        Args: {
-          _group_id: string
-          _mode?: string
-          _recipe_ids: string[]
-        }
+        Args: { _group_id: string; _mode?: string; _recipe_ids: string[] }
         Returns: Json
       }
     }
