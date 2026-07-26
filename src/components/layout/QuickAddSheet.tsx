@@ -12,10 +12,16 @@ interface QuickAddSheetProps {
 
 type QuickAction = "purchase" | "consumption" | "inventory";
 
-const ACTIONS: { key: QuickAction; label: string; desc: string; icon: LucideIcon }[] = [
-  { key: "purchase", label: "Log Purchase", desc: "Add a shopping trip and its items", icon: Receipt },
-  { key: "consumption", label: "Log Consumption", desc: "Record what you used or ate", icon: Heart },
-  { key: "inventory", label: "Add Pantry Item", desc: "Add stock to your pantry", icon: PackagePlus },
+const ACTIONS: {
+  key: QuickAction;
+  title: string;
+  sub: string;
+  icon: LucideIcon;
+  tone: string;
+}[] = [
+  { key: "inventory", title: "Add item", sub: "To pantry", icon: PackagePlus, tone: "var(--bento-emerald)" },
+  { key: "purchase", title: "Log purchase", sub: "Trip & receipt", icon: Receipt, tone: "var(--bento-cobalt)" },
+  { key: "consumption", title: "Used or ate", sub: "Log food", icon: Heart, tone: "var(--bento-amber)" },
 ];
 
 /**
@@ -34,24 +40,25 @@ const QuickAddSheet = ({ open, onOpenChange }: QuickAddSheetProps) => {
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent>
-          <DrawerHeader className="text-center">
-            <DrawerTitle>Quick Add</DrawerTitle>
-            <DrawerDescription>Log an activity or add to your pantry.</DrawerDescription>
+          <DrawerHeader className="px-5 pt-4 pb-2 text-left">
+            <DrawerTitle className="font-serif text-2xl">Quick Add</DrawerTitle>
+            <DrawerDescription>Pick what you want to capture.</DrawerDescription>
           </DrawerHeader>
-          <div className="grid gap-2 px-4 pb-4">
+          <div className="grid gap-3 px-5 pb-5">
             {ACTIONS.map((a) => (
               <button
                 key={a.key}
                 type="button"
                 onClick={() => launch(a.key)}
-                className="flex items-center gap-4 rounded-2xl border border-border bg-card/60 p-4 text-left transition-colors hover:bg-accent active:bg-accent"
+                className="bento-action"
+                style={{ ["--tone" as any]: a.tone }}
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <a.icon className="h-5 w-5" />
+                <span className="bento-well">
+                  <a.icon className="h-5 w-5" strokeWidth={2.2} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block font-medium text-foreground">{a.label}</span>
-                  <span className="block text-sm text-muted-foreground">{a.desc}</span>
+                  <span className="block text-[15px] font-semibold text-foreground">{a.title}</span>
+                  <span className="block text-sm text-muted-foreground">{a.sub}</span>
                 </span>
               </button>
             ))}

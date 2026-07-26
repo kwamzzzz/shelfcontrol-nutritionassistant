@@ -18,7 +18,7 @@ const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Overlay ref={ref} className={cn("fixed inset-0 z-50 bg-black/50 backdrop-blur-sm", className)} {...props} />
+  <DrawerPrimitive.Overlay ref={ref} className={cn("garden-scrim fixed inset-0 z-50", className)} {...props} />
 ));
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
@@ -31,12 +31,12 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "glass-surface fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-3xl pb-[var(--safe-bottom)]",
+        "bento-sheet fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col pb-[calc(var(--safe-bottom)+0.5rem)]",
         className,
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+      <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-foreground/20" />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>

@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { MORE_SECTIONS, moreItems, isNavItemActive } from "@/config/navigation";
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
+
+const SECTION_TONE: Record<string, string> = {
+  activity: "var(--bento-emerald)",
+  intelligence: "var(--bento-amber)",
+  community: "var(--bento-cobalt)",
+  account: "var(--bento-slate)",
+};
 
 interface MoreSheetProps {
   open: boolean;
@@ -31,21 +39,20 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85dvh]">
-        <DrawerHeader className="text-center">
-          <DrawerTitle>More</DrawerTitle>
+        <DrawerHeader className="px-5 pt-4 pb-2 text-left">
+          <DrawerTitle className="font-serif text-2xl">More</DrawerTitle>
         </DrawerHeader>
-        <div className="space-y-5 overflow-y-auto px-4 pb-4">
+        <div className="space-y-5 overflow-y-auto px-5 pb-5">
           {MORE_SECTIONS.map((section) => {
             const items = moreItems.filter((i) => i.section === section.key);
             if (!items.length) return null;
+            const tone = SECTION_TONE[section.key] ?? "var(--bento-emerald)";
             return (
               <div key={section.key}>
                 <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                   {section.label}
                 </p>
-                {/* Two columns normally; a single column once text scaling makes
-                    two columns too narrow (≈200% text). */}
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2.5">
                   {items.map((item) => {
                     const active = isNavItemActive(item, pathname);
                     return (
@@ -54,16 +61,12 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
                         type="button"
                         onClick={() => go(item.path)}
                         aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-[52px] items-center gap-3 rounded-2xl border p-3 text-left transition-colors",
-                          active
-                            ? "border-primary/40 bg-primary/10 text-foreground"
-                            : "border-border bg-card/60 hover:bg-accent",
-                        )}
+                        className={cn("bento-action", active && "ring-2 ring-primary/30")}
+                        style={{ ["--tone" as any]: tone } as CSSProperties}
                       >
-                        <item.icon className="h-5 w-5 shrink-0 text-primary" />
-                        {/* Wrap rather than truncate — long labels such as
-                            "Pantry Intelligence" must stay fully readable. */}
+                        <span className="bento-well">
+                          <item.icon className="h-5 w-5" strokeWidth={2.2} />
+                        </span>
                         <span className="min-w-0 flex-1 text-sm font-medium leading-tight">{item.label}</span>
                         {item.hasBadge && pendingCount > 0 && (
                           <Badge className="h-4 min-w-4 border-0 bg-[#FF5A25] px-1 text-[10px] font-bold text-white">
@@ -78,7 +81,6 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
             );
           })}
 
-          {/* Appearance — theme toggle (the phone shell has no sidebar) */}
           <div>
             <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
               Appearance
@@ -86,9 +88,12 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
             <button
               type="button"
               onClick={() => setTheme(isDark ? "light" : "dark")}
-              className="flex min-h-[52px] w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left transition-colors hover:bg-accent"
+              className="bento-action"
+              style={{ ["--tone" as any]: "var(--bento-amber)" } as CSSProperties}
             >
-              {isDark ? <Sun className="h-5 w-5 shrink-0 text-primary" /> : <Moon className="h-5 w-5 shrink-0 text-primary" />}
+              <span className="bento-well">
+                {isDark ? <Sun className="h-5 w-5" strokeWidth={2.2} /> : <Moon className="h-5 w-5" strokeWidth={2.2} />}
+              </span>
               <span className="min-w-0 flex-1 text-sm font-medium">{isDark ? "Light mode" : "Dark mode"}</span>
             </button>
           </div>
