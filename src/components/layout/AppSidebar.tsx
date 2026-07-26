@@ -147,7 +147,7 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                           <item.icon
                             className={cn(
                               "h-[18px] w-[18px] shrink-0 transition-colors",
-                              !isActive && section.accent,
+                              !isActive && (item.accent ?? section.accent),
                             )}
                           />
                           {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
