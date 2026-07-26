@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useCreateConsumptionLog } from "@/hooks/useConsumption";
 import { useItems } from "@/hooks/usePantry";
 import QuickAddItemForm from "@/components/purchases/QuickAddItemForm";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,7 @@ const AddConsumptionDialog = ({
   };
   const [itemId, setItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("Unit");
   const [consumedAt, setConsumedAt] = useState(localDateTimeValue);
   const [openCombobox, setOpenCombobox] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -53,19 +55,21 @@ const AddConsumptionDialog = ({
   const { toast } = useToast();
 
   const itemMap = useMemo(() => {
-    const map = new Map<string, string>();
-    items?.forEach((i) => map.set(i.id, i.name));
+    const map = new Map<string, { name: string; unit: string | null }>();
+    items?.forEach((i) => map.set(i.id, { name: i.name, unit: i.default_unit }));
     return map;
   }, [items]);
 
   const reset = () => {
     setItemId("");
     setQuantity("1");
+    setUnit("Unit");
     setConsumedAt(localDateTimeValue());
   };
 
   const handleItemSelect = (id: string) => {
     setItemId(id);
+    setUnit(itemMap.get(id)?.unit || "Unit");
     setOpenCombobox(false);
     setShowQuickAdd(false);
   };
@@ -80,9 +84,10 @@ const AddConsumptionDialog = ({
       await createLog.mutateAsync({
         item_id: itemId,
         quantity: Number(quantity) || 1,
+        unit,
         consumed_at: consumedAt ? new Date(consumedAt).toISOString() : undefined,
       });
-      toast({ title: "Logged", description: `${itemMap.get(itemId) ?? "Item"} consumption recorded.` });
+      toast({ title: "Logged", description: `${itemMap.get(itemId)?.name ?? "Item"} consumption recorded.` });
       reset();
       setOpen(false);
     } catch (err: unknown) {
@@ -120,7 +125,7 @@ const AddConsumptionDialog = ({
             <Popover open={openCombobox} onOpenChange={(v) => { setOpenCombobox(v); if (!v) setShowQuickAdd(false); }}>
               <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="min-h-11 w-full justify-between rounded-xl text-sm font-normal">
-                  {itemId ? itemMap.get(itemId) ?? "Select" : "Choose a catalog item"}
+                  {itemId ? itemMap.get(itemId)?.name ?? "Select" : "Choose a catalog item"}
                   <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -164,12 +169,16 @@ const AddConsumptionDialog = ({
             </Popover>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Quantity</Label>
               <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
             <div className="space-y-2">
+              <Label>Unit</Label>
+              <GroupedUnitSelect value={unit} onValueChange={setUnit} />
+            </div>
+            <div className="col-span-2 space-y-2">
               <Label>Date / Time</Label>
               <Input className="min-h-11 rounded-xl" type="datetime-local" value={consumedAt} onChange={(e) => setConsumedAt(e.target.value)} />
             </div>

@@ -119,6 +119,10 @@ export const usePlateEstimate = () => {
               protein_g: it.protein_g,
               carbs_g: it.carbs_g,
               fat_g: it.fat_g,
+              nutrition_source: "AI plate-photo estimate",
+              nutrition_estimated: true,
+              nutrition_confidence: it.confidence,
+              nutrition_updated_at: new Date().toISOString(),
             } as any)
             .select("id")
             .single();
@@ -130,6 +134,7 @@ export const usePlateEstimate = () => {
           user_id: user.id,
           item_id: itemId,
           quantity: 1,
+          unit: "serving",
         } as any);
         if (logErr) throw logErr;
       }

@@ -247,6 +247,7 @@ export const useCookRecipe = () => {
           user_id: user!.id,
           item_id: ing.item_id,
           quantity: Number(ing.quantity),
+          unit: ing.unit,
           recipe_id: recipe.id,
           group_id: activeGroupId,
         });

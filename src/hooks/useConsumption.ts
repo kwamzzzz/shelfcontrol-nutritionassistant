@@ -42,6 +42,7 @@ export const useCreateConsumptionLog = () => {
     mutationFn: async (input: {
       item_id: string;
       quantity: number;
+      unit?: string | null;
       consumed_at?: string;
     }) => {
       const { data, error } = await supabase
@@ -51,6 +52,7 @@ export const useCreateConsumptionLog = () => {
           group_id: activeGroupId,
           item_id: input.item_id,
           quantity: input.quantity,
+          unit: input.unit ?? null,
           consumed_at: input.consumed_at ?? new Date().toISOString(),
         })
         .select("*, items(*), recipes(*)")

@@ -9,6 +9,7 @@ import { Flame, Beef, Wheat, Droplets, Plus, BookOpen, GlassWater, Lightbulb, Tr
 import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 import { isToday, format, subDays, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { nutrientAmount } from "@/lib/nutrition";
 
 interface Props {
   onNavigate: (tab: string) => void;
@@ -167,11 +168,12 @@ const NutritionDashboard = ({ onNavigate }: Props) => {
           {meals.map((meal) => {
             const MealIcon = MEAL_ICONS[meal.key] ?? Flame;
             const mealCal = meal.logs.reduce((sum, log) => {
-              const item = log.items;
-              const basis = item?.nutrition_basis ?? "per_unit";
-              let mult = Number(log.quantity);
-              if (basis === "per_100g") mult = Number(log.quantity) / 100;
-              return sum + (Number(item?.calories_per_unit ?? 0) * mult);
+              return sum + nutrientAmount(
+                log.items,
+                "calories_per_unit",
+                Number(log.quantity),
+                log.unit,
+              );
             }, 0);
             const mealTarget = meal.key === "breakfast" ? 300 : meal.key === "lunch" ? 550 : meal.key === "dinner" ? 700 : 250;
             const isComplete = mealCal >= mealTarget * 0.8;
@@ -199,7 +201,7 @@ const NutritionDashboard = ({ onNavigate }: Props) => {
                           <span>{log.items?.name ?? "Unknown"}</span>
                           <span className="tabular-nums flex items-center gap-1">
                             <Flame className="h-3 w-3" />
-                            {(Number(log.items?.calories_per_unit ?? 0) * Number(log.quantity)).toFixed(0)} kcal
+                            {nutrientAmount(log.items, "calories_per_unit", Number(log.quantity), log.unit).toFixed(0)} kcal
                           </span>
                         </div>
                       ))}

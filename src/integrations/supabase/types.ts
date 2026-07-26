@@ -408,6 +408,14 @@ export type Database = {
           image_url: string | null
           name: string
           nutrition_basis: string | null
+          nutrition_confidence: string | null
+          nutrition_estimated: boolean
+          nutrition_grams_per_unit: number | null
+          nutrition_ml_per_unit: number | null
+          nutrition_source: string | null
+          nutrition_source_id: string | null
+          nutrition_source_url: string | null
+          nutrition_updated_at: string | null
           protein_g: number | null
           serving_size: string | null
           sodium_mg: number | null
@@ -429,6 +437,14 @@ export type Database = {
           image_url?: string | null
           name: string
           nutrition_basis?: string | null
+          nutrition_confidence?: string | null
+          nutrition_estimated?: boolean
+          nutrition_grams_per_unit?: number | null
+          nutrition_ml_per_unit?: number | null
+          nutrition_source?: string | null
+          nutrition_source_id?: string | null
+          nutrition_source_url?: string | null
+          nutrition_updated_at?: string | null
           protein_g?: number | null
           serving_size?: string | null
           sodium_mg?: number | null
@@ -450,6 +466,14 @@ export type Database = {
           image_url?: string | null
           name?: string
           nutrition_basis?: string | null
+          nutrition_confidence?: string | null
+          nutrition_estimated?: boolean
+          nutrition_grams_per_unit?: number | null
+          nutrition_ml_per_unit?: number | null
+          nutrition_source?: string | null
+          nutrition_source_id?: string | null
+          nutrition_source_url?: string | null
+          nutrition_updated_at?: string | null
           protein_g?: number | null
           serving_size?: string | null
           sodium_mg?: number | null

@@ -20,6 +20,7 @@ import { Flame, Beef, Wheat, Droplets, Trash2, Coffee, Sun, Moon, Cookie, Info, 
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { nutrientAmount, nutritionBasisLabel } from "@/lib/nutrition";
 
 const MEAL_META: Record<string, { icon: any; color: string; bg: string; target: number }> = {
   breakfast: { icon: Coffee, color: "text-amber-500", bg: "bg-amber-500/10", target: 300 },
@@ -166,11 +167,12 @@ const FoodDiary = () => {
             const meta = MEAL_META[meal.key] ?? MEAL_META.snacks;
             const MealIcon = meta.icon;
             const mealCal = meal.logs.reduce((sum, log) => {
-              const item = log.items;
-              const basis = item?.nutrition_basis ?? "per_unit";
-              let mult = Number(log.quantity);
-              if (basis === "per_100g") mult = Number(log.quantity) / 100;
-              return sum + (Number(item?.calories_per_unit ?? 0) * mult);
+              return sum + nutrientAmount(
+                log.items,
+                "calories_per_unit",
+                Number(log.quantity),
+                log.unit,
+              );
             }, 0);
             const isComplete = mealCal >= meta.target * 0.8 && meal.logs.length > 0;
 
@@ -202,10 +204,12 @@ const FoodDiary = () => {
                     <div className="space-y-1.5">
                       {meal.logs.map((log: any) => {
                         const item = log.items;
-                        const basis = item?.nutrition_basis ?? "per_unit";
-                        let mult = Number(log.quantity);
-                        if (basis === "per_100g") mult = Number(log.quantity) / 100;
-                        const itemCal = Number(item?.calories_per_unit ?? 0) * mult;
+                        const itemCal = nutrientAmount(
+                          item,
+                          "calories_per_unit",
+                          Number(log.quantity),
+                          log.unit,
+                        );
 
                         return (
                           <div
@@ -221,7 +225,7 @@ const FoodDiary = () => {
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                                 {item?.brand && <span>{item.brand}</span>}
                                 {item?.brand && <span>·</span>}
-                                <span>{log.quantity} {item?.serving_size ?? item?.default_unit ?? "serving"}</span>
+                                <span>{log.quantity} {log.unit ?? item?.default_unit ?? "serving"}</span>
                                 <span>·</span>
                                 <span>{format(parseISO(log.consumed_at), "h:mm a")}</span>
                               </div>
@@ -295,7 +299,7 @@ const FoodDiary = () => {
                           <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
                           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
                             {item.brand && <><span>{item.brand}</span><span>·</span></>}
-                            <span>{Number(item.calories_per_unit ?? 0)} cals per {item.serving_size ?? item.default_unit ?? "unit"}</span>
+                            <span>{Number(item.calories_per_unit ?? 0)} cals · {nutritionBasisLabel(item).toLowerCase()}</span>
                             {item.created_at && (
                               <>
                                 <span>·</span>
@@ -330,11 +334,12 @@ const FoodDiary = () => {
                   <div className="space-y-1.5">
                     {recs.map((recipe) => {
                       const totalCals = recipe.recipe_ingredients?.reduce((sum, ri) => {
-                        const cals = Number(ri.items?.calories_per_unit ?? 0);
-                        const basis = ri.items?.nutrition_basis ?? "per_unit";
-                        let mult = Number(ri.quantity);
-                        if (basis === "per_100g") mult = ri.quantity / 100;
-                        return sum + cals * mult;
+                        return sum + nutrientAmount(
+                          ri.items,
+                          "calories_per_unit",
+                          Number(ri.quantity),
+                          ri.unit,
+                        );
                       }, 0) ?? 0;
                       const perServing = recipe.servings ? totalCals / recipe.servings : totalCals;
 

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Beef, Wheat, Droplets } from "lucide-react";
+import { ExternalLink, Flame, Beef, Wheat, Droplets, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -18,6 +18,10 @@ interface Props {
     sugar_g?: number | null;
     sodium_mg?: number | null;
     nutrition_basis?: string | null;
+    nutrition_confidence?: string | null;
+    nutrition_estimated?: boolean | null;
+    nutrition_source?: string | null;
+    nutrition_source_url?: string | null;
   } | null;
 }
 
@@ -37,7 +41,17 @@ const MICROS = [
 const NutritionDetailModal = ({ open, onOpenChange, item }: Props) => {
   if (!item) return null;
 
-  const basisLabel = item.nutrition_basis === "per_100g" ? "per 100g" : item.nutrition_basis === "per_serving" ? "per serving" : "per unit";
+  const basisLabel =
+    item.nutrition_basis === "per_100g"
+      ? "per 100g"
+      : item.nutrition_basis === "per_100ml"
+        ? "per 100ml"
+        : item.nutrition_basis === "per_serving"
+          ? "per serving"
+          : "per unit";
+  const sourceUrl = item.nutrition_source_url?.startsWith("https://")
+    ? item.nutrition_source_url
+    : null;
 
   // Simple "Good" / "Needs data" check
   const hasMicros = (item.sodium_mg ?? 0) > 0 || (item.fiber_g ?? 0) > 0 || (item.sugar_g ?? 0) > 0;
@@ -56,6 +70,33 @@ const NutritionDetailModal = ({ open, onOpenChange, item }: Props) => {
             <Badge variant="secondary" className="text-[10px] rounded-full">🏷 {item.category}</Badge>
           )}
           <Badge variant="secondary" className="text-[10px] rounded-full">{basisLabel}</Badge>
+        </div>
+
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-primary/15 bg-primary/[0.055] p-3">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-foreground">
+              {item.nutrition_confidence === "needs_review"
+                ? "Needs package label"
+                : item.nutrition_estimated
+                  ? "Reference estimate"
+                  : "Confirmed nutrition"}
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              {item.nutrition_source || "No source recorded"}
+            </p>
+          </div>
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open nutrition source"
+              className="rounded-lg p-1.5 text-primary hover:bg-primary/10"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
 
         {/* Macro Grid */}

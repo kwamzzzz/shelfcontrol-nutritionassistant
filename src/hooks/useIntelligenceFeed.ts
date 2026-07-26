@@ -6,6 +6,7 @@ import { useConsumptionLogs } from "@/hooks/useConsumption";
 import { useWasteLogs } from "@/hooks/useWasteLogs";
 import { useInsightStates } from "@/hooks/useInsightState";
 import { getExpiryStatus } from "@/lib/pantry-utils";
+import { nutrientAmount } from "@/lib/nutrition";
 import { formatCurrency } from "@/lib/currency";
 import { differenceInDays, parseISO, isThisMonth, isThisWeek } from "date-fns";
 
@@ -119,7 +120,7 @@ export const useIntelligenceFeed = () => {
     if (inventory && inventory.length > 0) {
       let totalProtein = 0;
       for (const r of inventory) {
-        totalProtein += Number(r.quantity) * Number(r.items?.protein_g ?? 0);
+        totalProtein += nutrientAmount(r.items, "protein_g", Number(r.quantity), r.unit);
       }
       if (totalProtein < 100) {
         push({

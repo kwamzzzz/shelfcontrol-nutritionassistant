@@ -41,6 +41,7 @@ import { useShoppingList } from "@/hooks/useShoppingList";
 import { useWaterLogs } from "@/hooks/useWaterTracking";
 import { formatCurrencyAlways } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { nutrientAmount } from "@/lib/nutrition";
 import { getExpiryLabel, getExpiryStatus } from "@/lib/pantry-utils";
 
 function getCategoryEmoji(category?: string | null): string {
@@ -485,7 +486,7 @@ const Dashboard = () => {
             <div className="mt-5">
               {todayLogs.map((log, index) => {
                 const item = log.items;
-                const calories = Number(item?.calories_per_unit ?? 0) * Number(log.quantity);
+                const calories = nutrientAmount(item, "calories_per_unit", Number(log.quantity), log.unit);
                 return (
                   <div
                     key={log.id}

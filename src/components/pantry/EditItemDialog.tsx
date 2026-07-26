@@ -38,6 +38,8 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
   const [sodium, setSodium] = useState(String(item.sodium_mg ?? 0));
   const [servingSize, setServingSize] = useState(item.serving_size ?? "");
   const [nutritionBasis, setNutritionBasis] = useState(item.nutrition_basis ?? "per_unit");
+  const [gramsPerUnit, setGramsPerUnit] = useState(String(item.nutrition_grams_per_unit ?? ""));
+  const [mlPerUnit, setMlPerUnit] = useState(String(item.nutrition_ml_per_unit ?? ""));
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
@@ -45,6 +47,25 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nextNutrition = {
+      calories_per_unit: calories ? Number(calories) : 0,
+      protein_g: protein ? Number(protein) : 0,
+      carbs_g: carbs ? Number(carbs) : 0,
+      fat_g: fat ? Number(fat) : 0,
+      fiber_g: fiber ? Number(fiber) : 0,
+      sugar_g: sugar ? Number(sugar) : 0,
+      sodium_mg: sodium ? Number(sodium) : 0,
+      serving_size: servingSize.trim() || null,
+      nutrition_basis: nutritionBasis,
+      nutrition_grams_per_unit: gramsPerUnit ? Number(gramsPerUnit) : null,
+      nutrition_ml_per_unit: mlPerUnit ? Number(mlPerUnit) : null,
+    };
+    const nutritionWasEdited =
+      Object.entries(nextNutrition).some(([key, value]) => {
+        const current = item[key as keyof Item];
+        return String(current ?? "") !== String(value ?? "");
+      });
+
     try {
       await updateItem.mutateAsync({
         id: item.id,
@@ -54,15 +75,17 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
         country_of_origin: countryOfOrigin.trim() || null,
         additional_info: additionalInfo.trim() || null,
         default_unit: defaultUnit,
-        calories_per_unit: calories ? Number(calories) : 0,
-        protein_g: protein ? Number(protein) : 0,
-        carbs_g: carbs ? Number(carbs) : 0,
-        fat_g: fat ? Number(fat) : 0,
-        fiber_g: fiber ? Number(fiber) : 0,
-        sugar_g: sugar ? Number(sugar) : 0,
-        sodium_mg: sodium ? Number(sodium) : 0,
-        serving_size: servingSize.trim() || null,
-        nutrition_basis: nutritionBasis,
+        ...nextNutrition,
+        ...(nutritionWasEdited
+          ? {
+              nutrition_source: "User-entered label values",
+              nutrition_source_url: null,
+              nutrition_source_id: null,
+              nutrition_estimated: false,
+              nutrition_confidence: "high",
+              nutrition_updated_at: new Date().toISOString(),
+            }
+          : {}),
         image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
@@ -150,6 +173,7 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
                   <SelectContent>
                     <SelectItem value="per_unit">Per unit</SelectItem>
                     <SelectItem value="per_100g">Per 100 g</SelectItem>
+                    <SelectItem value="per_100ml">Per 100 ml</SelectItem>
                     <SelectItem value="per_serving">Per serving</SelectItem>
                   </SelectContent>
                 </Select>
@@ -159,6 +183,31 @@ const EditItemDialog = ({ item, open, onClose }: Props) => {
                 <Input value={servingSize} onChange={(e) => setServingSize(e.target.value)} placeholder="e.g. 125 g" />
               </div>
             </div>
+            {(nutritionBasis === "per_100g" || nutritionBasis === "per_100ml") && (
+              <div className="rounded-xl bg-muted/45 p-3">
+                <Label className="text-xs">
+                  {nutritionBasis === "per_100g"
+                    ? "Grams in one piece, pack or container"
+                    : "Millilitres in one container"}
+                </Label>
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={nutritionBasis === "per_100g" ? gramsPerUnit : mlPerUnit}
+                  onChange={(e) =>
+                    nutritionBasis === "per_100g"
+                      ? setGramsPerUnit(e.target.value)
+                      : setMlPerUnit(e.target.value)
+                  }
+                  placeholder="Optional — used when logging 1 unit"
+                />
+                <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                  This lets Shelf Control convert a piece or pack into an accurate nutrition total.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 ["Calories", calories, setCalories],
