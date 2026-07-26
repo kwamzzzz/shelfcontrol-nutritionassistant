@@ -36,7 +36,7 @@ export interface AppNavItem {
 // reproduces the existing MAIN / INTELLIGENCE / GROUP / SYSTEM sections and order.
 export const NAV_ITEMS: AppNavItem[] = [
   { path: "/",                  label: "Dashboard",           shortLabel: "Home",     icon: LayoutDashboard,  section: "primary",      desktopGroup: "MAIN",         mobileSlot: "home" },
-  { path: "/pantry",            label: "Pantry",                                      icon: Package,          section: "primary",      desktopGroup: "MAIN",         mobileSlot: "pantry" },
+  { path: "/pantry",            label: "Pantry",                                      icon: Package,          section: "primary",      desktopGroup: "MAIN",         mobileSlot: "pantry", activeFor: ["/pantry"] },
   { path: "/purchases",         label: "Purchases",                                   icon: Receipt,          section: "activity",     desktopGroup: "MAIN",         mobileSlot: "purchases", activeFor: ["/purchases"] },
   { path: "/consumption",       label: "Consumption",         icon: Heart,            section: "activity",     desktopGroup: "MAIN" },
   { path: "/shopping",          label: "Shopping List",       shortLabel: "Shopping", icon: ShoppingCart,     section: "primary",      desktopGroup: "MAIN",         mobileSlot: "shopping" },
