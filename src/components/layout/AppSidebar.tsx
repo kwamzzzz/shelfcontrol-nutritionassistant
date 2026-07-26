@@ -128,21 +128,39 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                       end={item.to === "/"}
                       className={({ isActive }) =>
                         cn(
-                          "group/nav relative flex items-center rounded-full text-sm font-medium transition-all duration-200",
+                          "relative flex items-center rounded-full text-sm font-medium transition-all duration-200",
                           isCompact ? "justify-center px-0 py-2.5 mx-auto w-11 h-11" : "gap-3 px-4 py-2.5",
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:bg-sidebar-primary before:content-['']"
-                            : cn(
-                                "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                                "[&_svg]:transition-colors",
-                                `[&_svg]:${section.accent.split(" ")[0]}`,
-                                `dark:[&_svg]:${section.accent.split(" ")[1] ?? section.accent.split(" ")[0]}`,
-                              )
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-inset ring-white/10"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         )
                       }
                     >
-                      <item.icon className={cn("h-[18px] w-[18px] shrink-0", section.accent)} />
-                      {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
+                      {({ isActive }: { isActive: boolean }) => (
+                        <>
+                          {isActive && !isCompact && (
+                            <span
+                              aria-hidden
+                              className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-sidebar-primary"
+                            />
+                          )}
+                          <item.icon
+                            className={cn(
+                              "h-[18px] w-[18px] shrink-0 transition-colors",
+                              !isActive && section.accent,
+                            )}
+                          />
+                          {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
+                          {!isCompact && item.hasBadge && pendingCount > 0 && (
+                            <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
+                              {pendingCount}
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                  // remove the old duplicated inner content below by matching next lines
                       {!isCompact && item.hasBadge && pendingCount > 0 && (
                         <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
                           {pendingCount}
