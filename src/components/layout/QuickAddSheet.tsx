@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Receipt, Heart, PackagePlus, type LucideIcon } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import AddPurchaseDialog from "@/components/purchases/AddPurchaseDialog";
@@ -11,6 +11,7 @@ interface QuickAddSheetProps {
 }
 
 type QuickAction = "purchase" | "consumption" | "inventory";
+type ToneStyle = CSSProperties & { "--tone": string };
 
 const ACTIONS: {
   key: QuickAction;
@@ -51,7 +52,7 @@ const QuickAddSheet = ({ open, onOpenChange }: QuickAddSheetProps) => {
                 type="button"
                 onClick={() => launch(a.key)}
                 className="bento-action"
-                style={{ ["--tone" as any]: a.tone }}
+                style={{ "--tone": a.tone } as ToneStyle}
               >
                 <span className="bento-well">
                   <a.icon className="h-5 w-5" strokeWidth={2.2} />
