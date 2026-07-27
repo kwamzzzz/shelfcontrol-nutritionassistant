@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarPlus, ShoppingCart } from "lucide-react";
 import { MOCK_RECIPES, type MockRecipe } from "@/data/cookbookMockData";
 import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
+import { calculateNutrition } from "@/lib/nutrition";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Please try again.";
@@ -83,6 +84,42 @@ const RecipeDetail = () => {
     const mock = MOCK_RECIPES.find((r) => r.id === id);
     return mock ?? null;
   }, [databaseRecipe, id]);
+
+  // Live, per-serving nutrition summed from each ingredient's stored macros ×
+  // amount used. Updates whenever ingredients change. Ingredients without macro
+  // data contribute nothing, so this is 0 until those items are filled in — the
+  // AI "Calculate" button remains for that. Falls back to the stored estimate.
+  const displayNutrition = useMemo(() => {
+    const stored = recipe?.nutrition ?? null;
+    if (!databaseRecipe) return stored;
+    const perServing = Math.max(1, databaseRecipe.servings ?? 1);
+    const totals = (databaseRecipe.recipe_ingredients ?? []).reduce(
+      (acc, ri) => {
+        const n = calculateNutrition(ri.items, Number(ri.quantity), ri.unit);
+        acc.calories += n.calories;
+        acc.protein += n.protein;
+        acc.carbs += n.carbs;
+        acc.fat += n.fat;
+        acc.fiber += n.fiber;
+        acc.sugar += n.sugar;
+        acc.sodium += n.sodium;
+        return acc;
+      },
+      { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 },
+    );
+    if (totals.calories <= 0 && totals.protein <= 0 && totals.carbs <= 0 && totals.fat <= 0) {
+      return stored; // no usable macro data on the ingredients — keep the estimate
+    }
+    return {
+      calories: totals.calories / perServing,
+      carbs: totals.carbs / perServing,
+      protein: totals.protein / perServing,
+      fat: totals.fat / perServing,
+      fiber: totals.fiber / perServing,
+      sugar: totals.sugar / perServing,
+      sodium: totals.sodium / perServing,
+    };
+  }, [databaseRecipe, recipe?.nutrition]);
 
   const [servings, setServings] = useState(recipe?.servings ?? 1);
   const [favorite, setFavorite] = useState(false);
@@ -282,7 +319,7 @@ const RecipeDetail = () => {
             saving={savingSteps}
           />
           <NutritionCard
-            nutrition={recipe.nutrition}
+            nutrition={displayNutrition ?? recipe.nutrition}
             servings={servings}
             onCalculate={handleCalculateNutrition}
             calculating={calculating}
