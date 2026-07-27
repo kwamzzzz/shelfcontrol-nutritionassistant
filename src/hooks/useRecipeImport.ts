@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateRecipe } from "@/hooks/useRecipes";
+import { splitCombinedIngredients } from "@/lib/ingredient-split";
 
 export interface ImportedIngredient {
   name: string;
@@ -35,7 +36,12 @@ export const useRecipeImport = () => {
       });
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
-      setParsed(data as ImportedRecipe);
+      const imported = data as ImportedRecipe;
+      // Split combined lines ("salt and pepper") so each is tracked separately.
+      setParsed({
+        ...imported,
+        ingredients: splitCombinedIngredients(imported.ingredients ?? []),
+      });
     } catch (err: any) {
       setError(err?.message ?? "Failed to import recipe");
     } finally {
