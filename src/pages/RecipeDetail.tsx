@@ -10,6 +10,7 @@ import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
 import StepByStepMode from "@/components/cookbook/StepByStepMode";
 import AddIngredientDialog from "@/components/cookbook/AddIngredientDialog";
+import EditRecipeDialog from "@/components/recipes/EditRecipeDialog";
 import ShareToGroupDialog from "@/components/groups/ShareToGroupDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, ShoppingCart } from "lucide-react";
@@ -69,6 +70,7 @@ const RecipeDetail = () => {
   const [savingNutrition, setSavingNutrition] = useState(false);
   const [savingSteps, setSavingSteps] = useState(false);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -218,7 +220,7 @@ const RecipeDetail = () => {
     <div className="space-y-5">
       <RecipeBreadcrumb
         title={recipe.title}
-        onEdit={notImpl("Edit recipe")}
+        onEdit={() => setEditOpen(true)}
         onShare={
           databaseRecipe?.group_id === null
             ? () => setSharing(true)
@@ -314,6 +316,14 @@ const RecipeDetail = () => {
         open={addIngredientOpen}
         onOpenChange={setAddIngredientOpen}
       />
+
+      {databaseRecipe && (
+        <EditRecipeDialog
+          recipe={databaseRecipe}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
 
       <ShareToGroupDialog
         open={sharing}
