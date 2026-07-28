@@ -171,6 +171,40 @@ export const useRemoveRecipeIngredient = () => {
   });
 };
 
+/**
+ * Edit an ingredient already in a recipe — amount, unit, or which catalogue
+ * item it points at. Amounts are the recipe's base quantities (for its own
+ * `servings`), never a servings-scaled display value.
+ */
+export const useUpdateRecipeIngredient = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: {
+      id: string;
+      quantity?: number;
+      unit?: string;
+      item_id?: string;
+    }) => {
+      // Assert a row actually changed: a filter that matches nothing (a sample
+      // recipe's placeholder id, or a row hidden by RLS) returns no error, and
+      // reporting success for a write that did nothing is worse than failing.
+      const { data, error } = await supabase
+        .from("recipe_ingredients")
+        .update(updates)
+        .eq("id", id)
+        .select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("That ingredient could not be updated.");
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["recipes"] }),
+  });
+};
+
 export const useUpdateRecipeTags = () => {
   const qc = useQueryClient();
   return useMutation({

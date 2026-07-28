@@ -16,7 +16,15 @@ import { Button } from "@/components/ui/button";
 import { CalendarPlus, ShoppingCart } from "lucide-react";
 import { MOCK_RECIPES, type MockRecipe } from "@/data/cookbookMockData";
 import { useRecipes, type RecipeWithIngredients } from "@/hooks/useRecipes";
+import { useInventory } from "@/hooks/usePantry";
+import { useCreateShoppingItem, useShoppingList } from "@/hooks/useShoppingList";
 import { calculateNutrition } from "@/lib/nutrition";
+import {
+  computeIngredientNeeds,
+  safeScale,
+  shoppingListHasIngredient,
+  toShoppingLine,
+} from "@/lib/recipe-pantry";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Please try again.";
@@ -125,11 +133,79 @@ const RecipeDetail = () => {
   const [favorite, setFavorite] = useState(false);
   const [stepMode, setStepMode] = useState(false);
 
+  // Depend on the values, not the object: `recipe` is a useMemo that returns a
+  // fresh literal on every ["recipes"] refetch, so keying on its identity would
+  // snap the servings scaler back to base every time an ingredient is saved.
+  const loadedRecipeKey = recipe?.id;
+  const loadedBaseServings = recipe?.servings;
   useEffect(() => {
-    if (recipe) setServings(recipe.servings);
-  }, [recipe]);
+    if (loadedBaseServings != null) setServings(loadedBaseServings);
+  }, [loadedRecipeKey, loadedBaseServings]);
 
   const notImpl = (label: string) => () => toast.info(`${label} — coming soon`);
+
+  const { data: inventory, isLoading: inventoryLoading } = useInventory();
+  // Dedupe is only meaningful once the list has actually arrived — adding
+  // before it resolves would duplicate everything already on it.
+  const { data: shoppingItems, isLoading: shoppingLoading } = useShoppingList();
+  const createShoppingItem = useCreateShoppingItem();
+  const [addingToList, setAddingToList] = useState(false);
+
+  /** Queue everything this recipe needs that the pantry can't cover. */
+  const handleAddMissingToShoppingList = async () => {
+    if (!recipe) return;
+    const needs = computeIngredientNeeds(
+      recipe.ingredients,
+      inventory,
+      safeScale(servings, recipe.servings),
+    );
+    const lacking = needs.filter((n) => n.status === "missing" || n.status === "short");
+
+    if (lacking.length === 0) {
+      toast.success("You already have everything this recipe needs.");
+      return;
+    }
+
+    const open = (shoppingItems ?? [])
+      .filter((row) => !row.is_purchased)
+      .map((row) => ({ name: row.name, item_id: row.item_id ?? null }));
+    const queued = lacking.filter(
+      (n) =>
+        !shoppingListHasIngredient(open, {
+          name: n.ingredient.name,
+          item_id: n.ingredient.item_id ?? null,
+        }),
+    );
+
+    if (queued.length === 0) {
+      toast.info("Everything you're short of is already on your shopping list.");
+      return;
+    }
+
+    setAddingToList(true);
+    let added = 0;
+    try {
+      for (const need of queued) {
+        const amount = need.shortfall > 0 ? need.shortfall : need.scaledQty ?? 1;
+        const line = toShoppingLine(need.ingredient.name, amount, need.ingredient.unit ?? "");
+        try {
+          await createShoppingItem.mutateAsync({
+            name: line.name,
+            quantity: line.quantity,
+            item_id: need.ingredient.item_id ?? null,
+          });
+          added += 1;
+        } catch {
+          // One bad row shouldn't strand the rest of the list.
+        }
+      }
+    } finally {
+      setAddingToList(false);
+    }
+
+    if (added === 0) toast.error("Could not add those to your shopping list.");
+    else toast.success(`Added ${added} ${added === 1 ? "item" : "items"} to your shopping list`);
+  };
 
   const handleEditImage = () => fileInputRef.current?.click();
 
@@ -297,10 +373,12 @@ const RecipeDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={notImpl("Add to Shopping List")}
+            onClick={handleAddMissingToShoppingList}
+            disabled={inventoryLoading || shoppingLoading || addingToList}
             className="gap-2 rounded-full"
           >
-            <ShoppingCart className="h-3.5 w-3.5" /> Add to Shopping List
+            <ShoppingCart className="h-3.5 w-3.5" />
+            {addingToList ? "Adding…" : "Add missing to Shopping List"}
           </Button>
         </div>
 
@@ -310,6 +388,7 @@ const RecipeDetail = () => {
             baseServings={recipe.servings}
             servings={servings}
             onServingsChange={setServings}
+            recipeId={databaseRecipe?.id}
             onAddIngredient={() => setAddIngredientOpen(true)}
           />
           <InstructionsCard
