@@ -58,9 +58,9 @@ const InventoryCard = ({
   const nutritionWithBasis = nutritionSummary ? `${nutritionSummary} · ${nutritionBasis}` : "";
 
   useEffect(() => {
-    setImageSrc(media.src);
+    setImageSrc(media.source === "uploaded" ? signedUpload : media.src);
     setMediaSource(media.source);
-  }, [media]);
+  }, [media, signedUpload]);
 
   // Phone shows ONE overlay badge. Priority: expired → expiring → missing storage
   // → opened → no expiry. Secondary states stay available in the detail sheet and
