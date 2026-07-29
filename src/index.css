@@ -560,4 +560,198 @@
     background: hsl(var(--tone) / 0.22);
     border-color: hsl(var(--tone) / 0.28);
   }
+
+  /* Pantry storage environments. These are intentionally more illustrative
+     than a tint: each location has its own material, temperature and light. */
+  .storage-zone {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .storage-zone > * {
+    position: relative;
+    z-index: 1;
+  }
+  .storage-zone::before,
+  .storage-zone::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .storage-zone-fridge {
+    background-color: hsl(190 72% 97%);
+    background-image:
+      radial-gradient(circle at 9% 12%, hsl(187 90% 72% / 0.34), transparent 20%),
+      linear-gradient(145deg, hsl(0 0% 100% / 0.92), hsl(191 68% 94% / 0.9));
+  }
+  .storage-zone-fridge::before {
+    inset: 0;
+    opacity: 0.5;
+    background-image:
+      radial-gradient(circle at 10% 18%, hsl(0 0% 100% / 0.95) 0 3px, transparent 4px),
+      radial-gradient(circle at 17% 8%, hsl(0 0% 100% / 0.9) 0 2px, transparent 3px),
+      radial-gradient(circle at 91% 24%, hsl(0 0% 100% / 0.9) 0 3px, transparent 4px);
+    background-size: 56px 66px, 71px 74px, 83px 79px;
+  }
+  .storage-zone-fridge::after {
+    left: 3%;
+    right: 3%;
+    bottom: 12px;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, hsl(190 65% 68% / 0.48), transparent);
+    box-shadow: 0 -1px 0 hsl(0 0% 100% / 0.8);
+  }
+
+  .storage-zone-freezer {
+    background-color: hsl(216 78% 97%);
+    background-image:
+      radial-gradient(circle at 92% 0%, hsl(214 100% 76% / 0.45), transparent 25%),
+      radial-gradient(circle at 4% 92%, hsl(188 92% 78% / 0.34), transparent 24%),
+      linear-gradient(145deg, hsl(0 0% 100% / 0.94), hsl(218 78% 94% / 0.92));
+  }
+  .storage-zone-freezer::before {
+    inset: -2px;
+    border-radius: inherit;
+    background:
+      radial-gradient(ellipse at 12% 0%, hsl(0 0% 100% / 0.9) 0 7%, transparent 20%),
+      radial-gradient(ellipse at 38% 0%, hsl(0 0% 100% / 0.72) 0 5%, transparent 17%),
+      radial-gradient(ellipse at 72% 0%, hsl(0 0% 100% / 0.78) 0 6%, transparent 18%),
+      radial-gradient(ellipse at 96% 0%, hsl(0 0% 100% / 0.9) 0 8%, transparent 21%);
+    filter: blur(1px);
+  }
+  .storage-zone-freezer::after {
+    right: -24px;
+    top: -30px;
+    width: 130px;
+    height: 130px;
+    border: 2px solid hsl(210 92% 70% / 0.2);
+    border-radius: 50%;
+    box-shadow:
+      -35px 55px 0 -29px hsl(195 92% 70% / 0.28),
+      -82px 14px 0 -38px hsl(215 90% 70% / 0.25);
+  }
+
+  .storage-zone-pantry {
+    background-color: hsl(38 72% 96%);
+    background-image:
+      radial-gradient(circle at 94% 8%, hsl(34 96% 64% / 0.3), transparent 24%),
+      linear-gradient(145deg, hsl(45 82% 98%), hsl(34 68% 93% / 0.92));
+  }
+  .storage-zone-pantry::before {
+    inset: 0;
+    opacity: 0.42;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 166px,
+        hsl(28 48% 46% / 0.32) 167px,
+        hsl(28 48% 46% / 0.32) 170px,
+        hsl(0 0% 100% / 0.7) 171px,
+        transparent 173px
+      );
+  }
+  .storage-zone-pantry::after {
+    right: 24px;
+    top: 18px;
+    width: 54px;
+    height: 68px;
+    border: 2px solid hsl(32 64% 48% / 0.22);
+    border-radius: 13px 13px 18px 18px;
+    background: linear-gradient(180deg, hsl(42 92% 72% / 0.18), hsl(28 74% 54% / 0.12));
+    box-shadow:
+      -68px 18px 0 -8px hsl(38 76% 54% / 0.13),
+      -118px 4px 0 -13px hsl(25 70% 52% / 0.14);
+  }
+
+  .storage-zone-counter {
+    background-color: hsl(32 30% 96%);
+    background-image:
+      radial-gradient(circle at 18% 22%, hsl(24 28% 58% / 0.19) 0 1px, transparent 2px),
+      radial-gradient(circle at 64% 38%, hsl(28 22% 48% / 0.14) 0 1px, transparent 2px),
+      radial-gradient(circle at 82% 72%, hsl(18 26% 52% / 0.13) 0 1.5px, transparent 2.5px),
+      linear-gradient(135deg, hsl(34 36% 99%), hsl(27 28% 92%));
+    background-size: 38px 34px, 47px 41px, 61px 53px, auto;
+  }
+  .storage-zone-counter::before {
+    right: -64px;
+    bottom: -74px;
+    width: 230px;
+    height: 165px;
+    transform: rotate(-8deg);
+    border-radius: 42% 38% 36% 44%;
+    border: 1px solid hsl(28 68% 48% / 0.18);
+    background: linear-gradient(145deg, hsl(32 78% 70% / 0.18), hsl(20 68% 50% / 0.1));
+    box-shadow: inset 0 0 0 8px hsl(0 0% 100% / 0.18);
+  }
+  .storage-zone-counter::after {
+    left: 4%;
+    right: 4%;
+    bottom: 13px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(24 24% 46% / 0.24), transparent);
+  }
+
+  .storage-zone-other {
+    background-color: hsl(147 52% 97%);
+    background-image:
+      radial-gradient(circle at 90% 4%, hsl(145 72% 60% / 0.3), transparent 27%),
+      radial-gradient(circle at 2% 90%, hsl(168 76% 62% / 0.22), transparent 24%),
+      linear-gradient(145deg, hsl(0 0% 100% / 0.94), hsl(148 52% 94% / 0.88));
+  }
+  .storage-zone-other::before {
+    right: -22px;
+    top: -18px;
+    width: 132px;
+    height: 132px;
+    border-radius: 72% 28% 68% 32%;
+    border: 1px solid hsl(145 58% 46% / 0.18);
+    transform: rotate(28deg);
+    background: linear-gradient(145deg, hsl(142 72% 50% / 0.13), transparent 68%);
+  }
+  .storage-zone-other::after {
+    left: 18px;
+    bottom: 14px;
+    width: 92px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, hsl(152 58% 45% / 0.18), transparent 72%);
+  }
+
+  .dark .storage-zone-fridge,
+  .dark .storage-zone-freezer,
+  .dark .storage-zone-pantry,
+  .dark .storage-zone-counter,
+  .dark .storage-zone-other {
+    background-color: hsl(var(--card));
+    background-blend-mode: screen, normal;
+  }
+  .dark .storage-zone-fridge {
+    background-image:
+      radial-gradient(circle at 9% 12%, hsl(187 80% 45% / 0.18), transparent 24%),
+      linear-gradient(145deg, hsl(var(--card)), hsl(190 34% 12%));
+  }
+  .dark .storage-zone-freezer {
+    background-image:
+      radial-gradient(circle at 92% 0%, hsl(214 90% 52% / 0.2), transparent 28%),
+      linear-gradient(145deg, hsl(var(--card)), hsl(220 38% 13%));
+  }
+  .dark .storage-zone-pantry {
+    background-image:
+      radial-gradient(circle at 94% 8%, hsl(34 82% 48% / 0.16), transparent 28%),
+      linear-gradient(145deg, hsl(var(--card)), hsl(32 30% 13%));
+  }
+  .dark .storage-zone-counter {
+    background-image:
+      radial-gradient(circle at 18% 22%, hsl(28 32% 65% / 0.13) 0 1px, transparent 2px),
+      linear-gradient(145deg, hsl(var(--card)), hsl(25 18% 14%));
+  }
+  .dark .storage-zone-other {
+    background-image:
+      radial-gradient(circle at 90% 4%, hsl(145 65% 44% / 0.17), transparent 28%),
+      linear-gradient(145deg, hsl(var(--card)), hsl(148 30% 12%));
+  }
 }

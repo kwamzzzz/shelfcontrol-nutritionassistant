@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { differenceInCalendarDays, format, parseISO, startOfToday } from "date-fns";
-import { useNavigate } from "react-router-dom";
 import {
-  BadgeDollarSign,
   CalendarDays,
   ExternalLink,
   Globe2,
   ImagePlus,
   MapPin,
-  Pencil,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -43,7 +40,6 @@ interface Props {
   entry: InventoryRow;
   open: boolean;
   onClose: () => void;
-  onEdit: () => void;
   onShare?: () => void;
   onExit: (mode: PantryExitMode) => void;
 }
@@ -67,8 +63,7 @@ const nutritionBasisLabel = (entry: InventoryRow) => {
 const displayNumber = (value: number) =>
   Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
-const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare, onExit }: Omit<Props, "open">) => {
-  const navigate = useNavigate();
+const InventoryDetailsContent = ({ entry, onShare, onExit }: Omit<Props, "open">) => {
   const media = useMemo(() => getItemMedia(entry.items), [entry.items]);
   const fallbackMedia = useMemo(
     () => getItemMedia({ ...entry.items, image_url: null }),
@@ -163,11 +158,6 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare, onExit }: Om
     detail: string;
     icon: typeof Globe2;
   }>;
-
-  const openCompare = () => {
-    onClose();
-    navigate(`/pantry/${entry.item_id}/prices`);
-  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -356,29 +346,22 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare, onExit }: Om
             </Button>
           </div>
         )}
-        <div className="mx-auto flex max-w-3xl gap-2">
-          <Button variant="outline" className="min-h-12 flex-1 rounded-xl" onClick={openCompare}>
-            <BadgeDollarSign className="h-4 w-4" />
-            Compare
-          </Button>
-          {onShare && (
-            <Button variant="outline" size="icon" className="h-12 w-12 shrink-0 rounded-xl" onClick={onShare} aria-label="Share to group">
+        {onShare && (
+          <div className="mx-auto flex max-w-3xl justify-center">
+            <Button variant="ghost" className="min-h-11 rounded-xl text-muted-foreground" onClick={onShare}>
               <Share2 className="h-4 w-4" />
+              Share with a group
             </Button>
-          )}
-          <Button className="min-h-12 flex-[1.25] rounded-xl shadow-sm" onClick={onEdit}>
-            <Pencil className="h-4 w-4" />
-            Edit details
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const InventoryDetailsOverlay = ({ entry, open, onClose, onEdit, onShare, onExit }: Props) => {
+const InventoryDetailsOverlay = ({ entry, open, onClose, onShare, onExit }: Props) => {
   const isPhone = useIsPhone();
-  const contentProps = { entry, onClose, onEdit, onShare, onExit };
+  const contentProps = { entry, onClose, onShare, onExit };
 
   if (isPhone) {
     return (

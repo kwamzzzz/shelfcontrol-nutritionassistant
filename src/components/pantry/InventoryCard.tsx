@@ -109,7 +109,8 @@ const InventoryCard = ({
         "group surface-panel flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl text-left transition",
         selected
           ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md"
-          : "hover:shadow-md"
+          : "hover:shadow-md",
+        storageStyle.card,
       )}
       aria-label={a11yLabel}
     >
