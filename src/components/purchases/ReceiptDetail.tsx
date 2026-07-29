@@ -86,7 +86,7 @@ const ReceiptDetail = ({ purchase }: Props) => {
           style={{ clipPath: TORN_TOP }}
         />
 
-        <div className="border-x border-border/70 bg-[hsl(var(--surface-panel))] px-4 pb-5 sm:px-6 sm:pb-6">
+        <div className="border-x border-border/70 bg-[hsl(var(--surface-panel))] px-4 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4">
           <header className="flex items-center gap-3 pb-5">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-md">
               {storeInitial}

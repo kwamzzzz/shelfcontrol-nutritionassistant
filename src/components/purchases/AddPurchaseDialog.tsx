@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { formatCurrency } from "@/lib/currency";
 import { useCreatePurchase, type NewPurchaseLineItem } from "@/hooks/usePurchases";
 import { useReceiptScan } from "@/hooks/useReceiptScan";
 import { parseBulkNotes } from "@/lib/purchase-parser";
 import ManualLinesEditor, { manualEmptyLine } from "./ManualLinesEditor";
 import BulkReviewTable, { toReviewRows, type ReviewRow } from "./BulkReviewTable";
+import ReceiptImagePicker from "./ReceiptImagePicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, ShoppingBag, Sparkles, Camera, Loader2, ScanLine, Package } from "lucide-react";
+import { Plus, ShoppingBag, Sparkles, ScanLine, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -69,11 +70,14 @@ const AddPurchaseDialog = ({
   // Manual fallback.
   const [manualLines, setManualLines] = useState<NewPurchaseLineItem[]>([manualEmptyLine()]);
 
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
   const createPurchase = useCreatePurchase();
-  const { scan, isScanning, error: scanError, setError: setScanError } = useReceiptScan();
+  const {
+    scan,
+    isScanning,
+    scanStage,
+    error: scanError,
+    setError: setScanError,
+  } = useReceiptScan();
   const { toast } = useToast();
 
   const inReview = (tab === "bulk" || tab === "scan") && reviewRows !== null;
@@ -83,8 +87,6 @@ const AddPurchaseDialog = ({
     setStoreName(""); setPurchasedAt(today()); setNotes("");
     setBulkText(""); setReviewRows(null); setSelected(new Set());
     setManualLines([manualEmptyLine()]);
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(null);
     setScanError(null);
   };
 
@@ -98,13 +100,15 @@ const AddPurchaseDialog = ({
     setSelected(new Set());
   };
 
-  const handleScanFile = async (file: File) => {
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(URL.createObjectURL(file));
-    const result = await scan(file);
+  const handleScanFiles = async (files: File[]) => {
+    const result = await scan(files);
     if (!result) return;
     if (result.items.length === 0) {
-      toast({ title: "No items found", description: "Couldn't read line items from that image.", variant: "destructive" });
+      toast({
+        title: "No items found",
+        description: "We couldn't find receipt line items in those images.",
+        variant: "destructive",
+      });
       return;
     }
     if (!storeName && result.storeName) setStoreName(result.storeName);
@@ -246,41 +250,12 @@ const AddPurchaseDialog = ({
 
             {/* Scan receipt */}
             <TabsContent value="scan" className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Snap or upload a supermarket receipt — we'll read the line items into an editable table.
-              </p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScanFile(f); e.target.value = ""; }}
+              <ReceiptImagePicker
+                isScanning={isScanning}
+                scanStage={scanStage}
+                scanError={scanError}
+                onScan={handleScanFiles}
               />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={isScanning}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background/40 px-4 py-10 text-center transition-colors hover:bg-secondary/50 disabled:opacity-70"
-              >
-                {isScanning ? (
-                  <>
-                    <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">Reading receipt…</span>
-                  </>
-                ) : (
-                  <>
-                    {preview ? (
-                      <img src={preview} alt="Receipt preview" className="mb-1 max-h-28 rounded-lg object-contain" />
-                    ) : (
-                      <Camera className="h-7 w-7 text-muted-foreground" />
-                    )}
-                    <span className="text-sm font-medium text-foreground">{preview ? "Scan another photo" : "Take / upload receipt photo"}</span>
-                    <span className="text-xs text-muted-foreground">JPG or PNG</span>
-                  </>
-                )}
-              </button>
-              {scanError && <p className="text-xs text-destructive">{scanError}</p>}
             </TabsContent>
 
             {/* Manual */}
