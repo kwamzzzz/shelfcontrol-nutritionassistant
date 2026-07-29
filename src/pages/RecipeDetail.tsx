@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import RecipeBreadcrumb from "@/components/cookbook/RecipeBreadcrumb";
 import RecipeHero from "@/components/cookbook/RecipeHero";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import IngredientsCard from "@/components/cookbook/IngredientsCard";
 import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
