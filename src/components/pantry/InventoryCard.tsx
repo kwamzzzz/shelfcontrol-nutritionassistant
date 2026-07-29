@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { type InventoryRow } from "@/hooks/usePantry";
 import { getExpiryStatus, getExpiryLabel } from "@/lib/pantry-utils";
 import { getItemMedia, type ItemMediaSource } from "@/lib/item-media";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Check, ImagePlus, MapPin, PackageOpen, AlertTriangle } from "lucide-react";
@@ -45,6 +46,7 @@ const InventoryCard = ({
   );
   const [imageSrc, setImageSrc] = useState<string | null>(media.src);
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
+  const signedUpload = useSignedImage(entry.items.image_url);
   const missingLocation = entry.status === "active" && !entry.storage_location;
   const nutritionBasis = nutritionBasisLabel(entry.items).replace(/^Per /, "per ");
   const nutritionSummary = [
