@@ -25,17 +25,19 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PantryExitDialog, { type PantryExitMode } from "@/components/pantry/PantryExitDialog";
+import type { PantryExitMode } from "@/components/pantry/PantryExitDialog";
 
 interface Props {
   entry: InventoryRow;
@@ -43,6 +45,7 @@ interface Props {
   onClose: () => void;
   onEdit: () => void;
   onShare?: () => void;
+  onExit: (mode: PantryExitMode) => void;
 }
 
 interface NutritionRow {
@@ -64,7 +67,7 @@ const nutritionBasisLabel = (entry: InventoryRow) => {
 const displayNumber = (value: number) =>
   Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
-const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props, "open">) => {
+const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare, onExit }: Omit<Props, "open">) => {
   const navigate = useNavigate();
   const media = useMemo(() => getItemMedia(entry.items), [entry.items]);
   const fallbackMedia = useMemo(
@@ -74,7 +77,6 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
   const [imageSrc, setImageSrc] = useState<string | null>(media.src);
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
   const signedUpload = useSignedImage(entry.items.image_url);
-  const [exitMode, setExitMode] = useState<PantryExitMode | null>(null);
   const canExit = entry.status === "active";
 
   useEffect(() => {
@@ -339,7 +341,7 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
             <Button
               variant="outline"
               className="min-h-12 flex-1 rounded-xl border-success/40 text-success hover:bg-success/10 hover:text-success"
-              onClick={() => setExitMode("consume")}
+              onClick={() => onExit("consume")}
             >
               <Utensils className="h-4 w-4" />
               Consumed
@@ -347,7 +349,7 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
             <Button
               variant="outline"
               className="min-h-12 flex-1 rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => setExitMode("dispose")}
+              onClick={() => onExit("dispose")}
             >
               <Trash2 className="h-4 w-4" />
               Disposed
@@ -370,30 +372,21 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
           </Button>
         </div>
       </div>
-
-      {exitMode && (
-        <PantryExitDialog
-          entry={entry}
-          mode={exitMode}
-          open={exitMode !== null}
-          onClose={() => setExitMode(null)}
-          onCompleted={onClose}
-        />
-      )}
     </div>
   );
 };
 
-const InventoryDetailsOverlay = ({ entry, open, onClose, onEdit, onShare }: Props) => {
+const InventoryDetailsOverlay = ({ entry, open, onClose, onEdit, onShare, onExit }: Props) => {
   const isPhone = useIsPhone();
-  const contentProps = { entry, onClose, onEdit, onShare };
+  const contentProps = { entry, onClose, onEdit, onShare, onExit };
 
   if (isPhone) {
     return (
       <Drawer open={open} onOpenChange={(next) => !next && onClose()}>
-        <DrawerContent className="max-h-[94dvh] overflow-hidden">
+        <DrawerContent className="h-[94dvh] max-h-[94dvh] overflow-hidden">
           <DrawerHeader className="sr-only">
             <DrawerTitle>{entry.items.name}</DrawerTitle>
+            <DrawerDescription>Pantry item details, nutrition and actions.</DrawerDescription>
           </DrawerHeader>
           <InventoryDetailsContent {...contentProps} />
         </DrawerContent>
@@ -403,9 +396,10 @@ const InventoryDetailsOverlay = ({ entry, open, onClose, onEdit, onShare }: Prop
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-5xl gap-0 overflow-hidden p-0 sm:p-0">
+      <DialogContent className="h-[min(92dvh,880px)] max-w-5xl gap-0 overflow-hidden p-0 sm:p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>{entry.items.name}</DialogTitle>
+          <DialogDescription>Pantry item details, nutrition and actions.</DialogDescription>
         </DialogHeader>
         <InventoryDetailsContent {...contentProps} />
       </DialogContent>

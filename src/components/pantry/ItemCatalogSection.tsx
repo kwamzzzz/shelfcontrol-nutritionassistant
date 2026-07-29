@@ -9,12 +9,19 @@ import EditItemDialog from "./EditItemDialog";
 import AddItemDialog from "./AddItemDialog";
 import { useToast } from "@/hooks/use-toast";
 
-const ItemCatalogSection = () => {
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Something went wrong.";
+
+interface ItemCatalogSectionProps {
+  defaultOpen?: boolean;
+}
+
+const ItemCatalogSection = ({ defaultOpen = false }: ItemCatalogSectionProps) => {
   const { data: items, isLoading } = useItems();
   const { data: inventory } = useInventory();
   const updateItem = useUpdateItem();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [inlineEdit, setInlineEdit] = useState<{ id: string; field: string; value: string } | null>(null);
 
@@ -31,8 +38,8 @@ const ItemCatalogSection = () => {
     const { id, field, value } = inlineEdit;
     try {
       await updateItem.mutateAsync({ id, [field]: value ? Number(value) : 0 });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
     setInlineEdit(null);
   };

@@ -117,7 +117,7 @@ export const FOOD_TYPES: Record<FoodType, FoodDef> = {
   },
   rice_grains: {
     label: "Rice & grains", keywords: ["rice", "quinoa", "oat", "barley", "couscous", "bulgur", "cereal", "grain", "millet"],
-    categories: ["Grains & Bread"], shelf: { Pantry: 720, Counter: 365 }, recommend: { location: "Pantry", confidence: "high" }, openedFactor: 0.9,
+    categories: ["Grains & Bread", "Non-perishables"], shelf: { Pantry: 720, Counter: 365 }, recommend: { location: "Pantry", confidence: "high" }, openedFactor: 0.9,
   },
   pasta: {
     label: "Pasta & noodles", keywords: ["pasta", "noodle", "spaghetti", "macaroni", "penne", "vermicelli"],
@@ -164,7 +164,7 @@ const CATEGORY_FALLBACK: Record<string, FoodType> = {
   "Dairy": "milk", "Produce": "vegetables", "Meat & Seafood": "raw_meat",
   "Grains & Bread": "bread", "Canned Goods": "canned", "Frozen": "frozen",
   "Snacks": "snacks", "Beverages": "beverages", "Condiments": "condiments",
-  "Spices": "spices", "Baking": "flour_baking",
+  "Spices": "spices", "Baking": "flour_baking", "Non-perishables": "rice_grains",
 };
 
 export interface Classification {

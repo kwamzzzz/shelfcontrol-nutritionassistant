@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Package, Receipt, Heart, ShoppingCart, UtensilsCrossed,
   BarChart3, BookHeart, Lightbulb, Newspaper, Apple, Sparkles, Users, Mail, Trophy,
   UserCircle, Settings,
+  BookOpen,
 } from "lucide-react";
 
 /**
@@ -39,6 +40,7 @@ export const NAV_ITEMS: AppNavItem[] = [
   { path: "/pantry",            label: "Pantry",                                      icon: Package,          section: "primary",      desktopGroup: "MAIN",         mobileSlot: "pantry", activeFor: ["/pantry"] },
   { path: "/purchases",         label: "Purchases",                                   icon: Receipt,          section: "activity",     desktopGroup: "MAIN",         mobileSlot: "purchases", activeFor: ["/purchases"] },
   { path: "/consumption",       label: "Consumption",         icon: Heart,            section: "activity",     desktopGroup: "MAIN" },
+  { path: "/catalog",           label: "Item Catalog",        icon: BookOpen,         section: "activity",     desktopGroup: "MAIN" },
   { path: "/shopping",          label: "Shopping List",       shortLabel: "Shopping", icon: ShoppingCart,     section: "primary",      desktopGroup: "MAIN",         mobileSlot: "shopping" },
   { path: "/recipes",           label: "My Cook Book",        shortLabel: "Cookbook", icon: UtensilsCrossed,  section: "activity",     desktopGroup: "MAIN",         mobileSlot: "recipes", activeFor: ["/recipes"] },
   { path: "/kitchen-story",     label: "Kitchen Story",       icon: BookHeart,        section: "intelligence", desktopGroup: "INTELLIGENCE" },

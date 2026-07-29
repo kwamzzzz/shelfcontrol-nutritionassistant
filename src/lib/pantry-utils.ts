@@ -44,6 +44,7 @@ export const CATEGORIES = [
   "Produce",
   "Meat & Seafood",
   "Grains & Bread",
+  "Non-perishables",
   "Canned Goods",
   "Frozen",
   "Snacks",
