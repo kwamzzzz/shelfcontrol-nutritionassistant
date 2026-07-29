@@ -87,11 +87,18 @@ const RecipeDetail = () => {
     () => recipes?.find((candidate) => candidate.id === id) ?? null,
     [recipes, id],
   );
-  const recipe = useMemo<MockRecipe | null>(() => {
+  const baseRecipe = useMemo<MockRecipe | null>(() => {
     if (databaseRecipe) return adaptRecipe(databaseRecipe);
     const mock = MOCK_RECIPES.find((r) => r.id === id);
     return mock ?? null;
   }, [databaseRecipe, id]);
+
+  // Recipe photos live in a private bucket, so swap in a short-lived signed URL.
+  const signedHero = useSignedImage(baseRecipe?.image);
+  const recipe = useMemo<MockRecipe | null>(
+    () => (baseRecipe ? { ...baseRecipe, image: signedHero ?? baseRecipe.image } : null),
+    [baseRecipe, signedHero]
+  );
 
   // Live, per-serving nutrition summed from each ingredient's stored macros ×
   // amount used. Updates whenever ingredients change. Ingredients without macro
