@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSignedImage } from "@/hooks/useSignedImage";
 
 interface Props {
   currentUrl?: string | null;
@@ -25,6 +26,7 @@ const ImageUpload = ({
 }: Props) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
+  const previewSrc = useSignedImage(preview);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,11 +66,13 @@ const ImageUpload = ({
       });
       if (error) throw error;
 
+      // The bucket is private; store the canonical object URL and resolve a
+      // signed URL at render time.
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
+      const storedUrl = urlData.publicUrl;
 
-      setPreview(publicUrl);
-      onUploaded(publicUrl);
+      setPreview(storedUrl);
+      onUploaded(storedUrl);
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Couldn't add the photo. Please try again.");
@@ -98,7 +102,7 @@ const ImageUpload = ({
       {preview ? (
         <div className={cn("relative rounded-xl overflow-hidden group", sizeClasses)}>
           <img
-            src={preview}
+            src={previewSrc ?? undefined}
             alt="Upload preview"
             className="h-full w-full object-cover"
           />
