@@ -133,7 +133,7 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                           "relative flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
                           isCompact ? "mx-auto h-11 w-11 shrink-0 p-0" : "gap-3 px-4 py-2.5",
                           isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/25 ring-1 ring-inset ring-white/10"
+                            ? "bg-emerald-600 text-white shadow-[0_9px_22px_-10px_rgba(5,150,105,0.85)] ring-2 ring-emerald-600/20 ring-offset-2 ring-offset-sidebar dark:bg-emerald-400 dark:text-emerald-950 dark:ring-emerald-300/25"
                             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         )
                       }
@@ -151,8 +151,9 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                               "h-[18px] w-[18px] shrink-0 transition-colors",
                               !isActive
                                 ? (item.accent ?? section.accent)
-                                : item.accent || "text-sidebar-primary-foreground",
+                                : "text-white dark:text-emerald-950",
                             )}
+                            strokeWidth={isActive ? 2.35 : 2}
                           />
                           {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
                           {!isCompact && item.hasBadge && pendingCount > 0 && (

@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CATEGORIES, STORAGE_LOCATIONS } from "@/lib/pantry-utils";
 import { getExpiryStatus, type ExpiryStatus } from "@/lib/pantry-utils";
 import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
-import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import InventoryDetailsOverlay from "@/components/pantry/InventoryDetailsOverlay";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
@@ -30,6 +29,8 @@ import {
   SlidersHorizontal,
   Settings2,
   Share2,
+  ListChecks,
+  Trash2,
   X,
   CalendarDays,
   ReceiptText,
@@ -89,8 +90,11 @@ const Pantry = () => {
   const [filterLocation, setFilterLocation] = useState("All");
   const [viewMode, setViewMode] = useState<PantryView>("location");
   const [viewing, setViewing] = useState<InventoryRow | null>(null);
-  const [editing, setEditing] = useState<InventoryRow | null>(null);
-  const [exitRequest, setExitRequest] = useState<{ entry: InventoryRow; mode: PantryExitMode } | null>(null);
+  const [exitRequest, setExitRequest] = useState<{
+    entries: InventoryRow[];
+    mode: PantryExitMode;
+    bulk?: boolean;
+  } | null>(null);
   const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
   // Purchase-date filter: "all" | "archived" | "YYYY-MM"
   const [purchaseFilter, setPurchaseFilter] = useState<string>("all");
@@ -135,11 +139,7 @@ const Pantry = () => {
   }, [isPhone]);
 
   useEffect(() => {
-    if (!isPersonalMode) {
-      setSelectionMode(false);
-      setSelectedIds(new Set());
-      setShareEntries(null);
-    }
+    if (!isPersonalMode) setShareEntries(null);
   }, [isPersonalMode]);
 
   // Purchase and receipt options are scoped to the active kitchen. Resetting
@@ -149,6 +149,8 @@ const Pantry = () => {
     setPurchaseFilter("all");
     setStoreFilter("all");
     setReceiptFilter("all");
+    setSelectionMode(false);
+    setSelectedIds(new Set());
   }, [activeGroupId]);
 
   // Attribution
@@ -484,7 +486,7 @@ const Pantry = () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {isPersonalMode && !isArchivedView && (
+            {!isArchivedView && (
               <Button
                 type="button"
                 variant="outline"
@@ -492,8 +494,8 @@ const Pantry = () => {
                 disabled={(inventory?.length ?? 0) === 0}
                 className="gap-1.5"
               >
-                <Share2 className="h-4 w-4" />
-                Share items
+                <ListChecks className="h-4 w-4" />
+                Select items
               </Button>
             )}
             <PantryStatsDialog />
@@ -524,15 +526,15 @@ const Pantry = () => {
                 </button>
               ))}
             </div>
-            {isPersonalMode && !isArchivedView && (
+            {!isArchivedView && (
               <button
                 type="button"
                 onClick={startSelection}
                 disabled={(inventory?.length ?? 0) === 0}
                 className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-45"
               >
-                <Share2 className="h-5 w-5" aria-hidden />
-                Share
+                <ListChecks className="h-5 w-5" aria-hidden />
+                Select
               </button>
             )}
             {/* Labelled, never icon-only: an unlabelled glyph here reads as
@@ -645,7 +647,7 @@ const Pantry = () => {
         </>
       )}
 
-      {selectionMode && isPersonalMode && (
+      {selectionMode && (
         <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/20 bg-card/95 p-3 shadow-lg backdrop-blur">
           <div className="min-w-0 flex-1">
             <p className="font-display text-sm font-semibold text-foreground">
@@ -656,15 +658,33 @@ const Pantry = () => {
           <Button type="button" variant="ghost" size="sm" className="rounded-xl" onClick={selectVisible}>
             Select visible
           </Button>
+          {isPersonalMode && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-xl"
+              disabled={selectedEntries.length === 0}
+              onClick={() => setShareEntries(selectedEntries)}
+            >
+              <Share2 className="mr-1.5 h-4 w-4" />
+              Share
+            </Button>
+          )}
           <Button
             type="button"
             size="sm"
+            variant="destructive"
             className="rounded-xl"
             disabled={selectedEntries.length === 0}
-            onClick={() => setShareEntries(selectedEntries)}
+            onClick={() => setExitRequest({
+              entries: selectedEntries,
+              mode: "dispose",
+              bulk: true,
+            })}
           >
-            <Share2 className="mr-1.5 h-4 w-4" />
-            Share selected
+            <Trash2 className="mr-1.5 h-4 w-4" />
+            Dispose
           </Button>
           <Button
             type="button"
@@ -1057,12 +1077,8 @@ const Pantry = () => {
           entry={viewing}
           open={!!viewing}
           onClose={() => setViewing(null)}
-          onEdit={() => {
-            setEditing(viewing);
-            setViewing(null);
-          }}
           onExit={(exitMode) => {
-            setExitRequest({ entry: viewing, mode: exitMode });
+            setExitRequest({ entries: [viewing], mode: exitMode });
             setViewing(null);
           }}
           onShare={
@@ -1070,22 +1086,6 @@ const Pantry = () => {
               ? () => {
                   setShareEntries([viewing]);
                   setViewing(null);
-                }
-              : undefined
-          }
-        />
-      )}
-
-      {editing && (
-        <EditInventoryDialog
-          entry={editing}
-          open={!!editing}
-          onClose={() => setEditing(null)}
-          onShare={
-            isPersonalMode
-              ? () => {
-                  setEditing(null);
-                  setShareEntries([editing]);
                 }
               : undefined
           }
@@ -1103,11 +1103,14 @@ const Pantry = () => {
 
       {exitRequest && (
         <PantryExitDialog
-          entry={exitRequest.entry}
+          entries={exitRequest.entries}
           mode={exitRequest.mode}
           open
           onClose={() => setExitRequest(null)}
-          onCompleted={() => setExitRequest(null)}
+          onCompleted={() => {
+            if (exitRequest.bulk) cancelSelection();
+            setExitRequest(null);
+          }}
         />
       )}
 

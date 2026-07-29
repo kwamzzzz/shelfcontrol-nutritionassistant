@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type InventoryRow, useUpdateInventory } from "@/hooks/usePantry";
 import { useCreateConsumptionLog } from "@/hooks/useConsumption";
 import { useCreateWasteLog } from "@/hooks/useWasteLogs";
@@ -11,12 +11,26 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useIsPhone } from "@/hooks/use-shell-mode";
-import { CalendarDays, Trash2, Utensils } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Trash2,
+  Utensils,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  getDisposalConfirmationEnabled,
+  setDisposalConfirmationEnabled,
+} from "@/lib/pantry-exit-preferences";
 
 export type PantryExitMode = "consume" | "dispose";
 
 interface Props {
-  entry: InventoryRow;
+  entry?: InventoryRow;
+  entries?: InventoryRow[];
   mode: PantryExitMode;
   open: boolean;
   onClose: () => void;
@@ -25,35 +39,6 @@ interface Props {
 }
 
 const WASTE_REASONS = ["Expired", "Spoiled", "Stale", "Freezer burn", "Damaged", "Overcooked", "Other"] as const;
-
-const COPY: Record<PantryExitMode, {
-  title: (name: string) => string;
-  description: string;
-  quantityLabel: string;
-  submit: string;
-  pending: string;
-  toastTitle: string;
-  status: "consumed" | "discarded";
-}> = {
-  consume: {
-    title: (name) => `Record ${name}`,
-    description: "Tell Shelf Control how much you used. This is the only confirmation step.",
-    quantityLabel: "How much did you use?",
-    submit: "Save consumption",
-    pending: "Saving…",
-    toastTitle: "Consumed",
-    status: "consumed",
-  },
-  dispose: {
-    title: (name) => `Record disposal · ${name}`,
-    description: "Record what left the pantry and why. This is the only confirmation step.",
-    quantityLabel: "How much did you throw out?",
-    submit: "Save disposal",
-    pending: "Saving…",
-    toastTitle: "Disposed",
-    status: "discarded",
-  },
-};
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong.";
@@ -71,146 +56,223 @@ const dateToTimestamp = (date: string) => {
 };
 
 /**
- * One flow for the two ways an item leaves the pantry: eaten or thrown out.
- * Either way we record the event (consumption_logs / waste_logs) and mark the
- * batch's status so it drops out of the active pantry — soft-delete, so the
- * eaten-vs-thrown-out history survives for the Kitchen Story and Analytics.
+ * One exit surface for pantry items. Disposal defaults to a concise
+ * confirmation and keeps quantity/date/reason as optional details. A user may
+ * skip future single-item confirmations; bulk disposal always confirms.
  */
-const PantryExitDialog = ({ entry, mode, open, onClose, onCompleted }: Props) => {
-  const copy = COPY[mode];
+const PantryExitDialog = ({ entry, entries, mode, open, onClose, onCompleted }: Props) => {
+  const targets = useMemo(
+    () => (entries?.length ? entries : entry ? [entry] : []),
+    [entries, entry],
+  );
+  const primaryEntry = targets[0];
+  const isBulk = targets.length > 1;
   const isPhone = useIsPhone();
-  const [quantity, setQuantity] = useState(String(entry.quantity));
+  const [quantity, setQuantity] = useState(primaryEntry ? String(primaryEntry.quantity) : "");
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
   const [recordDate, setRecordDate] = useState(false);
   const [eventDate, setEventDate] = useState(localDateValue);
+  const [detailsOpen, setDetailsOpen] = useState(mode === "consume");
+  const [confirmationPreference, setConfirmationPreference] = useState<"keep" | "never">("keep");
+  const autoSubmitted = useRef(false);
   const createConsumption = useCreateConsumptionLog();
   const createWaste = useCreateWasteLog();
   const updateInventory = useUpdateInventory();
   const { toast } = useToast();
 
   const pending = createConsumption.isPending || createWaste.isPending || updateInventory.isPending;
+  const totalQuantity = targets.reduce((sum, target) => sum + Number(target.quantity || 0), 0);
+  const unitLabel = new Set(targets.map((target) => target.unit)).size === 1
+    ? primaryEntry?.unit
+    : "units";
 
-  useEffect(() => {
-    if (!open) return;
-    setQuantity(String(entry.quantity));
-    setReason("");
-    setNote("");
-    setRecordDate(false);
-    setEventDate(localDateValue());
-  }, [entry.id, entry.quantity, mode, open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const qty = Number(quantity);
-    if (!Number.isFinite(qty) || qty <= 0) return;
-    const amount = Math.min(qty, entry.quantity);
-    const eventTimestamp = recordDate ? dateToTimestamp(eventDate) : new Date().toISOString();
+  const completeExit = useCallback(async ({
+    selectedQuantity,
+    selectedReason,
+    selectedNote,
+    selectedTimestamp,
+    rememberPreference = true,
+  }: {
+    selectedQuantity?: number;
+    selectedReason?: string;
+    selectedNote?: string;
+    selectedTimestamp: string;
+    rememberPreference?: boolean;
+  }) => {
+    if (!primaryEntry || targets.length === 0) return;
 
     try {
-      if (mode === "consume") {
-        await createConsumption.mutateAsync({
-          item_id: entry.item_id,
-          quantity: amount,
-          unit: entry.unit,
-          consumed_at: eventTimestamp,
-        });
-      } else {
-        await createWaste.mutateAsync({
-          item_id: entry.item_id,
-          inventory_id: entry.id,
-          quantity: amount,
-          unit: entry.unit,
-          reason: reason || undefined,
-          note: note || undefined,
-          discarded_at: eventTimestamp,
-        });
+      for (const target of targets) {
+        const requestedAmount = isBulk
+          ? Number(target.quantity)
+          : Math.min(Number(selectedQuantity ?? target.quantity), Number(target.quantity));
+
+        if (mode === "consume") {
+          await createConsumption.mutateAsync({
+            item_id: target.item_id,
+            quantity: requestedAmount,
+            unit: target.unit,
+            consumed_at: selectedTimestamp,
+          });
+        } else {
+          await createWaste.mutateAsync({
+            item_id: target.item_id,
+            inventory_id: target.id,
+            quantity: requestedAmount,
+            unit: target.unit,
+            reason: selectedReason || undefined,
+            note: selectedNote || undefined,
+            discarded_at: selectedTimestamp,
+          });
+        }
+
+        if (requestedAmount >= Number(target.quantity)) {
+          await updateInventory.mutateAsync({
+            id: target.id,
+            status: mode === "dispose" ? "discarded" : "consumed",
+            archived_at: selectedTimestamp,
+          });
+        } else {
+          await updateInventory.mutateAsync({
+            id: target.id,
+            quantity: Number(target.quantity) - requestedAmount,
+          });
+        }
       }
 
-      if (amount >= entry.quantity) {
-        // Last unit gone: leave the pantry without destroying the row, so the
-        // batch still counts toward the eaten-vs-thrown-out metric.
-        await updateInventory.mutateAsync({
-          id: entry.id,
-          status: copy.status,
-          archived_at: eventTimestamp,
-        });
-      } else {
-        await updateInventory.mutateAsync({ id: entry.id, quantity: entry.quantity - amount });
+      if (mode === "dispose" && !isBulk && rememberPreference) {
+        setDisposalConfirmationEnabled(confirmationPreference === "keep");
       }
 
       toast({
-        title: copy.toastTitle,
-        description: `${amount} ${entry.unit} of ${entry.items.name} logged.`,
+        title: mode === "dispose" ? "Disposed" : "Consumed",
+        description: isBulk
+          ? `${targets.length} pantry items were recorded and removed.`
+          : `${selectedQuantity ?? primaryEntry.quantity} ${primaryEntry.unit} of ${primaryEntry.items.name} logged.`,
       });
       onClose();
       onCompleted?.();
     } catch (error: unknown) {
+      autoSubmitted.current = false;
       toast({ title: "Error", description: errorMessage(error), variant: "destructive" });
     }
+  }, [
+    confirmationPreference,
+    createConsumption,
+    createWaste,
+    isBulk,
+    mode,
+    onClose,
+    onCompleted,
+    primaryEntry,
+    targets,
+    toast,
+    updateInventory,
+  ]);
+
+  useEffect(() => {
+    if (!open || !primaryEntry) return;
+    setQuantity(String(primaryEntry.quantity));
+    setReason("");
+    setNote("");
+    setRecordDate(false);
+    setEventDate(localDateValue());
+    setDetailsOpen(mode === "consume");
+    setConfirmationPreference("keep");
+  }, [mode, open, primaryEntry]);
+
+  useEffect(() => {
+    if (!open || !primaryEntry) {
+      autoSubmitted.current = false;
+      return;
+    }
+    const canSkip = mode === "dispose" && !isBulk && !getDisposalConfirmationEnabled();
+    if (canSkip && !autoSubmitted.current) {
+      autoSubmitted.current = true;
+      void completeExit({
+        selectedQuantity: Number(primaryEntry.quantity),
+        selectedTimestamp: new Date().toISOString(),
+        rememberPreference: false,
+      });
+    }
+  }, [completeExit, isBulk, mode, open, primaryEntry]);
+
+  if (!primaryEntry || targets.length === 0) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = Number(quantity);
+    if (!isBulk && (!Number.isFinite(qty) || qty <= 0)) return;
+    const eventTimestamp = recordDate ? dateToTimestamp(eventDate) : new Date().toISOString();
+    await completeExit({
+      selectedQuantity: isBulk ? undefined : qty,
+      selectedReason: reason,
+      selectedNote: note,
+      selectedTimestamp: eventTimestamp,
+    });
   };
 
-  const form = (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-            mode === "dispose" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"
-          }`}>
-            {mode === "dispose" ? <Trash2 className="h-5 w-5" /> : <Utensils className="h-5 w-5" />}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-semibold text-foreground">{entry.items.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {entry.quantity} {entry.unit} currently available
-            </p>
-          </div>
-        </div>
-      </div>
+  const itemLabel = isBulk ? `${targets.length} selected items` : primaryEntry.items.name;
+  const title = mode === "dispose"
+    ? isBulk
+      ? `Dispose ${targets.length} items?`
+      : `Dispose ${primaryEntry.items.name}?`
+    : `Record ${primaryEntry.items.name}`;
+  const description = mode === "dispose"
+    ? "This records what left your pantry and removes it from the active view."
+    : "Tell Shelf Control how much you used and when.";
 
-      <div className={mode === "dispose" ? "grid gap-4 sm:grid-cols-2" : ""}>
+  const details = (
+    <div className="space-y-4 rounded-2xl border border-border/70 bg-card/70 p-4">
+      {!isBulk && (
         <div className="space-y-2">
-          <Label htmlFor={`exit-quantity-${entry.id}`}>{copy.quantityLabel}</Label>
+          <Label htmlFor={`exit-quantity-${primaryEntry.id}`}>
+            {mode === "dispose" ? "Amount disposed" : "Amount consumed"}
+          </Label>
           <Input
-            id={`exit-quantity-${entry.id}`}
+            id={`exit-quantity-${primaryEntry.id}`}
             className="min-h-12 rounded-xl"
             type="number"
             inputMode="decimal"
             min={0.01}
-            max={entry.quantity}
+            max={primaryEntry.quantity}
             step="any"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
           />
         </div>
-        {mode === "dispose" && (
-          <div className="space-y-2">
-            <Label>Reason</Label>
-            <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger className="min-h-12 rounded-xl"><SelectValue placeholder="Select a reason" /></SelectTrigger>
-              <SelectContent>
-                {WASTE_REASONS.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
+      )}
 
-      <div className="rounded-2xl border border-border/70 bg-card p-4">
+      {mode === "dispose" && (
+        <div className="space-y-2">
+          <Label>Reason (optional)</Label>
+          <Select value={reason} onValueChange={setReason}>
+            <SelectTrigger className="min-h-12 rounded-xl">
+              <SelectValue placeholder="Select a reason" />
+            </SelectTrigger>
+            <SelectContent>
+              {WASTE_REASONS.map((wasteReason) => (
+                <SelectItem key={wasteReason} value={wasteReason}>{wasteReason}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border/70 bg-background/55 p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
-              <Label htmlFor={`record-date-${entry.id}`} className="text-sm">Choose a date</Label>
+              <Label htmlFor={`record-date-${primaryEntry.id}`} className="text-sm">Choose a date</Label>
               <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                Optional. Leave this off to record the event now.
+                Optional. Leave this off to record it now.
               </p>
             </div>
           </div>
           <Switch
-            id={`record-date-${entry.id}`}
+            id={`record-date-${primaryEntry.id}`}
             checked={recordDate}
             onCheckedChange={setRecordDate}
             aria-label="Choose a specific date"
@@ -218,11 +280,11 @@ const PantryExitDialog = ({ entry, mode, open, onClose, onCompleted }: Props) =>
         </div>
         {recordDate && (
           <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
-            <Label htmlFor={`exit-date-${entry.id}`}>
+            <Label htmlFor={`exit-date-${primaryEntry.id}`}>
               {mode === "dispose" ? "Date disposed" : "Date consumed"}
             </Label>
             <Input
-              id={`exit-date-${entry.id}`}
+              id={`exit-date-${primaryEntry.id}`}
               className="min-h-12 rounded-xl"
               type="date"
               max={localDateValue()}
@@ -236,9 +298,9 @@ const PantryExitDialog = ({ entry, mode, open, onClose, onCompleted }: Props) =>
 
       {mode === "dispose" && (
         <div className="space-y-2">
-          <Label htmlFor={`exit-note-${entry.id}`}>Note (optional)</Label>
+          <Label htmlFor={`exit-note-${primaryEntry.id}`}>Note (optional)</Label>
           <Input
-            id={`exit-note-${entry.id}`}
+            id={`exit-note-${primaryEntry.id}`}
             className="min-h-12 rounded-xl"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -246,27 +308,135 @@ const PantryExitDialog = ({ entry, mode, open, onClose, onCompleted }: Props) =>
           />
         </div>
       )}
+    </div>
+  );
 
-      <Button
-        type="submit"
-        variant={mode === "dispose" ? "destructive" : "default"}
-        className="min-h-12 w-full rounded-xl"
-        disabled={pending || !Number.isFinite(Number(quantity)) || Number(quantity) <= 0 || (recordDate && !eventDate)}
-      >
-        {pending ? copy.pending : copy.submit}
-      </Button>
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className={cn(
+        "rounded-[1.35rem] border p-4",
+        mode === "dispose"
+          ? "border-destructive/20 bg-destructive/[0.045]"
+          : "border-success/20 bg-success/[0.045]",
+      )}>
+        <div className="flex items-center gap-3">
+          <span className={cn(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+            mode === "dispose" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success",
+          )}>
+            {mode === "dispose" ? <Trash2 className="h-5 w-5" /> : <Utensils className="h-5 w-5" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-foreground">{itemLabel}</p>
+            <p className="text-xs text-muted-foreground">
+              {isBulk
+                ? `${totalQuantity.toLocaleString()} ${unitLabel} across this selection`
+                : `${primaryEntry.quantity} ${primaryEntry.unit} currently available`}
+            </p>
+          </div>
+        </div>
+        {isBulk && (
+          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-destructive/10 pt-3">
+            {targets.slice(0, 5).map((target) => (
+              <span key={target.id} className="rounded-full bg-card/80 px-2.5 py-1 text-xs text-foreground shadow-sm">
+                {target.items.name}
+              </span>
+            ))}
+            {targets.length > 5 && (
+              <span className="rounded-full bg-card/80 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
+                +{targets.length - 5} more
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {mode === "dispose" && (
+        <>
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((current) => !current)}
+            className="flex min-h-11 w-full items-center justify-between rounded-xl border border-border/70 bg-card/60 px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            aria-expanded={detailsOpen}
+          >
+            <span>{detailsOpen ? "Hide disposal details" : "Change amount or add details"}</span>
+            {detailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          {detailsOpen && details}
+        </>
+      )}
+
+      {mode === "consume" && details}
+
+      {mode === "dispose" && !isBulk && (
+        <fieldset className="space-y-2">
+          <legend className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Next time
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { value: "keep", label: "Keep asking", icon: ShieldCheck },
+              { value: "never", label: "Don’t ask again", icon: Check },
+            ] as const).map(({ value, label, icon: Icon }) => {
+              const selected = confirmationPreference === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setConfirmationPreference(value)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-card/60 text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", selected && "text-primary")} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            You can turn confirmations back on anytime in Settings.
+          </p>
+        </fieldset>
+      )}
+
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <Button type="button" variant="outline" className="min-h-12 flex-1 rounded-xl" onClick={onClose} disabled={pending}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant={mode === "dispose" ? "destructive" : "default"}
+          className="min-h-12 flex-[1.35] rounded-xl"
+          disabled={
+            pending ||
+            (!isBulk && (!Number.isFinite(Number(quantity)) || Number(quantity) <= 0)) ||
+            (recordDate && !eventDate)
+          }
+        >
+          {pending
+            ? mode === "dispose" ? "Disposing…" : "Saving…"
+            : mode === "dispose"
+              ? isBulk ? `Dispose ${targets.length} items` : "Dispose item"
+              : "Save consumption"}
+        </Button>
+      </div>
     </form>
   );
 
   if (isPhone) {
     return (
-      <Drawer open={open} onOpenChange={(v) => !v && onClose()}>
-        <DrawerContent className="max-h-[92dvh] overflow-y-auto overscroll-contain">
+      <Drawer open={open} onOpenChange={(value) => !value && onClose()}>
+        <DrawerContent className="max-h-[92dvh] overflow-hidden">
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left">
-            <DrawerTitle className="font-serif text-2xl leading-tight">{copy.title(entry.items.name)}</DrawerTitle>
-            <DrawerDescription>{copy.description}</DrawerDescription>
+            <DrawerTitle className="font-serif text-2xl leading-tight">{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-5 pb-[max(1rem,var(--safe-bottom))]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1rem,var(--safe-bottom))]">
             {form}
           </div>
         </DrawerContent>
@@ -275,11 +445,11 @@ const PantryExitDialog = ({ entry, mode, open, onClose, onCompleted }: Props) =>
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="max-h-[min(90dvh,820px)] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{copy.title(entry.items.name)}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {form}
       </DialogContent>
