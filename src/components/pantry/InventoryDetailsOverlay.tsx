@@ -19,6 +19,7 @@ import type { InventoryRow } from "@/hooks/usePantry";
 import { useIsPhone } from "@/hooks/use-shell-mode";
 import { classifyFood, estimateShelfLifeDays, recommendStorage, type StorageLocation } from "@/lib/shelf-life";
 import { getItemMedia, type ItemMediaSource } from "@/lib/item-media";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,13 +73,14 @@ const InventoryDetailsContent = ({ entry, onClose, onEdit, onShare }: Omit<Props
   );
   const [imageSrc, setImageSrc] = useState<string | null>(media.src);
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
+  const signedUpload = useSignedImage(entry.items.image_url);
   const [exitMode, setExitMode] = useState<PantryExitMode | null>(null);
   const canExit = entry.status === "active";
 
   useEffect(() => {
-    setImageSrc(media.src);
+    setImageSrc(media.source === "uploaded" ? signedUpload : media.src);
     setMediaSource(media.source);
-  }, [media]);
+  }, [media, signedUpload]);
 
   const classification = useMemo(
     () => classifyFood(entry.items.name, entry.items.category),
