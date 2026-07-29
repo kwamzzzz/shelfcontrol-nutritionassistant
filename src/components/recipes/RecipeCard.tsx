@@ -72,6 +72,7 @@ const RecipeCard = ({
   const deleteRecipe = useDeleteRecipe();
   const createRecipe = useCreateRecipe();
   const { toast } = useToast();
+  const signedImage = useSignedImage(recipe.image_url);
 
   const ingCount = recipe.recipe_ingredients?.length ?? 0;
   const tags = recipe.tags ?? [];
