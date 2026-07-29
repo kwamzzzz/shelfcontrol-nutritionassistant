@@ -31,6 +31,7 @@ import { useInventory, useItems } from "@/hooks/usePantry";
 import { usePurchases } from "@/hooks/usePurchases";
 import { usePriceObservations } from "@/hooks/usePricePassport";
 import { useIsPhone } from "@/hooks/use-shell-mode";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import {
   basisForUnit,
   basisLabel,
@@ -135,6 +136,7 @@ const PricePassport = () => {
     (purchases ?? [])
       .flatMap((purchase) => purchase.purchase_items ?? [])
       .find((line) => line.item_id === itemId)?.items;
+  const itemImage = useSignedImage(item?.image_url);
 
   const {
     data: observationData,
@@ -317,9 +319,9 @@ const PricePassport = () => {
       <header className="surface-panel mb-5 overflow-hidden rounded-3xl p-4 sm:p-5">
         <div className="flex items-center gap-4">
           <div className="media-well flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] sm:h-24 sm:w-24">
-            {item.image_url ? (
+            {itemImage ? (
               <img
-                src={item.image_url}
+                src={itemImage}
                 alt=""
                 className="h-full w-full object-contain p-1.5 mix-blend-multiply"
               />
