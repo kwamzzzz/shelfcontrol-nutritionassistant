@@ -7,7 +7,6 @@ import { getExpiryStatus } from "@/lib/pantry-utils";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import InventoryDetailsOverlay from "@/components/pantry/InventoryDetailsOverlay";
 import PantryExitDialog, { type PantryExitMode } from "@/components/pantry/PantryExitDialog";
-import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import { cn } from "@/lib/utils";
 
 type AlertKind = "use-soon" | "expired";
@@ -49,7 +48,6 @@ const PantryAlert = () => {
   const copy = ALERT_COPY[alertKind];
   const Icon = copy.icon;
   const [viewing, setViewing] = useState<InventoryRow | null>(null);
-  const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [exitRequest, setExitRequest] = useState<{ entry: InventoryRow; mode: PantryExitMode } | null>(null);
 
   const items = useMemo(() => {
@@ -116,19 +114,11 @@ const PantryAlert = () => {
           entry={viewing}
           open
           onClose={() => setViewing(null)}
-          onEdit={() => {
-            setEditing(viewing);
-            setViewing(null);
-          }}
           onExit={(mode) => {
             setExitRequest({ entry: viewing, mode });
             setViewing(null);
           }}
         />
-      )}
-
-      {editing && (
-        <EditInventoryDialog entry={editing} open onClose={() => setEditing(null)} />
       )}
 
       {exitRequest && (
