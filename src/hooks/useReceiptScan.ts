@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ParsedLine } from "@/lib/purchase-parser";
+import { prepareReceiptImages } from "@/lib/receipt-images";
 
 interface ReceiptItem {
   name: string;
@@ -18,43 +19,33 @@ export interface ScannedReceipt {
   items: ParsedLine[];
 }
 
-// Larger than the plate estimator (1024) so small receipt print survives compression.
-const downscaleImage = (file: File, maxSize = 1600): Promise<{ base64: string; mime: string }> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const w = Math.round(img.width * ratio);
-        const h = Math.round(img.height * ratio);
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas not available"));
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        resolve({ base64: dataUrl.split(",")[1] ?? "", mime: "image/jpeg" });
-      };
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
+type ScanStage = "preparing" | "reading" | null;
 
 export const useReceiptScan = () => {
   const [isScanning, setIsScanning] = useState(false);
+  const [scanStage, setScanStage] = useState<ScanStage>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const scan = useCallback(async (file: File): Promise<ScannedReceipt | null> => {
+  const scan = useCallback(async (files: File | File[]): Promise<ScannedReceipt | null> => {
     setIsScanning(true);
+    setScanStage("preparing");
     setError(null);
     try {
-      const { base64, mime } = await downscaleImage(file);
+      const selectedFiles = Array.isArray(files) ? files : [files];
+      if (selectedFiles.length === 0) throw new Error("Choose at least one receipt image.");
+
+      const images = await prepareReceiptImages(selectedFiles);
+      setScanStage("reading");
       const { data, error: fnError } = await supabase.functions.invoke("scan-receipt", {
-        body: { image_base64: base64, mime_type: mime },
+        body: {
+          images: images.map(({ base64, mime, sourceIndex, part, totalParts }) => ({
+            image_base64: base64,
+            mime_type: mime,
+            source_index: sourceIndex,
+            part,
+            total_parts: totalParts,
+          })),
+        },
       });
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
@@ -71,13 +62,14 @@ export const useReceiptScan = () => {
       }));
 
       return { storeName: data?.store_name ?? null, purchasedAt: data?.purchased_at ?? null, items };
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to scan receipt");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to scan receipt");
       return null;
     } finally {
       setIsScanning(false);
+      setScanStage(null);
     }
   }, []);
 
-  return { scan, isScanning, error, setError };
+  return { scan, isScanning, scanStage, error, setError };
 };
