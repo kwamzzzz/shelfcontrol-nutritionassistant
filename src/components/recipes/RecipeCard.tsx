@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import RecipeTagEditor from "./RecipeTagEditor";
 
 const errorMessage = (error: unknown) =>
@@ -132,9 +133,9 @@ const RecipeCard = ({
         }}
       >
         <div className="relative h-full w-2/5 sm:h-auto sm:w-full sm:aspect-[4/3] lg:aspect-square overflow-hidden bg-muted shrink-0">
-          {recipe.image_url ? (
+          {signedImage ? (
             <img
-              src={recipe.image_url}
+              src={signedImage}
               alt={recipe.name}
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
