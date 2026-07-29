@@ -31,6 +31,7 @@ import { useInventory, useItems } from "@/hooks/usePantry";
 import { usePurchases } from "@/hooks/usePurchases";
 import { usePriceObservations } from "@/hooks/usePricePassport";
 import { useIsPhone } from "@/hooks/use-shell-mode";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import {
   basisForUnit,
   basisLabel,
