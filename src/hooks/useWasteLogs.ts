@@ -36,6 +36,7 @@ export const useCreateWasteLog = () => {
       unit: string;
       reason?: string;
       note?: string;
+      discarded_at?: string;
     }) => {
       const { data, error } = await supabase
         .from("waste_logs")
@@ -48,6 +49,7 @@ export const useCreateWasteLog = () => {
           unit: input.unit,
           reason: input.reason ?? null,
           note: input.note ?? null,
+          discarded_at: input.discarded_at ?? new Date().toISOString(),
         })
         .select()
         .single();

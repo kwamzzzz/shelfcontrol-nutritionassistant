@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
   BarChart3, BookHeart, LogOut, Users, Trophy, UserCircle, Settings,
   Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen, Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ const navSections = [
       { to: "/pantry", label: "Pantry", icon: Package },
       { to: "/purchases", label: "Purchases", icon: Receipt },
       { to: "/consumption", label: "Consumption", icon: Heart },
+      { to: "/catalog", label: "Item Catalog", icon: BookOpen },
       { to: "/shopping", label: "Shopping List", icon: ShoppingCart },
       { to: "/recipes", label: "My Cook Book", icon: UtensilsCrossed },
     ],

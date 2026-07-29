@@ -40,6 +40,14 @@ describe("classifyFood", () => {
     expect(c.matchedBy).toBe("category");
   });
 
+  it("treats the non-perishables category as a long-life pantry staple", () => {
+    const c = classifyFood("Household staple", "Non-perishables");
+    expect(c.type).toBe("rice_grains");
+    expect(c.matchedBy).toBe("category");
+    expect(recommendStorage(c.type)).toEqual({ location: "Pantry", confidence: "high" });
+    expect(estimateShelfLifeDays(c.type, "Pantry")).toBe(720);
+  });
+
   it("returns 'other' with matchedBy none when nothing matches", () => {
     const c = classifyFood("Zorblax", null);
     expect(c.type).toBe("other");

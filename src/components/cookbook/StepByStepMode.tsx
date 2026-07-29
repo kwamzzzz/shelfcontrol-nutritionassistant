@@ -58,10 +58,10 @@ const StepByStepMode = ({ open, onOpenChange, steps, ingredients, servingsScale 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl gap-0 overflow-hidden p-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+      <DialogContent className="max-h-[calc(100dvh-var(--safe-top)-var(--safe-bottom)-1rem)] max-w-5xl gap-0 overflow-hidden p-0 sm:p-0">
+        <div className="grid min-h-0 max-h-[calc(100dvh-var(--safe-top)-var(--safe-bottom)-1rem)] grid-cols-1 overflow-y-auto overscroll-contain lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
           {/* Utility panel — deep emerald */}
-          <aside className="relative flex flex-col gap-5 bg-[hsl(155_45%_10%)] p-6 text-emerald-50 lg:p-7">
+          <aside className="relative flex flex-col gap-5 bg-[hsl(155_45%_10%)] p-5 pb-6 text-emerald-50 sm:p-6 lg:p-7">
             <div className="flex items-center gap-2 text-emerald-200/90">
               <ChefHat className="h-4 w-4" />
               <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">Cook mode</span>
@@ -167,11 +167,11 @@ const StepByStepMode = ({ open, onOpenChange, steps, ingredients, servingsScale 
           </aside>
 
           {/* Instruction panel — Garden Glow surface */}
-          <section className="relative flex min-h-[520px] flex-col p-6 sm:p-10">
+          <section className="relative flex min-h-[430px] flex-col p-5 pb-[max(1.5rem,var(--safe-bottom))] sm:min-h-[520px] sm:p-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Step {step + 1} of {steps.length}
             </p>
-            <p className="mt-6 flex-1 font-serif text-2xl leading-snug text-foreground sm:text-[28px]">
+            <p className="mt-5 flex-1 break-words font-serif text-2xl leading-snug text-foreground sm:mt-6 sm:text-[28px]">
               {steps[step]}
             </p>
 

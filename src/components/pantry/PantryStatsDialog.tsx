@@ -14,6 +14,7 @@ import {
   Package,
   Receipt as ReceiptIcon,
   Sparkles,
+  Mail,
 } from "lucide-react";
 
 type ToneStyle = CSSProperties & { "--tone": string };
@@ -120,6 +121,23 @@ const PantryStatsDialog = ({ open, onOpenChange, hideTrigger }: PantryToolDialog
               Monthly purchases, spend, and what left your pantry — from your full history.
             </DialogDescription>
           </DialogHeader>
+        </div>
+
+        <div className="mx-6 mt-5 flex items-start gap-3 rounded-2xl border border-dashed border-primary/25 bg-primary/[0.045] px-4 py-3 sm:mx-8">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Mail className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">Monthly Pantry Report</p>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                Coming soon
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              A clear month-by-month spend summary, store breakdown and pantry highlights delivered to your email.
+            </p>
+          </div>
         </div>
 
         {(() => {

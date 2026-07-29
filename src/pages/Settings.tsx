@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Bell, Palette, Database } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Palette, Database, Mail } from "lucide-react";
 
 const Settings = () => {
   return (
@@ -10,6 +10,7 @@ const Settings = () => {
       </div>
 
       {[
+        { icon: Mail, title: "Monthly Pantry Report", desc: "Receive your spend by month, store breakdown, most-bought foods, and waste summary by email." },
         { icon: Bell, title: "Notifications", desc: "Configure expiry alerts, shopping reminders, and group notifications." },
         { icon: Palette, title: "Appearance", desc: "Theme, layout density, and display preferences." },
         { icon: Database, title: "Data & Privacy", desc: "Export your data, manage storage, and review privacy settings." },

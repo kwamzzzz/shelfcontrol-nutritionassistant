@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { useInventory, useAllInventory, type InventoryRow } from "@/hooks/usePantry";
 import { usePurchases } from "@/hooks/usePurchases";
@@ -11,7 +11,6 @@ import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import InventoryDetailsOverlay from "@/components/pantry/InventoryDetailsOverlay";
-import ItemCatalogSection from "@/components/pantry/ItemCatalogSection";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
 import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
@@ -36,6 +35,12 @@ import {
   ReceiptText,
   Store,
   RotateCcw,
+  ChevronRight,
+  LayoutGrid,
+  MapPinned,
+  Tags,
+  CalendarClock,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGroupContext } from "@/contexts/GroupContext";
@@ -43,25 +48,33 @@ import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
 import { useIsPhone } from "@/hooks/use-shell-mode";
 import { Badge } from "@/components/ui/badge";
+import PantryExitDialog, { type PantryExitMode } from "@/components/pantry/PantryExitDialog";
+import { STORAGE_STYLES, type StorageStyleKey } from "@/components/pantry/storage-style";
 
 const LOCATION_TABS = ["All", ...STORAGE_LOCATIONS] as const;
 const normalizeStoreName = (value: string | null | undefined) => value?.trim().toLowerCase() ?? "";
 
-interface StatusGroup {
-  key: ExpiryStatus;
-  label: string;
-  icon: React.ReactNode;
-  colorClasses: string;
-}
+type PantryView = "location" | "category" | "items" | "freshness";
 
-const STATUS_GROUPS: StatusGroup[] = [
-  { key: "expired", label: "Expired", icon: <AlertTriangle className="h-4 w-4" />, colorClasses: "text-destructive" },
-  { key: "expiring", label: "Expiring Soon", icon: <Clock className="h-4 w-4" />, colorClasses: "text-warning" },
-  { key: "fresh", label: "Fresh Inventory", icon: <ShieldCheck className="h-4 w-4" />, colorClasses: "text-success" },
-  { key: "no-date", label: "No Expiry Set", icon: <HelpCircle className="h-4 w-4" />, colorClasses: "text-muted-foreground" },
+const VIEW_OPTIONS: { value: PantryView; label: string; icon: LucideIcon }[] = [
+  { value: "location", label: "Location", icon: MapPinned },
+  { value: "category", label: "Category", icon: Tags },
+  { value: "items", label: "All items", icon: LayoutGrid },
+  { value: "freshness", label: "Freshness", icon: CalendarClock },
 ];
 
+interface DisplayGroup {
+  key: string;
+  label: string;
+  items: InventoryRow[];
+  icon?: LucideIcon;
+  tone?: string;
+  detail?: string;
+  panel?: string;
+}
+
 const Pantry = () => {
+  const navigate = useNavigate();
   const { data: inventory, isLoading } = useInventory();
   const { data: allInventory } = useAllInventory();
   const { data: purchases } = usePurchases();
@@ -74,8 +87,10 @@ const Pantry = () => {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("All");
+  const [viewMode, setViewMode] = useState<PantryView>("location");
   const [viewing, setViewing] = useState<InventoryRow | null>(null);
   const [editing, setEditing] = useState<InventoryRow | null>(null);
+  const [exitRequest, setExitRequest] = useState<{ entry: InventoryRow; mode: PantryExitMode } | null>(null);
   const [expiryFilter, setExpiryFilter] = useState<string | null>(null);
   // Purchase-date filter: "all" | "archived" | "YYYY-MM"
   const [purchaseFilter, setPurchaseFilter] = useState<string>("all");
@@ -320,6 +335,18 @@ const Pantry = () => {
     setSelectedIds(new Set(filtered.map((entry) => entry.id)));
   };
 
+  const openStatus = (filter: string | null) => {
+    if (filter === "expiring") {
+      navigate("/pantry/alerts/use-soon");
+      return;
+    }
+    if (filter === "expired") {
+      navigate("/pantry/alerts/expired");
+      return;
+    }
+    setExpiryFilter(filter);
+  };
+
   // Phone status ribbon: summary + one-tap filter, replacing the 2x2 tile block.
   const statusChips: { key: string; label: string; count: number; filter: string | null; tone: string }[] = [
     { key: "all", label: "All", count: scoped.length, filter: null, tone: "" },
@@ -354,11 +381,70 @@ const Pantry = () => {
     }
   };
 
-  const grouped = useMemo(() => {
-    const groups: Record<ExpiryStatus, InventoryRow[]> = { expired: [], expiring: [], fresh: [], "no-date": [] };
-    (filtered ?? []).forEach((e) => { groups[getExpiryStatus(e.expiry_date)].push(e); });
-    return groups;
-  }, [filtered]);
+  const displayGroups = useMemo<DisplayGroup[]>(() => {
+    const byName = [...filtered].sort((a, b) => a.items.name.localeCompare(b.items.name));
+
+    if (viewMode === "items") {
+      return [{ key: "all", label: "All pantry items", items: byName, icon: LayoutGrid }];
+    }
+
+    if (viewMode === "freshness") {
+      const freshness: Array<{
+        key: ExpiryStatus;
+        label: string;
+        icon: LucideIcon;
+        tone: string;
+        detail: string;
+      }> = [
+        { key: "expired", label: "Expired", icon: AlertTriangle, tone: "text-destructive", detail: "Past the recorded date" },
+        { key: "expiring", label: "Use soon", icon: Clock, tone: "text-warning", detail: "Best used in the next few days" },
+        { key: "fresh", label: "Fresh", icon: ShieldCheck, tone: "text-success", detail: "Comfortably within date" },
+        { key: "no-date", label: "No date", icon: HelpCircle, tone: "text-muted-foreground", detail: "No expiry has been recorded" },
+      ];
+      return freshness
+        .map((group) => ({
+          ...group,
+          items: byName.filter((entry) => getExpiryStatus(entry.expiry_date) === group.key),
+        }))
+        .filter((group) => group.items.length > 0);
+    }
+
+    if (viewMode === "category") {
+      return [...CATEGORIES, "Uncategorised"]
+        .map((category) => ({
+          key: category,
+          label: category,
+          icon: Tags,
+          detail: category === "Non-perishables" ? "Long-life staples stored properly" : "Items in this food category",
+          items: byName.filter((entry) =>
+            category === "Uncategorised"
+              ? !entry.items.category
+              : entry.items.category === category,
+          ),
+        }))
+        .filter((group) => group.items.length > 0);
+    }
+
+    const locations: StorageStyleKey[] = ["Fridge", "Freezer", "Pantry", "Counter", "Other"];
+    return locations
+      .map((location) => {
+        const style = STORAGE_STYLES[location];
+        return {
+          key: location,
+          label: location,
+          icon: style.icon,
+          tone: style.accent,
+          detail: style.detail,
+          panel: style.panel,
+          items: byName.filter((entry) =>
+            location === "Other"
+              ? !entry.storage_location || entry.storage_location === "Other"
+              : entry.storage_location === location,
+          ),
+        };
+      })
+      .filter((group) => group.items.length > 0);
+  }, [filtered, viewMode]);
 
   const intelligenceCards: { key: ExpiryStatus; label: string; icon: React.ReactNode; accent: string; bg: string }[] = [
     { key: "expiring", label: "Use Soon", icon: <Clock className="h-5 w-5" />, accent: "text-warning", bg: "bg-warning/10" },
@@ -495,22 +581,25 @@ const Pantry = () => {
 
           {/* ── Phone row 3: locations ────────────────────────────────────── */}
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {LOCATION_TABS.map((loc) => (
-              <button
-                key={loc}
-                type="button"
-                onClick={() => setFilterLocation(loc)}
-                aria-pressed={filterLocation === loc}
-                className={cn(
-                  "min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors",
-                  filterLocation === loc
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground",
-                )}
-              >
-                {loc}
-              </button>
-            ))}
+            {LOCATION_TABS.map((loc) => {
+              const style = STORAGE_STYLES[loc];
+              const Icon = style.icon;
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => setFilterLocation(loc)}
+                  aria-pressed={filterLocation === loc}
+                  className={cn(
+                    "inline-flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[0.9375rem] font-medium transition-all",
+                    filterLocation === loc ? style.activeChip : style.inactiveChip,
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden />
+                  {loc}
+                </button>
+              );
+            })}
           </div>
 
           {/* ── Phone row 4: status ribbon ────────────────────────────────── */}
@@ -521,7 +610,7 @@ const Pantry = () => {
                 <button
                   key={c.key}
                   type="button"
-                  onClick={() => setExpiryFilter(c.filter)}
+                  onClick={() => openStatus(c.filter)}
                   aria-pressed={active}
                   className={cn(
                     "flex min-h-[44px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[0.9375rem] font-medium transition-colors",
@@ -532,10 +621,27 @@ const Pantry = () => {
                 >
                   <span className={cn("font-bold tabular-nums", active ? "text-primary" : c.tone)}>{c.count}</span>
                   {c.label}
+                  {(c.filter === "expiring" || c.filter === "expired") && <ChevronRight className="h-3.5 w-3.5" aria-hidden />}
                 </button>
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="flex min-h-[44px] w-full items-center justify-between rounded-2xl border border-border/80 bg-card px-4 text-left shadow-sm"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+              {(() => {
+                const option = VIEW_OPTIONS.find((item) => item.value === viewMode) ?? VIEW_OPTIONS[0];
+                const Icon = option.icon;
+                return <Icon className="h-4 w-4 text-primary" aria-hidden />;
+              })()}
+              View by {VIEW_OPTIONS.find((item) => item.value === viewMode)?.label.toLowerCase()}
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+          </button>
         </>
       )}
 
@@ -576,22 +682,25 @@ const Pantry = () => {
       {/* Location Pill Tabs — tablet/desktop (the phone has its own chip row) */}
       {!isPhone && (
         <div className="flex flex-wrap gap-2">
-          {LOCATION_TABS.map((loc) => (
-            <button
-              key={loc}
-              type="button"
-              onClick={() => setFilterLocation(loc)}
-              aria-pressed={filterLocation === loc}
-              className={cn(
-                "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                filterLocation === loc
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              {loc === "All" ? "All Locations" : loc}
-            </button>
-          ))}
+          {LOCATION_TABS.map((loc) => {
+            const style = STORAGE_STYLES[loc];
+            const Icon = style.icon;
+            return (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => setFilterLocation(loc)}
+                aria-pressed={filterLocation === loc}
+                className={cn(
+                  "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-all",
+                  filterLocation === loc ? style.activeChip : style.inactiveChip,
+                )}
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+                {loc === "All" ? "All Locations" : loc}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -817,13 +926,23 @@ const Pantry = () => {
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-11 pl-9" />
           </div>
           <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-full rounded-xl sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+            </SelectContent>
+          </Select>
+          <Select value={viewMode} onValueChange={(value) => setViewMode(value as PantryView)}>
+            <SelectTrigger className="h-11 w-full rounded-xl sm:w-44" aria-label="Organize pantry">
+              <SelectValue placeholder="View by" />
+            </SelectTrigger>
+            <SelectContent>
+              {VIEW_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>View by {option.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -833,13 +952,27 @@ const Pantry = () => {
       {!isPhone && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {intelligenceCards.map((card) => (
-            <div key={card.key} className={cn("rounded-2xl p-4 shadow-sm", card.bg)}>
-              <div className={cn("mb-1", card.accent)}>{card.icon}</div>
-              <p className={cn("text-2xl font-bold tabular-nums font-[Outfit,var(--font-heading),sans-serif]", card.accent)}>
-                {statusCounts[card.key]}
-              </p>
-              <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
-            </div>
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => openStatus(card.key === "no-date" ? "no_expiry" : card.key)}
+              className={cn(
+                "group rounded-2xl p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                card.bg,
+              )}
+              aria-label={`${statusCounts[card.key]} ${card.label}. Open details.`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className={cn("mb-1", card.accent)}>{card.icon}</div>
+                  <p className={cn("text-2xl font-bold tabular-nums font-[Outfit,var(--font-heading),sans-serif]", card.accent)}>
+                    {statusCounts[card.key]}
+                  </p>
+                  <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </button>
           ))}
         </div>
       )}
@@ -874,23 +1007,33 @@ const Pantry = () => {
           ))}
         </div>
       ) : (
-        <div className="space-y-8">
-          {STATUS_GROUPS.map((group) => {
-            const items = grouped[group.key];
-            if (items.length === 0) return null;
+        <div className="space-y-6">
+          {displayGroups.map((group) => {
+            const GroupIcon = group.icon ?? Package;
             return (
-              <section key={group.key}>
-                <div className={cn("mb-4 flex items-center gap-2", group.colorClasses)}>
-                  {group.icon}
-                  <h2 className="text-sm font-semibold uppercase tracking-wide font-[Outfit,var(--font-heading),sans-serif]">
-                    {group.label}
-                  </h2>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    {items.length}
+              <section
+                key={group.key}
+                className={cn(
+                  "rounded-[1.75rem] border p-3.5 sm:p-5",
+                  group.panel ?? "border-border/60 bg-card/30",
+                )}
+              >
+                <div className={cn("mb-4 flex items-center gap-3", group.tone)}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-current/10 bg-card/75 shadow-sm">
+                    <GroupIcon className="h-4 w-4" aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground font-[Outfit,var(--font-heading),sans-serif]">
+                      {group.label}
+                    </h2>
+                    {group.detail && <p className="truncate text-xs text-muted-foreground">{group.detail}</p>}
+                  </div>
+                  <span className="rounded-full border border-border/70 bg-card/80 px-2.5 py-1 text-xs font-semibold tabular-nums text-muted-foreground shadow-sm">
+                    {group.items.length}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                  {items.map((entry) => (
+                  {group.items.map((entry) => (
                     <InventoryCard
                       key={entry.id}
                       entry={entry}
@@ -916,6 +1059,10 @@ const Pantry = () => {
           onClose={() => setViewing(null)}
           onEdit={() => {
             setEditing(viewing);
+            setViewing(null);
+          }}
+          onExit={(exitMode) => {
+            setExitRequest({ entry: viewing, mode: exitMode });
             setViewing(null);
           }}
           onShare={
@@ -954,7 +1101,15 @@ const Pantry = () => {
         onShared={() => cancelSelection()}
       />
 
-      <ItemCatalogSection />
+      {exitRequest && (
+        <PantryExitDialog
+          entry={exitRequest.entry}
+          mode={exitRequest.mode}
+          open
+          onClose={() => setExitRequest(null)}
+          onCompleted={() => setExitRequest(null)}
+        />
+      )}
 
       {/* Phone progressive disclosure */}
       {isPhone && (
@@ -962,11 +1117,37 @@ const Pantry = () => {
           <PantryToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
 
           <Drawer open={filtersOpen} onOpenChange={setFiltersOpen}>
-            <DrawerContent>
-              <DrawerHeader className="text-center">
+            <DrawerContent className="max-h-[88dvh] overflow-hidden">
+              <DrawerHeader className="shrink-0 text-center">
                 <DrawerTitle>Filters</DrawerTitle>
               </DrawerHeader>
-              <div className="space-y-4 px-4 pb-6">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-[max(1.5rem,var(--safe-bottom))]">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Organize pantry</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {VIEW_OPTIONS.map((option) => {
+                      const Icon = option.icon;
+                      const active = viewMode === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setViewMode(option.value)}
+                          aria-pressed={active}
+                          className={cn(
+                            "flex min-h-12 items-center gap-2 rounded-xl border px-3 text-left text-sm font-medium transition-colors",
+                            active
+                              ? "border-primary bg-primary/10 text-foreground"
+                              : "border-border bg-card text-muted-foreground",
+                          )}
+                        >
+                          <Icon className={cn("h-4 w-4", active && "text-primary")} aria-hidden />
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Category</label>
                   <Select value={filterCategory} onValueChange={setFilterCategory}>

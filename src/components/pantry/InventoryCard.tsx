@@ -5,10 +5,11 @@ import { getItemMedia, type ItemMediaSource } from "@/lib/item-media";
 import { useSignedImage } from "@/hooks/useSignedImage";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Check, ImagePlus, MapPin, PackageOpen, AlertTriangle } from "lucide-react";
+import { Check, ImagePlus, PackageOpen, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import QuickActionsBar from "@/components/pantry/QuickActionsBar";
 import { nutritionBasisLabel } from "@/lib/nutrition";
+import { getStorageStyle } from "@/components/pantry/storage-style";
 
 interface Props {
   entry: InventoryRow;
@@ -48,6 +49,8 @@ const InventoryCard = ({
   const [mediaSource, setMediaSource] = useState<ItemMediaSource>(media.source);
   const signedUpload = useSignedImage(entry.items.image_url);
   const missingLocation = entry.status === "active" && !entry.storage_location;
+  const storageStyle = getStorageStyle(entry.storage_location);
+  const StorageIcon = storageStyle.icon;
   const nutritionBasis = nutritionBasisLabel(entry.items).replace(/^Per /, "per ");
   const nutritionSummary = [
     Number(entry.items.calories_per_unit ?? 0) > 0
@@ -215,14 +218,14 @@ const InventoryCard = ({
             </Badge>
           )}
           {(entry.storage_location || entry.items.category) && (
-            <span className="inline-flex sm:hidden items-center gap-0.5 text-[0.7rem] text-muted-foreground truncate">
-              <MapPin className="h-3 w-3 shrink-0" />
+            <span className={cn("inline-flex truncate items-center gap-0.5 text-[0.7rem] sm:hidden", entry.storage_location ? storageStyle.accent : "text-muted-foreground")}>
+              <StorageIcon className="h-3 w-3 shrink-0" />
               <span className="truncate">{entry.storage_location ?? entry.items.category}</span>
             </span>
           )}
           {entry.storage_location && (
-            <span className="hidden sm:inline-flex items-center gap-0.5 text-[0.65rem] text-muted-foreground">
-              <MapPin className="h-2.5 w-2.5" />
+            <span className={cn("hidden items-center gap-0.5 rounded-full bg-card/70 px-1.5 py-0.5 text-[0.65rem] sm:inline-flex", storageStyle.accent)}>
+              <StorageIcon className="h-2.5 w-2.5" />
               {entry.storage_location}
             </span>
           )}
