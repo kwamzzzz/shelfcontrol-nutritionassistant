@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
@@ -63,6 +63,7 @@ const navSections = [
 
 const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { collapsed, toggleCollapsed } = useSidebar();
   const { pendingCount } = useMyInvites();
 
@@ -123,45 +124,44 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
               )}
               <div className={cn("space-y-0.5", isCompact && "flex flex-col items-center")}>
                 {section.items.map((item) => {
+                  const isActive = item.to === "/"
+                    ? pathname === "/"
+                    : pathname === item.to || pathname.startsWith(`${item.to}/`);
                   const link = (
                     <NavLink
                       key={item.to}
                       to={item.to}
                       end={item.to === "/"}
-                      className={({ isActive }) =>
-                        cn(
-                          "relative flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
-                          isCompact ? "mx-auto h-11 w-11 shrink-0 p-0" : "gap-3 px-4 py-2.5",
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-[0_9px_22px_-10px_rgba(5,150,105,0.85)] ring-2 ring-emerald-600/20 ring-offset-2 ring-offset-sidebar dark:bg-emerald-400 dark:text-emerald-950 dark:ring-emerald-300/25"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        )
-                      }
+                      aria-current={isActive ? "page" : undefined}
+                      aria-label={isCompact ? item.label : undefined}
+                      className={cn(
+                        "relative flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
+                        isCompact ? "mx-auto h-11 w-11 shrink-0 p-0" : "gap-3 px-4 py-2.5",
+                        isActive
+                          ? "bg-emerald-600 text-white shadow-[0_9px_22px_-10px_rgba(5,150,105,0.85)] ring-2 ring-emerald-600/20 ring-offset-2 ring-offset-sidebar dark:bg-emerald-400 dark:text-emerald-950 dark:ring-emerald-300/25"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      )}
                     >
-                      {({ isActive }: { isActive: boolean }) => (
-                        <>
-                          {isActive && !isCompact && (
-                            <span
-                              aria-hidden
-                              className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-sidebar-primary"
-                            />
-                          )}
-                          <item.icon
-                            className={cn(
-                              "h-[18px] w-[18px] shrink-0 transition-colors",
-                              !isActive
-                                ? (item.accent ?? section.accent)
-                                : "text-white dark:text-emerald-950",
-                            )}
-                            strokeWidth={isActive ? 2.35 : 2}
-                          />
-                          {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
-                          {!isCompact && item.hasBadge && pendingCount > 0 && (
-                            <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
-                              {pendingCount}
-                            </Badge>
-                          )}
-                        </>
+                      {isActive && !isCompact && (
+                        <span
+                          aria-hidden
+                          className="absolute -left-3 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-sidebar-primary"
+                        />
+                      )}
+                      <item.icon
+                        className={cn(
+                          "h-[18px] w-[18px] shrink-0 transition-colors",
+                          !isActive
+                            ? (item.accent ?? section.accent)
+                            : "text-white dark:text-emerald-950",
+                        )}
+                        strokeWidth={isActive ? 2.35 : 2}
+                      />
+                      {!isCompact && <span className="flex-1 truncate">{item.label}</span>}
+                      {!isCompact && item.hasBadge && pendingCount > 0 && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-4 font-bold bg-[#FF5A25] text-white border-0">
+                          {pendingCount}
+                        </Badge>
                       )}
                     </NavLink>
                   );

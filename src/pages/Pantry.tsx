@@ -31,6 +31,7 @@ import {
   Share2,
   ListChecks,
   Trash2,
+  UtensilsCrossed,
   X,
   CalendarDays,
   ReceiptText,
@@ -671,6 +672,20 @@ const Pantry = () => {
               Share
             </Button>
           )}
+          <Button
+            type="button"
+            size="sm"
+            className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+            disabled={selectedEntries.length === 0}
+            onClick={() => setExitRequest({
+              entries: selectedEntries,
+              mode: "consume",
+              bulk: true,
+            })}
+          >
+            <UtensilsCrossed className="mr-1.5 h-4 w-4" />
+            Consume
+          </Button>
           <Button
             type="button"
             size="sm"

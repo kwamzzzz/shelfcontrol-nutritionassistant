@@ -58,7 +58,7 @@ const dateToTimestamp = (date: string) => {
 /**
  * One exit surface for pantry items. Disposal defaults to a concise
  * confirmation and keeps quantity/date/reason as optional details. A user may
- * skip future single-item confirmations; bulk disposal always confirms.
+ * skip future single-item confirmations; every bulk action always confirms.
  */
 const PantryExitDialog = ({ entry, entries, mode, open, onClose, onCompleted }: Props) => {
   const targets = useMemo(
@@ -218,10 +218,14 @@ const PantryExitDialog = ({ entry, entries, mode, open, onClose, onCompleted }: 
     ? isBulk
       ? `Dispose ${targets.length} items?`
       : `Dispose ${primaryEntry.items.name}?`
-    : `Record ${primaryEntry.items.name}`;
+    : isBulk
+      ? `Consume ${targets.length} items?`
+      : `Record ${primaryEntry.items.name}`;
   const description = mode === "dispose"
     ? "This records what left your pantry and removes it from the active view."
-    : "Tell Shelf Control how much you used and when.";
+    : isBulk
+      ? "This records the selected items as consumed and removes them from the active pantry."
+      : "Tell Shelf Control how much you used and when.";
 
   const details = (
     <div className="space-y-4 rounded-2xl border border-border/70 bg-card/70 p-4">
@@ -336,7 +340,10 @@ const PantryExitDialog = ({ entry, entries, mode, open, onClose, onCompleted }: 
           </div>
         </div>
         {isBulk && (
-          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-destructive/10 pt-3">
+          <div className={cn(
+            "mt-3 flex flex-wrap gap-1.5 border-t pt-3",
+            mode === "dispose" ? "border-destructive/10" : "border-success/10",
+          )}>
             {targets.slice(0, 5).map((target) => (
               <span key={target.id} className="rounded-full bg-card/80 px-2.5 py-1 text-xs text-foreground shadow-sm">
                 {target.items.name}
@@ -422,7 +429,7 @@ const PantryExitDialog = ({ entry, entries, mode, open, onClose, onCompleted }: 
             ? mode === "dispose" ? "Disposing…" : "Saving…"
             : mode === "dispose"
               ? isBulk ? `Dispose ${targets.length} items` : "Dispose item"
-              : "Save consumption"}
+              : isBulk ? `Consume ${targets.length} items` : "Save consumption"}
         </Button>
       </div>
     </form>
