@@ -1087,9 +1087,12 @@ const Pantry = () => {
         </div>
       )}
 
-      {viewing && (
+      {viewing && (() => {
+        // Always read the freshest row so inline edits (e.g. a new photo) show up
+        const current = inventory?.find((row) => row.id === viewing.id) ?? viewing;
+        return (
         <InventoryDetailsOverlay
-          entry={viewing}
+          entry={current}
           open={!!viewing}
           onClose={() => setViewing(null)}
           onExit={(exitMode) => {
@@ -1105,7 +1108,8 @@ const Pantry = () => {
               : undefined
           }
         />
-      )}
+        );
+      })()}
 
       <ShareToGroupDialog
         open={!!shareEntries}

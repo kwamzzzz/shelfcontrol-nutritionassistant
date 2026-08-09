@@ -17,6 +17,7 @@ import { useIsPhone } from "@/hooks/use-shell-mode";
 import { classifyFood, estimateShelfLifeDays, recommendStorage, type StorageLocation } from "@/lib/shelf-life";
 import { getItemMedia, type ItemMediaSource } from "@/lib/item-media";
 import { useSignedImage } from "@/hooks/useSignedImage";
+import ItemPhotoButton from "@/components/shared/ItemPhotoButton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -193,7 +194,15 @@ const InventoryDetailsContent = ({ entry, onShare, onExit }: Omit<Props, "open">
                 <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">
                   Upload an accurate photo for this exact product.
                 </p>
+                <ItemPhotoButton itemId={entry.item_id} className="mt-4" />
               </div>
+            )}
+            {imageSrc && (
+              <ItemPhotoButton
+                itemId={entry.item_id}
+                hasPhoto={mediaSource === "uploaded"}
+                className="absolute right-3 top-3"
+              />
             )}
             {mediaSource === "catalog" && (
               <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur">
