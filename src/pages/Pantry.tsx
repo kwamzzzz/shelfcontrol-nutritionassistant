@@ -1108,7 +1108,8 @@ const Pantry = () => {
               : undefined
           }
         />
-      )}
+        );
+      })()}
 
       <ShareToGroupDialog
         open={!!shareEntries}
