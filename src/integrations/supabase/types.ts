@@ -771,6 +771,8 @@ export type Database = {
           protein_g_per_serving: number | null
           servings: number | null
           sodium_mg_per_serving: number | null
+          source_notes: string | null
+          source_url: string | null
           sugar_g_per_serving: number | null
           tags: string[]
           user_id: string
@@ -791,6 +793,8 @@ export type Database = {
           protein_g_per_serving?: number | null
           servings?: number | null
           sodium_mg_per_serving?: number | null
+          source_notes?: string | null
+          source_url?: string | null
           sugar_g_per_serving?: number | null
           tags?: string[]
           user_id: string
@@ -811,6 +815,8 @@ export type Database = {
           protein_g_per_serving?: number | null
           servings?: number | null
           sodium_mg_per_serving?: number | null
+          source_notes?: string | null
+          source_url?: string | null
           sugar_g_per_serving?: number | null
           tags?: string[]
           user_id?: string
