@@ -10,6 +10,7 @@ import { getExpiryStatus, type ExpiryStatus } from "@/lib/pantry-utils";
 import AddInventoryDialog from "@/components/pantry/AddInventoryDialog";
 import InventoryCard from "@/components/pantry/InventoryCard";
 import InventoryDetailsOverlay from "@/components/pantry/InventoryDetailsOverlay";
+import EditInventoryDialog from "@/components/pantry/EditInventoryDialog";
 import ShelfLifeManager from "@/components/pantry/ShelfLifeManager";
 import PantryCleanupDialog from "@/components/pantry/PantryCleanupDialog";
 import PantryStatsDialog from "@/components/pantry/PantryStatsDialog";
@@ -91,6 +92,7 @@ const Pantry = () => {
   const [filterLocation, setFilterLocation] = useState("All");
   const [viewMode, setViewMode] = useState<PantryView>("location");
   const [viewing, setViewing] = useState<InventoryRow | null>(null);
+  const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [exitRequest, setExitRequest] = useState<{
     entries: InventoryRow[];
     mode: PantryExitMode;
@@ -1099,6 +1101,10 @@ const Pantry = () => {
             setExitRequest({ entries: [viewing], mode: exitMode });
             setViewing(null);
           }}
+          onEdit={() => {
+            setEditing(current);
+            setViewing(null);
+          }}
           onShare={
             isPersonalMode
               ? () => {
@@ -1108,6 +1114,18 @@ const Pantry = () => {
               : undefined
           }
         />
+        );
+      })()}
+
+      {editing && (() => {
+        const currentEdit = inventory?.find((row) => row.id === editing.id) ?? editing;
+        return (
+          <EditInventoryDialog
+            entry={currentEdit}
+            open
+            onClose={() => setEditing(null)}
+            onShare={isPersonalMode ? () => setShareEntries([currentEdit]) : undefined}
+          />
         );
       })()}
 

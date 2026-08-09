@@ -6,6 +6,7 @@ import {
   Globe2,
   ImagePlus,
   MapPin,
+  Pencil,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -42,6 +43,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onShare?: () => void;
+  onEdit?: () => void;
   onExit: (mode: PantryExitMode) => void;
 }
 
@@ -64,7 +66,7 @@ const nutritionBasisLabel = (entry: InventoryRow) => {
 const displayNumber = (value: number) =>
   Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
-const InventoryDetailsContent = ({ entry, onShare, onExit }: Omit<Props, "open">) => {
+const InventoryDetailsContent = ({ entry, onShare, onEdit, onExit }: Omit<Props, "open">) => {
   const media = useMemo(() => getItemMedia(entry.items), [entry.items]);
   const fallbackMedia = useMemo(
     () => getItemMedia({ ...entry.items, image_url: null }),
@@ -335,6 +337,18 @@ const InventoryDetailsContent = ({ entry, onShare, onExit }: Omit<Props, "open">
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,var(--safe-bottom))] pt-3 backdrop-blur sm:px-6 sm:pb-4">
+        {onEdit && (
+          <div className="mx-auto flex max-w-3xl">
+            <Button
+              variant="outline"
+              className="min-h-12 w-full rounded-xl border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+              onClick={onEdit}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit details
+            </Button>
+          </div>
+        )}
         {canExit && (
           <div className="mx-auto flex max-w-3xl gap-2">
             <Button
@@ -368,9 +382,9 @@ const InventoryDetailsContent = ({ entry, onShare, onExit }: Omit<Props, "open">
   );
 };
 
-const InventoryDetailsOverlay = ({ entry, open, onClose, onShare, onExit }: Props) => {
+const InventoryDetailsOverlay = ({ entry, open, onClose, onShare, onEdit, onExit }: Props) => {
   const isPhone = useIsPhone();
-  const contentProps = { entry, onClose, onShare, onExit };
+  const contentProps = { entry, onClose, onShare, onEdit, onExit };
 
   if (isPhone) {
     return (
