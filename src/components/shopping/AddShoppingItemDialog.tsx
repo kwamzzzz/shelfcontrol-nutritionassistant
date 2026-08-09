@@ -17,6 +17,7 @@ import { CATEGORIES } from "@/lib/pantry-utils";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import ImageUpload from "@/components/shared/ImageUpload";
 
 interface Props {
   triggerClassName?: string;
@@ -34,6 +35,7 @@ const AddShoppingItemDialog = ({
   const [quantity, setQuantity] = useState("1");
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { data: items } = useItems();
   const createItem = useCreateShoppingItem();
   const { toast } = useToast();
@@ -45,6 +47,7 @@ const AddShoppingItemDialog = ({
     setQuantity("1");
     setCategory("");
     setEstimatedCost("");
+    setImageUrl(null);
   };
 
   const handleCatalogSelect = (id: string) => {
@@ -53,6 +56,7 @@ const AddShoppingItemDialog = ({
     if (item) {
       setName(item.name);
       if (item.category) setCategory(item.category);
+      if (item.image_url) setImageUrl(item.image_url);
     }
   };
 
@@ -66,6 +70,7 @@ const AddShoppingItemDialog = ({
         quantity: quantity ? Number(quantity) : 1,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        image_url: imageUrl,
       });
       toast({ title: "Added", description: `${name} added to shopping list.` });
       reset();

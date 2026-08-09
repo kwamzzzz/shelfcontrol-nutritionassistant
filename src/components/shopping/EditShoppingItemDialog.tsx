@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CATEGORIES } from "@/lib/pantry-utils";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ImageUpload from "@/components/shared/ImageUpload";
 
 interface Props {
   item: ShoppingItem;
@@ -21,6 +22,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const [quantity, setQuantity] = useState(String(item.quantity ?? 1));
   const [category, setCategory] = useState(item.category ?? "");
   const [estimatedCost, setEstimatedCost] = useState(String(item.estimated_cost ?? ""));
+  const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateShoppingItem();
   const deleteItem = useDeleteShoppingItem();
   const { toast } = useToast();
@@ -34,6 +36,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
         quantity: quantity ? Number(quantity) : 1,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
       onClose();
@@ -70,6 +73,15 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Photo</Label>
+            <ImageUpload
+              currentUrl={imageUrl}
+              folder="shopping"
+              onUploaded={setImageUrl}
+              onRemoved={() => setImageUrl(null)}
+            />
+          </div>
           <div className="space-y-2">
             <Label>Name *</Label>
             <Input className="min-h-11 rounded-xl" value={name} onChange={(e) => setName(e.target.value)} required />
