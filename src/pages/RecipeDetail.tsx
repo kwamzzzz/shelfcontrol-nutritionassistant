@@ -9,6 +9,7 @@ import { useSignedImage } from "@/hooks/useSignedImage";
 import IngredientsCard from "@/components/cookbook/IngredientsCard";
 import InstructionsCard from "@/components/cookbook/InstructionsCard";
 import NutritionCard from "@/components/cookbook/NutritionCard";
+import RecipeSourceCard from "@/components/cookbook/RecipeSourceCard";
 import StepByStepMode from "@/components/cookbook/StepByStepMode";
 import AddIngredientDialog from "@/components/cookbook/AddIngredientDialog";
 import EditRecipeDialog from "@/components/recipes/EditRecipeDialog";
@@ -414,6 +415,15 @@ const RecipeDetail = () => {
             saving={savingNutrition}
           />
         </div>
+
+        {databaseRecipe && (
+          <RecipeSourceCard
+            recipeId={databaseRecipe.id}
+            sourceUrl={databaseRecipe.source_url}
+            sourceNotes={databaseRecipe.source_notes}
+            imageUrl={databaseRecipe.image_url}
+          />
+        )}
 
         {recipe.tips && recipe.tips.length > 0 && (
           <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur p-5 shadow-sm">
