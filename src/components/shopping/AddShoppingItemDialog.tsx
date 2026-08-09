@@ -158,6 +158,16 @@ const AddShoppingItemDialog = ({
             </div>
           )}
 
+          <div className="space-y-2">
+            <Label>Photo</Label>
+            <ImageUpload
+              currentUrl={imageUrl}
+              folder="shopping"
+              onUploaded={setImageUrl}
+              onRemoved={() => setImageUrl(null)}
+            />
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Qty</Label>

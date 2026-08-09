@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { type ShoppingItem, useToggleShoppingItem } from "@/hooks/useShoppingList";
 import { formatCurrency } from "@/lib/currency";
+import { useSignedImage } from "@/hooks/useSignedImage";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -39,6 +40,7 @@ const categoryTone = (category?: string | null) => {
 
 const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
   const toggleItem = useToggleShoppingItem();
+  const photo = useSignedImage(item.image_url);
   const quantity = Number(item.quantity ?? 1);
   const estimatedLineCost = Number(item.estimated_cost ?? 0) * quantity;
   const completionTime =
@@ -86,9 +88,18 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
         className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl px-1.5 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Edit ${item.name}`}
       >
-        <span className={cn("hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:flex", categoryTone(item.category))}>
-          <ShoppingBag className="h-5 w-5" />
-        </span>
+        {photo ? (
+          <img
+            src={photo}
+            alt={item.name}
+            loading="lazy"
+            className="hidden h-11 w-11 shrink-0 rounded-2xl object-cover sm:block"
+          />
+        ) : (
+          <span className={cn("hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:flex", categoryTone(item.category))}>
+            <ShoppingBag className="h-5 w-5" />
+          </span>
+        )}
 
         <span className="min-w-0 flex-1">
           <span
