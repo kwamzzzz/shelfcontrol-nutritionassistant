@@ -834,6 +834,7 @@ export type Database = {
           estimated_cost: number | null
           group_id: string | null
           id: string
+          image_url: string | null
           is_purchased: boolean
           item_id: string | null
           name: string
@@ -848,6 +849,7 @@ export type Database = {
           estimated_cost?: number | null
           group_id?: string | null
           id?: string
+          image_url?: string | null
           is_purchased?: boolean
           item_id?: string | null
           name: string
@@ -862,6 +864,7 @@ export type Database = {
           estimated_cost?: number | null
           group_id?: string | null
           id?: string
+          image_url?: string | null
           is_purchased?: boolean
           item_id?: string | null
           name?: string
