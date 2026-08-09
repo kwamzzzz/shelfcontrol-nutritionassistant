@@ -382,7 +382,7 @@ const InventoryDetailsContent = ({ entry, onShare, onEdit, onExit }: Omit<Props,
   );
 };
 
-const InventoryDetailsOverlay = ({ entry, open, onClose, onShare, onExit }: Props) => {
+const InventoryDetailsOverlay = ({ entry, open, onClose, onShare, onEdit, onExit }: Props) => {
   const isPhone = useIsPhone();
   const contentProps = { entry, onClose, onShare, onEdit, onExit };
 
