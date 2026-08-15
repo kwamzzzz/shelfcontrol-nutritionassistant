@@ -59,6 +59,7 @@ const AddShoppingItemDialog = ({
   const [unit, setUnit] = useState("Piece");
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
+  const [basket, setBasket] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { data: items } = useItems();
   const createItem = useCreateShoppingItem();
@@ -76,6 +77,7 @@ const AddShoppingItemDialog = ({
     setUnit("Piece");
     setCategory("");
     setEstimatedCost("");
+    setBasket("");
     setImageUrl(null);
   };
 
@@ -120,6 +122,7 @@ const AddShoppingItemDialog = ({
           unit: r.unit || null,
           category: null,
           estimated_cost: r.cost ? Number(r.cost) : null,
+          basket: basket.trim() ? basket.trim() : null,
           image_url: null,
         });
       }
@@ -148,6 +151,7 @@ const AddShoppingItemDialog = ({
         unit: unit || null,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        basket: basket.trim() ? basket.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Added", description: `${name} added to shopping list.` });
@@ -187,6 +191,15 @@ const AddShoppingItemDialog = ({
           </TabsList>
 
           <TabsContent value="bulk" className="space-y-3">
+            <div className="space-y-2">
+              <Label>Basket (optional)</Label>
+              <Input
+                className="min-h-11 rounded-xl"
+                value={basket}
+                onChange={(e) => setBasket(e.target.value)}
+                placeholder="e.g. Carrefour, Amazon, Corner shop"
+              />
+            </div>
             {bulkRows ? (
               <>
                 <div className="space-y-2">
