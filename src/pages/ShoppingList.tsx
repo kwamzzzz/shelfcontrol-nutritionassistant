@@ -439,13 +439,13 @@ const ShoppingList = () => {
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
             <div className="relative min-w-0 flex-1 lg:max-w-sm">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 inputMode="search"
-                placeholder="Search name, category or basket"
+                placeholder="Search items or baskets"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="min-h-11 rounded-2xl border-border/70 bg-[hsl(var(--surface-subtle))] pl-10 pr-11 shadow-none"
@@ -463,38 +463,42 @@ const ShoppingList = () => {
               )}
             </div>
 
-            <Button
-              type="button"
-              variant={selectMode ? "default" : "outline"}
-              className="min-h-11 shrink-0 rounded-2xl"
-              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-            >
-              <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              {selectMode ? "Done selecting" : "Select items"}
-            </Button>
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
+              <Button
+                type="button"
+                variant={selectMode ? "default" : "outline"}
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              >
+                <ShoppingBasket className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">{selectMode ? "Done" : "Select"}</span>
+                <span className="hidden sm:ml-1 sm:inline">{selectMode ? "selecting" : "items"}</span>
+              </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 shrink-0 rounded-2xl"
-              disabled={!filtered.length}
-              onClick={() => setShareState({ items: filtered, title: contextLabel })}
-            >
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Share list
-            </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                disabled={!filtered.length}
+                onClick={() => setShareState({ items: filtered, title: contextLabel })}
+              >
+                <Share2 className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">Share</span>
+                <span className="hidden sm:ml-1 sm:inline">list</span>
+              </Button>
 
-            <Button
-              type="button"
-              className="min-h-11 shrink-0 rounded-2xl"
-              onClick={() => setCartOpen(true)}
-            >
-              <ShoppingCart className="mr-1.5 h-4 w-4" />
-              Cart
-              <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
-                {cartItems.length}
-              </span>
-            </Button>
+              <Button
+                type="button"
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                onClick={() => setCartOpen(true)}
+              >
+                <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">Cart</span>
+                <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
+                  {cartItems.length}
+                </span>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
