@@ -210,7 +210,7 @@ const AddShoppingItemDialog = ({
                       />
                       <Input
                         className="min-h-10 rounded-xl"
-                        type="number" min={0} step="0.01" placeholder="Cost"
+                        type="number" min={0} step="0.01" placeholder="Total"
                         value={r.cost}
                         onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, cost: e.target.value } : x)))}
                       />
@@ -341,7 +341,7 @@ const AddShoppingItemDialog = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Est. Cost</Label>
+              <Label>Total Price</Label>
               <Input className="min-h-11 rounded-xl" type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
             </div>
           </div>

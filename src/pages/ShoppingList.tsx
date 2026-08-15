@@ -92,11 +92,7 @@ const ShoppingList = () => {
     const open = items.length - purchased;
     const estimate = items
       .filter((item) => !item.is_purchased)
-      .reduce(
-        (sum, item) =>
-          sum + Number(item.estimated_cost ?? 0) * Number(item.quantity ?? 1),
-        0
-      );
+      .reduce((sum, item) => sum + Number(item.estimated_cost ?? 0), 0);
 
     return {
       all: items.length,
