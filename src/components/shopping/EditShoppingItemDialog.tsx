@@ -25,6 +25,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const [unit, setUnit] = useState(item.unit ?? "Piece");
   const [category, setCategory] = useState(item.category ?? "");
   const [estimatedCost, setEstimatedCost] = useState(String(item.estimated_cost ?? ""));
+  const [basket, setBasket] = useState(item.basket ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateShoppingItem();
   const deleteItem = useDeleteShoppingItem();
@@ -41,6 +42,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
         unit: unit || null,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        basket: basket.trim() ? basket.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
@@ -115,6 +117,16 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
               <Label>Total Price</Label>
               <Input className="min-h-11 rounded-xl" type="number" min={0} step="0.01" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} placeholder="0.00" />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Basket</Label>
+            <Input
+              className="min-h-11 rounded-xl"
+              value={basket}
+              onChange={(e) => setBasket(e.target.value)}
+              placeholder="e.g. Carrefour, Amazon, Corner shop"
+            />
+            <p className="text-xs text-muted-foreground">Leave empty to keep it in the unsorted list.</p>
           </div>
           <div className="flex gap-2">
             <Button type="submit" className="min-h-11 flex-1 rounded-xl" disabled={updateItem.isPending}>
