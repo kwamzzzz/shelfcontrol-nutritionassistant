@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { parseBulkNotes } from "@/lib/purchase-parser";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import ImageUpload from "@/components/shared/ImageUpload";
@@ -25,11 +28,30 @@ interface Props {
   triggerLabel?: string;
 }
 
+const BULK_PLACEHOLDER = `Item, quantity, unit, price
+
+Tomatoes, 6 pieces, 14
+Spinach, 1 bunch, 5
+Milk, 2 bottles, 8
+Rice, 5 kg, 30`;
+
+interface BulkRow {
+  id: string;
+  name: string;
+  quantity: string;
+  unit: string;
+  cost: string;
+}
+
 const AddShoppingItemDialog = ({
   triggerClassName,
   triggerLabel = "Add Item",
 }: Props) => {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"single" | "bulk">("single");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkRows, setBulkRows] = useState<BulkRow[] | null>(null);
+  const [bulkSaving, setBulkSaving] = useState(false);
   const [mode, setMode] = useState<"catalog" | "custom">("custom");
   const [itemId, setItemId] = useState("");
   const [name, setName] = useState("");
@@ -44,6 +66,10 @@ const AddShoppingItemDialog = ({
 
   const reset = () => {
     setMode("custom");
+    setTab("single");
+    setBulkText("");
+    setBulkRows(null);
+    setBulkSaving(false);
     setItemId("");
     setName("");
     setQuantity("1");
@@ -61,6 +87,53 @@ const AddShoppingItemDialog = ({
       if (item.default_unit) setUnit(item.default_unit);
       if (item.category) setCategory(item.category);
       if (item.image_url) setImageUrl(item.image_url);
+    }
+  };
+
+  const analyseBulk = () => {
+    const parsed = parseBulkNotes(bulkText);
+    if (parsed.length === 0) {
+      toast({ title: "Nothing to add", description: "Add some items first.", variant: "destructive" });
+      return;
+    }
+    setBulkRows(
+      parsed.map((p, i) => ({
+        id: `${i}-${p.name}`,
+        name: p.name,
+        quantity: p.quantity != null ? String(p.quantity) : p.weight != null ? String(p.weight) : "1",
+        unit: p.quantityUnit || p.weightUnit || "Piece",
+        cost: p.price != null ? String(p.price) : "",
+      })),
+    );
+  };
+
+  const saveBulk = async () => {
+    const rows = (bulkRows ?? []).filter((r) => r.name.trim());
+    if (rows.length === 0) return;
+    setBulkSaving(true);
+    try {
+      for (const r of rows) {
+        await createItem.mutateAsync({
+          name: r.name.trim(),
+          item_id: null,
+          quantity: r.quantity ? Number(r.quantity) : 1,
+          unit: r.unit || null,
+          category: null,
+          estimated_cost: r.cost ? Number(r.cost) : null,
+          image_url: null,
+        });
+      }
+      toast({ title: "Added", description: `${rows.length} item${rows.length !== 1 ? "s" : ""} added to your shopping list.` });
+      reset();
+      setOpen(false);
+    } catch (err: unknown) {
+      toast({
+        title: "Couldn't add items",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkSaving(false);
     }
   };
 
@@ -97,13 +170,87 @@ const AddShoppingItemDialog = ({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md rounded-[1.75rem]">
+      <DialogContent className={cn("max-h-[88vh] overflow-y-auto rounded-[1.75rem]", bulkRows ? "max-w-2xl" : "max-w-md")}>
         <DialogHeader>
           <DialogTitle className="font-display">Add to Shopping List</DialogTitle>
           <DialogDescription>
-            Add something new or choose an item already in your pantry catalog.
+            Add one item, or paste a whole list at once.
           </DialogDescription>
         </DialogHeader>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "bulk")}>
+          <TabsList className="grid min-h-12 w-full grid-cols-2 rounded-xl">
+            <TabsTrigger value="single" className="min-h-10 rounded-lg">Single Item</TabsTrigger>
+            <TabsTrigger value="bulk" className="min-h-10 rounded-lg">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Bulk Paste
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="bulk" className="space-y-3">
+            {bulkRows ? (
+              <>
+                <div className="space-y-2">
+                  {bulkRows.map((r) => (
+                    <div key={r.id} className="grid grid-cols-[1fr_4.5rem_7rem_5.5rem_2rem] items-center gap-2">
+                      <Input
+                        className="min-h-10 rounded-xl"
+                        value={r.name}
+                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, name: e.target.value } : x)))}
+                      />
+                      <Input
+                        className="min-h-10 rounded-xl"
+                        type="number" min={0} step="any"
+                        value={r.quantity}
+                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, quantity: e.target.value } : x)))}
+                      />
+                      <GroupedUnitSelect
+                        value={r.unit}
+                        onValueChange={(v) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, unit: v } : x)))}
+                        triggerClassName="min-h-10 rounded-xl"
+                      />
+                      <Input
+                        className="min-h-10 rounded-xl"
+                        type="number" min={0} step="0.01" placeholder="Cost"
+                        value={r.cost}
+                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, cost: e.target.value } : x)))}
+                      />
+                      <Button
+                        type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg"
+                        onClick={() => setBulkRows((rows) => rows!.filter((x) => x.id !== r.id))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="min-h-11 flex-1 rounded-xl" onClick={() => setBulkRows(null)}>
+                    Back
+                  </Button>
+                  <Button type="button" className="min-h-11 flex-1 rounded-xl" onClick={saveBulk} disabled={bulkSaving}>
+                    {bulkSaving ? "Adding…" : `Add ${bulkRows.length} item${bulkRows.length !== 1 ? "s" : ""}`}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  One item per line — <span className="font-medium text-foreground">Item, quantity, price</span>. Anything in (brackets) is ignored.
+                </p>
+                <Textarea
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  placeholder={BULK_PLACEHOLDER}
+                  className="min-h-[180px] resize-y font-mono text-sm leading-relaxed placeholder:text-muted-foreground/50"
+                />
+                <Button type="button" onClick={analyseBulk} disabled={!bulkText.trim()} className="min-h-11 w-full rounded-xl">
+                  <Sparkles className="mr-1.5 h-4 w-4" /> Review List
+                </Button>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="single">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Mode toggle */}
           <div className="grid grid-cols-2 gap-2">
@@ -203,6 +350,8 @@ const AddShoppingItemDialog = ({
             {createItem.isPending ? "Adding..." : "Add to List"}
           </Button>
         </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
