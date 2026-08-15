@@ -439,13 +439,13 @@ const ShoppingList = () => {
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
             <div className="relative min-w-0 flex-1 lg:max-w-sm">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 inputMode="search"
-                placeholder="Search name, category or basket"
+                placeholder="Search items or baskets"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="min-h-11 rounded-2xl border-border/70 bg-[hsl(var(--surface-subtle))] pl-10 pr-11 shadow-none"
@@ -463,38 +463,42 @@ const ShoppingList = () => {
               )}
             </div>
 
-            <Button
-              type="button"
-              variant={selectMode ? "default" : "outline"}
-              className="min-h-11 shrink-0 rounded-2xl"
-              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-            >
-              <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              {selectMode ? "Done selecting" : "Select items"}
-            </Button>
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
+              <Button
+                type="button"
+                variant={selectMode ? "default" : "outline"}
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              >
+                <ShoppingBasket className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">{selectMode ? "Done" : "Select"}</span>
+                <span className="hidden sm:ml-1 sm:inline">{selectMode ? "selecting" : "items"}</span>
+              </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 shrink-0 rounded-2xl"
-              disabled={!filtered.length}
-              onClick={() => setShareState({ items: filtered, title: contextLabel })}
-            >
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Share list
-            </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                disabled={!filtered.length}
+                onClick={() => setShareState({ items: filtered, title: contextLabel })}
+              >
+                <Share2 className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">Share</span>
+                <span className="hidden sm:ml-1 sm:inline">list</span>
+              </Button>
 
-            <Button
-              type="button"
-              className="min-h-11 shrink-0 rounded-2xl"
-              onClick={() => setCartOpen(true)}
-            >
-              <ShoppingCart className="mr-1.5 h-4 w-4" />
-              Cart
-              <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
-                {cartItems.length}
-              </span>
-            </Button>
+              <Button
+                type="button"
+                className="min-h-11 min-w-0 shrink-0 rounded-2xl px-2 text-xs sm:px-4 sm:text-sm"
+                onClick={() => setCartOpen(true)}
+              >
+                <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+                <span className="truncate">Cart</span>
+                <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
+                  {cartItems.length}
+                </span>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -557,15 +561,15 @@ const ShoppingList = () => {
       )}
 
       {selectMode && selectedIds.length > 0 && (
-        <div className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-lg items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-[hsl(var(--surface-panel)/0.96)] p-3 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.6)] backdrop-blur">
-          <span className="pl-1 text-sm font-semibold text-foreground">
+        <div className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-lg flex-col gap-2 rounded-2xl border border-primary/25 bg-[hsl(var(--surface-panel)/0.96)] p-3 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.6)] backdrop-blur sm:bottom-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <span className="pl-1 text-xs font-semibold text-foreground sm:text-sm">
             {selectedIds.length} selected
           </span>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-4 items-center gap-1.5 sm:flex sm:gap-2">
             <Button
               type="button"
               variant="ghost"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setSelectedIds([])}
             >
               Clear
@@ -573,32 +577,32 @@ const ShoppingList = () => {
             <Button
               type="button"
               variant="outline"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setShareState({ items: selectedItems, title: contextLabel })}
             >
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Share
+              <Share2 className="h-4 w-4 shrink-0 sm:mr-1.5" />
+              <span className="hidden sm:inline">Share</span>
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setBasketDialogOpen(true)}
             >
-              <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              To basket
+              <ShoppingBasket className="mr-1.5 h-4 w-4 shrink-0" />
+              <span className="truncate">Basket</span>
             </Button>
             <Button
               type="button"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               disabled={setCart.isPending}
               onClick={async () => {
                 await addToCart(selectedItems, "your selection");
                 exitSelectMode();
               }}
             >
-              <ShoppingCart className="mr-1.5 h-4 w-4" />
-              Add to cart
+              <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+              <span className="truncate">Cart</span>
             </Button>
           </div>
         </div>
@@ -717,9 +721,9 @@ const BasketCard = ({
   onAddToCart,
   onManage,
 }: BasketCardProps) => (
-  <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
-    <header className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
-      <div className="flex min-w-0 items-center gap-3">
+  <section className="surface-panel min-w-0 overflow-hidden rounded-[2rem] p-4 sm:p-5">
+    <header className="mb-4 flex flex-col gap-3 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <span
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
@@ -735,9 +739,17 @@ const BasketCard = ({
             {basket.isUnsorted ? " • not in a basket yet" : ""}
           </p>
         </div>
+        <div className="ml-auto shrink-0 text-right sm:hidden">
+          <p className="font-display text-base font-bold tabular-nums text-foreground">
+            {formatCurrency(basket.total)}
+          </p>
+          <p className="text-[0.62rem] font-medium text-muted-foreground">
+            {formatCurrency(basket.openTotal)} to buy
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="hidden text-right sm:block">
           <p className="font-display text-xl font-bold tabular-nums text-foreground">
             {formatCurrency(basket.total)}
           </p>
@@ -758,7 +770,7 @@ const BasketCard = ({
         <AddShoppingItemDialog
           defaultBasket={basket.isUnsorted ? null : basket.key}
           triggerLabel="Add item"
-          triggerClassName="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          triggerClassName="min-h-10 min-w-0 flex-1 shrink rounded-xl px-3 text-xs sm:flex-none sm:px-3.5 sm:text-sm"
         />
         <Button
           type="button"
@@ -779,7 +791,8 @@ const BasketCard = ({
         </Button>
         <Button
           type="button"
-          className="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          className="min-h-10 min-w-0 flex-1 shrink rounded-xl px-3 text-xs sm:flex-none sm:px-3.5 sm:text-sm"
+          aria-label={`Add ${basket.label} to cart`}
           onClick={() =>
             onAddToCart(
               basket.sections.flatMap((section) =>
@@ -789,8 +802,11 @@ const BasketCard = ({
             )
           }
         >
-          <ShoppingCart className="mr-1.5 h-4 w-4" />
-          Add to cart
+          <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+          <span className="truncate">
+            <span className="sm:hidden">To cart</span>
+            <span className="hidden sm:inline">Add to cart</span>
+          </span>
         </Button>
       </div>
     </header>
