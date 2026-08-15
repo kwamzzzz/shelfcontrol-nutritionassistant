@@ -82,6 +82,7 @@ const IngredientsCard = ({
           name: line.name,
           quantity: line.quantity,
           item_id: need.ingredient.item_id ?? null,
+          recipe_id: recipeId ?? null,
         });
         added += 1;
       } catch {
