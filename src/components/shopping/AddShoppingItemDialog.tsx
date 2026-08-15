@@ -376,6 +376,16 @@ const AddShoppingItemDialog = ({
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label>Notes (optional)</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. organic, small size, check expiry"
+              className="min-h-[80px] resize-y rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50"
+            />
+          </div>
+
           <Button type="submit" className="min-h-11 w-full rounded-xl" disabled={!name.trim() || createItem.isPending}>
             {createItem.isPending ? "Adding..." : "Add to List"}
           </Button>
