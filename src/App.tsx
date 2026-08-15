@@ -34,6 +34,8 @@ import KitchenStory from "@/pages/KitchenStory";
 import PricePassport from "@/pages/PricePassport";
 import ItemCatalog from "@/pages/ItemCatalog";
 import PantryAlert from "@/pages/PantryAlert";
+import Feedback from "@/pages/Feedback";
+import Admin from "@/pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +121,8 @@ const App = () => (
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/admin" element={<Admin />} />
           </Route>
           <Route element={<ImmersiveRoutes />}>
             <Route path="/kitchen-story" element={<KitchenStory />} />
