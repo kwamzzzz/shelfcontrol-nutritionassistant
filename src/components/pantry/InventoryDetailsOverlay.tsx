@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { differenceInCalendarDays, format, parseISO, startOfToday } from "date-fns";
 import {
+  BadgeDollarSign,
   CalendarDays,
   ExternalLink,
   Globe2,
@@ -67,6 +69,7 @@ const displayNumber = (value: number) =>
   Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
 const InventoryDetailsContent = ({ entry, onShare, onEdit, onExit }: Omit<Props, "open">) => {
+  const navigate = useNavigate();
   const media = useMemo(() => getItemMedia(entry.items), [entry.items]);
   const fallbackMedia = useMemo(
     () => getItemMedia({ ...entry.items, image_url: null }),
@@ -337,18 +340,26 @@ const InventoryDetailsContent = ({ entry, onShare, onEdit, onExit }: Omit<Props,
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,var(--safe-bottom))] pt-3 backdrop-blur sm:px-6 sm:pb-4">
-        {onEdit && (
-          <div className="mx-auto flex max-w-3xl">
+        <div className="mx-auto flex max-w-3xl gap-2">
+          {onEdit && (
             <Button
               variant="outline"
-              className="min-h-12 w-full rounded-xl border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+              className="min-h-12 flex-1 rounded-xl border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
               onClick={onEdit}
             >
               <Pencil className="h-4 w-4" />
               Edit details
             </Button>
-          </div>
-        )}
+          )}
+          <Button
+            variant="outline"
+            className="min-h-12 flex-1 rounded-xl border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+            onClick={() => navigate(`/pantry/${entry.item_id}/prices`)}
+          >
+            <BadgeDollarSign className="h-4 w-4" />
+            Compare prices
+          </Button>
+        </div>
         {canExit && (
           <div className="mx-auto flex max-w-3xl gap-2">
             <Button
