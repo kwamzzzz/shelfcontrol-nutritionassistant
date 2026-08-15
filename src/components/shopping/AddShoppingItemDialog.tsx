@@ -18,6 +18,7 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import ImageUpload from "@/components/shared/ImageUpload";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 
 interface Props {
   triggerClassName?: string;
@@ -33,6 +34,7 @@ const AddShoppingItemDialog = ({
   const [itemId, setItemId] = useState("");
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("Piece");
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -45,6 +47,7 @@ const AddShoppingItemDialog = ({
     setItemId("");
     setName("");
     setQuantity("1");
+    setUnit("Piece");
     setCategory("");
     setEstimatedCost("");
     setImageUrl(null);
@@ -55,6 +58,7 @@ const AddShoppingItemDialog = ({
     const item = items?.find((i) => i.id === id);
     if (item) {
       setName(item.name);
+      if (item.default_unit) setUnit(item.default_unit);
       if (item.category) setCategory(item.category);
       if (item.image_url) setImageUrl(item.image_url);
     }
@@ -68,6 +72,7 @@ const AddShoppingItemDialog = ({
         name: name.trim(),
         item_id: mode === "catalog" && itemId ? itemId : null,
         quantity: quantity ? Number(quantity) : 1,
+        unit: unit || null,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         image_url: imageUrl,
@@ -168,10 +173,14 @@ const AddShoppingItemDialog = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="space-y-2">
               <Label>Qty</Label>
               <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Unit</Label>
+              <GroupedUnitSelect value={unit} onValueChange={setUnit} triggerClassName="min-h-11 rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
