@@ -561,15 +561,15 @@ const ShoppingList = () => {
       )}
 
       {selectMode && selectedIds.length > 0 && (
-        <div className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-lg items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-[hsl(var(--surface-panel)/0.96)] p-3 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.6)] backdrop-blur">
-          <span className="pl-1 text-sm font-semibold text-foreground">
+        <div className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-lg flex-col gap-2 rounded-2xl border border-primary/25 bg-[hsl(var(--surface-panel)/0.96)] p-3 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.6)] backdrop-blur sm:bottom-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <span className="pl-1 text-xs font-semibold text-foreground sm:text-sm">
             {selectedIds.length} selected
           </span>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-4 items-center gap-1.5 sm:flex sm:gap-2">
             <Button
               type="button"
               variant="ghost"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setSelectedIds([])}
             >
               Clear
@@ -577,32 +577,32 @@ const ShoppingList = () => {
             <Button
               type="button"
               variant="outline"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setShareState({ items: selectedItems, title: contextLabel })}
             >
-              <Share2 className="mr-1.5 h-4 w-4" />
-              Share
+              <Share2 className="h-4 w-4 shrink-0 sm:mr-1.5" />
+              <span className="hidden sm:inline">Share</span>
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               onClick={() => setBasketDialogOpen(true)}
             >
-              <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              To basket
+              <ShoppingBasket className="mr-1.5 h-4 w-4 shrink-0" />
+              <span className="truncate">Basket</span>
             </Button>
             <Button
               type="button"
-              className="min-h-10 rounded-xl"
+              className="min-h-10 min-w-0 rounded-xl px-2 text-xs sm:px-4 sm:text-sm"
               disabled={setCart.isPending}
               onClick={async () => {
                 await addToCart(selectedItems, "your selection");
                 exitSelectMode();
               }}
             >
-              <ShoppingCart className="mr-1.5 h-4 w-4" />
-              Add to cart
+              <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+              <span className="truncate">Cart</span>
             </Button>
           </div>
         </div>
