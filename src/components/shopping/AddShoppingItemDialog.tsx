@@ -125,6 +125,7 @@ const AddShoppingItemDialog = ({
           category: null,
           estimated_cost: r.cost ? Number(r.cost) : null,
           basket: basket.trim() ? basket.trim() : null,
+          notes: null,
           image_url: null,
         });
       }
@@ -154,6 +155,7 @@ const AddShoppingItemDialog = ({
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         basket: basket.trim() ? basket.trim() : null,
+        notes: notes.trim() ? notes.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Added", description: `${name} added to shopping list.` });
