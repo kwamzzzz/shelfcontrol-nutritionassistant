@@ -60,6 +60,7 @@ const AddShoppingItemDialog = ({
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
   const [basket, setBasket] = useState("");
+  const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { data: items } = useItems();
   const createItem = useCreateShoppingItem();

@@ -26,6 +26,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const [category, setCategory] = useState(item.category ?? "");
   const [estimatedCost, setEstimatedCost] = useState(String(item.estimated_cost ?? ""));
   const [basket, setBasket] = useState(item.basket ?? "");
+  const [notes, setNotes] = useState(item.notes ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateShoppingItem();
   const deleteItem = useDeleteShoppingItem();
