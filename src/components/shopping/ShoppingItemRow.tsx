@@ -144,6 +144,13 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
             )}
           </span>
 
+          {item.notes && (
+            <span className="mt-1 flex items-center gap-1 text-[0.68rem] text-muted-foreground/80">
+              <StickyNote className="h-3 w-3 shrink-0" />
+              <span className="truncate">{item.notes}</span>
+            </span>
+          )}
+
           {(addedBy || completedBy) && (
             <span className="mt-1 block truncate text-[0.68rem] text-muted-foreground/80">
               {item.is_purchased && completedBy
