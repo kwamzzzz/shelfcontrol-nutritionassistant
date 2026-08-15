@@ -721,9 +721,9 @@ const BasketCard = ({
   onAddToCart,
   onManage,
 }: BasketCardProps) => (
-  <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
-    <header className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
-      <div className="flex min-w-0 items-center gap-3">
+  <section className="surface-panel min-w-0 overflow-hidden rounded-[2rem] p-4 sm:p-5">
+    <header className="mb-4 flex flex-col gap-3 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <span
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
@@ -739,9 +739,17 @@ const BasketCard = ({
             {basket.isUnsorted ? " • not in a basket yet" : ""}
           </p>
         </div>
+        <div className="ml-auto shrink-0 text-right sm:hidden">
+          <p className="font-display text-base font-bold tabular-nums text-foreground">
+            {formatCurrency(basket.total)}
+          </p>
+          <p className="text-[0.62rem] font-medium text-muted-foreground">
+            {formatCurrency(basket.openTotal)} to buy
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="hidden text-right sm:block">
           <p className="font-display text-xl font-bold tabular-nums text-foreground">
             {formatCurrency(basket.total)}
           </p>
@@ -762,7 +770,7 @@ const BasketCard = ({
         <AddShoppingItemDialog
           defaultBasket={basket.isUnsorted ? null : basket.key}
           triggerLabel="Add item"
-          triggerClassName="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          triggerClassName="min-h-10 min-w-0 flex-1 shrink rounded-xl px-3 text-xs sm:flex-none sm:px-3.5 sm:text-sm"
         />
         <Button
           type="button"
@@ -783,7 +791,8 @@ const BasketCard = ({
         </Button>
         <Button
           type="button"
-          className="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          className="min-h-10 min-w-0 flex-1 shrink rounded-xl px-3 text-xs sm:flex-none sm:px-3.5 sm:text-sm"
+          aria-label={`Add ${basket.label} to cart`}
           onClick={() =>
             onAddToCart(
               basket.sections.flatMap((section) =>
@@ -793,8 +802,11 @@ const BasketCard = ({
             )
           }
         >
-          <ShoppingCart className="mr-1.5 h-4 w-4" />
-          Add to cart
+          <ShoppingCart className="mr-1.5 h-4 w-4 shrink-0" />
+          <span className="truncate">
+            <span className="sm:hidden">To cart</span>
+            <span className="hidden sm:inline">Add to cart</span>
+          </span>
         </Button>
       </div>
     </header>
