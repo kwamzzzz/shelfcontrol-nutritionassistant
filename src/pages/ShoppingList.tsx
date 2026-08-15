@@ -777,6 +777,21 @@ const BasketCard = ({
         >
           <Share2 className="h-4 w-4" />
         </Button>
+        <Button
+          type="button"
+          className="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          onClick={() =>
+            onAddToCart(
+              basket.sections.flatMap((section) =>
+                section.groups.flatMap((group) => group.items)
+              ),
+              basket.label
+            )
+          }
+        >
+          <ShoppingCart className="mr-1.5 h-4 w-4" />
+          Add to cart
+        </Button>
       </div>
     </header>
 
