@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateShoppingItem } from "@/hooks/useShoppingList";
+import { useCreateShoppingItem, useShoppingList } from "@/hooks/useShoppingList";
 import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { Plus, ShoppingBasket, Sparkles, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import ImageUpload from "@/components/shared/ImageUpload";
@@ -26,6 +26,8 @@ import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 interface Props {
   triggerClassName?: string;
   triggerLabel?: string;
+  /** Pre-selects a basket (null/undefined = unsorted). */
+  defaultBasket?: string | null;
 }
 
 const BULK_PLACEHOLDER = `Item, quantity, unit, price
@@ -46,6 +48,7 @@ interface BulkRow {
 const AddShoppingItemDialog = ({
   triggerClassName,
   triggerLabel = "Add Item",
+  defaultBasket = null,
 }: Props) => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"single" | "bulk">("single");
@@ -59,12 +62,64 @@ const AddShoppingItemDialog = ({
   const [unit, setUnit] = useState("Piece");
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
-  const [basket, setBasket] = useState("");
+  const [basket, setBasket] = useState(defaultBasket ?? "");
+  const [newBasketMode, setNewBasketMode] = useState(false);
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { data: items } = useItems();
+  const { data: list } = useShoppingList();
   const createItem = useCreateShoppingItem();
   const { toast } = useToast();
+
+  const existingBaskets = [
+    ...new Set((list ?? []).map((i) => i.basket?.trim()).filter((b): b is string => !!b)),
+  ].sort((a, b) => a.localeCompare(b));
+
+  const basketPicker = (
+    <div className="space-y-2">
+      <Label>Add to basket</Label>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant={!basket && !newBasketMode ? "default" : "outline"}
+          className="min-h-10 rounded-full px-3.5 text-sm"
+          onClick={() => { setNewBasketMode(false); setBasket(""); }}
+        >
+          Unsorted list
+        </Button>
+        {existingBaskets.map((b) => (
+          <Button
+            key={b}
+            type="button"
+            variant={!newBasketMode && basket === b ? "default" : "outline"}
+            className="min-h-10 rounded-full px-3.5 text-sm"
+            onClick={() => { setNewBasketMode(false); setBasket(b); }}
+          >
+            <ShoppingBasket className="mr-1.5 h-3.5 w-3.5" />
+            {b}
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant={newBasketMode ? "default" : "outline"}
+          className="min-h-10 rounded-full px-3.5 text-sm"
+          onClick={() => { setNewBasketMode(true); setBasket(""); }}
+        >
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          New basket
+        </Button>
+      </div>
+      {newBasketMode && (
+        <Input
+          autoFocus
+          className="min-h-11 rounded-xl"
+          value={basket}
+          onChange={(e) => setBasket(e.target.value)}
+          placeholder="e.g. Carrefour, Amazon, Corner shop"
+        />
+      )}
+    </div>
+  );
 
   const reset = () => {
     setMode("custom");
@@ -78,7 +133,8 @@ const AddShoppingItemDialog = ({
     setUnit("Piece");
     setCategory("");
     setEstimatedCost("");
-    setBasket("");
+    setBasket(defaultBasket ?? "");
+    setNewBasketMode(false);
     setNotes("");
     setImageUrl(null);
   };
@@ -195,15 +251,7 @@ const AddShoppingItemDialog = ({
           </TabsList>
 
           <TabsContent value="bulk" className="space-y-3">
-            <div className="space-y-2">
-              <Label>Basket (optional)</Label>
-              <Input
-                className="min-h-11 rounded-xl"
-                value={basket}
-                onChange={(e) => setBasket(e.target.value)}
-                placeholder="e.g. Carrefour, Amazon, Corner shop"
-              />
-            </div>
+            {basketPicker}
             {bulkRows ? (
               <>
                 <div className="min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-border/20 p-2 max-h-[40vh]">
@@ -365,18 +413,7 @@ const AddShoppingItemDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Basket (optional)</Label>
-            <Input
-              className="min-h-11 rounded-xl"
-              value={basket}
-              onChange={(e) => setBasket(e.target.value)}
-              placeholder="e.g. Carrefour, Amazon, Corner shop"
-            />
-            <p className="text-xs text-muted-foreground">
-              Group this trip under a named basket — store, location or online order.
-            </p>
-          </div>
+          {basketPicker}
 
           <div className="space-y-2">
             <Label>Notes (optional)</Label>

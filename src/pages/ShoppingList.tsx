@@ -695,6 +695,11 @@ const BasketCard = ({
         >
           <Pencil className="h-4 w-4" />
         </Button>
+        <AddShoppingItemDialog
+          defaultBasket={basket.isUnsorted ? null : basket.key}
+          triggerLabel="Add item"
+          triggerClassName="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+        />
         <Button
           type="button"
           variant="outline"
