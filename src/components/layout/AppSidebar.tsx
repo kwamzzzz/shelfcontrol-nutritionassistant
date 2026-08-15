@@ -4,12 +4,13 @@ import {
   LayoutDashboard, Package, ShoppingCart, Receipt, UtensilsCrossed, Heart,
   BarChart3, BookHeart, LogOut, Users, Trophy, UserCircle, Settings,
   Apple, Mail, Lightbulb, Newspaper, PanelLeftClose, PanelLeftOpen, Sparkles,
-  BookOpen,
+  BookOpen, MessageSquareHeart, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMyInvites } from "@/hooks/useMyInvites";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { type ShellMode } from "@/hooks/use-shell-mode";
 import { ModeToggle } from "@/components/ModeToggle";
@@ -57,15 +58,29 @@ const navSections = [
     items: [
       { to: "/profile", label: "Profile", icon: UserCircle },
       { to: "/settings", label: "Settings", icon: Settings },
+      { to: "/feedback", label: "Feedback", icon: MessageSquareHeart },
+      { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
     ],
   },
-];
+] as const satisfies readonly {
+  label: string;
+  accent: string;
+  items: readonly {
+    to: string;
+    label: string;
+    icon: React.ElementType;
+    accent?: string;
+    hasBadge?: boolean;
+    adminOnly?: boolean;
+  }[];
+}[];
 
 const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { collapsed, toggleCollapsed } = useSidebar();
   const { pendingCount } = useMyInvites();
+  const { isAdmin } = useIsAdmin();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
