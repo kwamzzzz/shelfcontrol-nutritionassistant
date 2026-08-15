@@ -1202,6 +1202,10 @@ export type Database = {
         Args: { _group_id: string; _mode?: string; _recipe_ids: string[] }
         Returns: Json
       }
+      share_shopping_to_group: {
+        Args: { _group_id: string; _shopping_ids: string[] }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
