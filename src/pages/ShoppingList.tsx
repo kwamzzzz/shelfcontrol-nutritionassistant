@@ -345,39 +345,33 @@ const ShoppingList = () => {
           copy="Try another search or switch the list filter."
         />
       ) : (
-        <div
-          className={cn(
-            "grid gap-4",
-            unpurchased.length > 0 &&
-              purchased.length > 0 &&
-              "xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]"
-          )}
-        >
-          {unpurchased.length > 0 && (
+        <div className="space-y-6 md:space-y-8">
+          {regularCount > 0 && (
             <ShoppingSection
-              title="To buy"
-              description="Your active shopping queue"
-              count={unpurchased.length}
+              title="Regular shopping"
+              description="Everyday items you added yourself"
+              count={regularCount}
               icon={ShoppingCart}
               tone="text-primary"
-              items={unpurchased}
+              groups={regularGroups}
               onEdit={setEditing}
               activeGroupId={activeGroupId}
               profileMap={profileMap}
             />
           )}
 
-          {purchased.length > 0 && (
+          {recipeCount > 0 && (
             <ShoppingSection
-              title="In the basket"
-              description={totals.open === 0 ? "This shop is complete" : "Already picked up"}
-              count={purchased.length}
-              icon={CheckCircle2}
+              title="From My Cook Book"
+              description="Ingredients pulled from your recipes"
+              count={recipeCount}
+              icon={ChefHat}
               tone="text-success"
-              items={purchased}
+              groups={recipeGroups}
               onEdit={setEditing}
               activeGroupId={activeGroupId}
               profileMap={profileMap}
+              recipeNames={recipeNames}
             />
           )}
         </div>
