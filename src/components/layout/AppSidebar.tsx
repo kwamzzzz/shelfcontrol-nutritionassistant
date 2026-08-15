@@ -62,10 +62,10 @@ const navSections = [
       { to: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
     ],
   },
-] as const satisfies readonly {
+] as {
   label: string;
   accent: string;
-  items: readonly {
+  items: {
     to: string;
     label: string;
     icon: React.ElementType;
@@ -73,6 +73,7 @@ const navSections = [
     hasBadge?: boolean;
     adminOnly?: boolean;
   }[];
+}[];
 }[];
 
 const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
@@ -138,7 +139,9 @@ const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
                 </p>
               )}
               <div className={cn("space-y-0.5", isCompact && "flex flex-col items-center")}>
-                {section.items.map((item) => {
+                {section.items
+                  .filter((item) => !item.adminOnly || isAdmin)
+                  .map((item) => {
                   const isActive = item.to === "/"
                     ? pathname === "/"
                     : pathname === item.to || pathname.startsWith(`${item.to}/`);
