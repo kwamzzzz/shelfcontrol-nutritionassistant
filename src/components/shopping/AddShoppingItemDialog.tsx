@@ -186,7 +186,7 @@ const AddShoppingItemDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "bulk")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "bulk")} className="min-w-0">
           <TabsList className="grid min-h-12 w-full grid-cols-2 rounded-xl">
             <TabsTrigger value="single" className="min-h-10 rounded-lg">Single Item</TabsTrigger>
             <TabsTrigger value="bulk" className="min-h-10 rounded-lg">
@@ -206,39 +206,41 @@ const AddShoppingItemDialog = ({
             </div>
             {bulkRows ? (
               <>
-                <div className="space-y-2">
-                  {bulkRows.map((r) => (
-                    <div key={r.id} className="grid grid-cols-[1fr_4.5rem_7rem_5.5rem_2rem] items-center gap-2">
-                      <Input
-                        className="min-h-10 rounded-xl"
-                        value={r.name}
-                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, name: e.target.value } : x)))}
-                      />
-                      <Input
-                        className="min-h-10 rounded-xl"
-                        type="number" min={0} step="any"
-                        value={r.quantity}
-                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, quantity: e.target.value } : x)))}
-                      />
-                      <GroupedUnitSelect
-                        value={r.unit}
-                        onValueChange={(v) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, unit: v } : x)))}
-                        triggerClassName="min-h-10 rounded-xl"
-                      />
-                      <Input
-                        className="min-h-10 rounded-xl"
-                        type="number" min={0} step="0.01" placeholder="Total"
-                        value={r.cost}
-                        onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, cost: e.target.value } : x)))}
-                      />
-                      <Button
-                        type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg"
-                        onClick={() => setBulkRows((rows) => rows!.filter((x) => x.id !== r.id))}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                <div className="min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-border/20 p-2 max-h-[40vh]">
+                  <div className="min-w-[640px] space-y-2">
+                    {bulkRows.map((r) => (
+                      <div key={r.id} className="grid grid-cols-[minmax(150px,1fr)_4.5rem_7rem_5.5rem_2rem] items-center gap-2">
+                        <Input
+                          className="min-h-10 rounded-xl"
+                          value={r.name}
+                          onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, name: e.target.value } : x)))}
+                        />
+                        <Input
+                          className="min-h-10 rounded-xl"
+                          type="number" min={0} step="any"
+                          value={r.quantity}
+                          onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, quantity: e.target.value } : x)))}
+                        />
+                        <GroupedUnitSelect
+                          value={r.unit}
+                          onValueChange={(v) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, unit: v } : x)))}
+                          triggerClassName="min-h-10 rounded-xl"
+                        />
+                        <Input
+                          className="min-h-10 rounded-xl"
+                          type="number" min={0} step="0.01" placeholder="Total"
+                          value={r.cost}
+                          onChange={(e) => setBulkRows((rows) => rows!.map((x) => (x.id === r.id ? { ...x, cost: e.target.value } : x)))}
+                        />
+                        <Button
+                          type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-lg"
+                          onClick={() => setBulkRows((rows) => rows!.filter((x) => x.id !== r.id))}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" className="min-h-11 flex-1 rounded-xl" onClick={() => setBulkRows(null)}>
