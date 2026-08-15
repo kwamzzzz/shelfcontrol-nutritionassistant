@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import {
   Check,
@@ -7,8 +8,9 @@ import {
   Loader2,
   ShoppingBag,
 } from "lucide-react";
-import { type ShoppingItem, useToggleShoppingItem } from "@/hooks/useShoppingList";
-import { formatCurrency } from "@/lib/currency";
+import { type ShoppingItem, useToggleShoppingItem, useUpdateShoppingItem } from "@/hooks/useShoppingList";
+import { formatCurrency, getActiveCurrency } from "@/lib/currency";
+import { Input } from "@/components/ui/input";
 import { useSignedImage } from "@/hooks/useSignedImage";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +42,25 @@ const categoryTone = (category?: string | null) => {
 
 const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
   const toggleItem = useToggleShoppingItem();
+  const updateItem = useUpdateShoppingItem();
   const photo = useSignedImage(item.image_url);
   const quantity = Number(item.quantity ?? 1);
   const estimatedLineCost = Number(item.estimated_cost ?? 0) * quantity;
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceDraft, setPriceDraft] = useState(String(item.estimated_cost ?? ""));
+
+  useEffect(() => {
+    if (!editingPrice) setPriceDraft(String(item.estimated_cost ?? ""));
+  }, [item.estimated_cost, editingPrice]);
+
+  const commitPrice = () => {
+    setEditingPrice(false);
+    const trimmed = priceDraft.trim();
+    const next = trimmed === "" ? null : Number(trimmed);
+    if (next !== null && (Number.isNaN(next) || next < 0)) return;
+    if (next === (item.estimated_cost ?? null)) return;
+    updateItem.mutate({ id: item.id, estimated_cost: next });
+  };
   const completionTime =
     item.is_purchased && item.completed_at
       ? formatDistanceToNow(parseISO(item.completed_at), { addSuffix: true })
@@ -135,20 +153,42 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
             </span>
           )}
         </span>
-
-        <span className="shrink-0 text-right">
-          <span className="block font-display text-sm font-semibold tabular-nums text-foreground">
-            {item.unit ? `${quantity} ${item.unit}` : `×${quantity}`}
-          </span>
-          {estimatedLineCost > 0 && (
-            <span className="mt-0.5 block text-xs tabular-nums text-muted-foreground">
-              {formatCurrency(estimatedLineCost)}
-            </span>
-          )}
-        </span>
-
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/55 transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </button>
+
+      <div className="shrink-0 text-right">
+        <span className="block font-display text-sm font-semibold tabular-nums text-foreground">
+          {item.unit ? `${quantity} ${item.unit}` : `×${quantity}`}
+        </span>
+        {editingPrice ? (
+          <Input
+            autoFocus
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            aria-label={`Price per unit for ${item.name}`}
+            value={priceDraft}
+            onChange={(e) => setPriceDraft(e.target.value)}
+            onBlur={commitPrice}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); commitPrice(); }
+              if (e.key === "Escape") { setPriceDraft(String(item.estimated_cost ?? "")); setEditingPrice(false); }
+            }}
+            className="mt-0.5 h-8 w-20 rounded-lg px-2 text-right text-xs tabular-nums"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditingPrice(true)}
+            aria-label={`Edit price for ${item.name}`}
+            className="mt-0.5 block w-full rounded-md px-1 text-right text-xs tabular-nums text-muted-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {estimatedLineCost > 0 ? formatCurrency(estimatedLineCost) : `Add ${getActiveCurrency().symbol} price`}
+          </button>
+        )}
+      </div>
+
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/55 transition group-hover:translate-x-0.5 group-hover:text-primary" />
     </div>
   );
 };
