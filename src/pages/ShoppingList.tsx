@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   CheckCircle2,
+  ChefHat,
   CircleDollarSign,
   ListChecks,
   Package,
@@ -63,6 +64,7 @@ const filterTabs: { key: FilterTab; label: string }[] = [
 
 const ShoppingList = () => {
   const { data: list, isLoading } = useShoppingList();
+  const { data: recipes } = useRecipes();
   const [editing, setEditing] = useState<ShoppingItem | null>(null);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -436,10 +438,11 @@ interface ShoppingSectionProps {
   count: number;
   icon: LucideIcon;
   tone: string;
-  items: ShoppingItem[];
+  groups: DateGroup[];
   onEdit: (item: ShoppingItem) => void;
   activeGroupId: string | null;
   profileMap?: Map<string, string>;
+  recipeNames?: Map<string, string>;
 }
 
 const ShoppingSection = ({
@@ -448,10 +451,11 @@ const ShoppingSection = ({
   count,
   icon: Icon,
   tone,
-  items,
+  groups,
   onEdit,
   activeGroupId,
   profileMap,
+  recipeNames,
 }: ShoppingSectionProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
     <header className="mb-4 flex items-center justify-between gap-4 px-1">
@@ -469,19 +473,40 @@ const ShoppingSection = ({
       </span>
     </header>
 
-    <div className="space-y-2">
-      {items.map((item) => (
-        <ShoppingItemRow
-          key={item.id}
-          item={item}
-          onClick={() => onEdit(item)}
-          addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
-          completedBy={
-            activeGroupId && item.completed_by
-              ? profileMap?.get(item.completed_by)
-              : undefined
-          }
-        />
+    <div className="space-y-7">
+      {groups.map((group) => (
+        <div key={group.key} className="space-y-2">
+          <div className="flex items-center gap-3 px-1">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {group.label}
+            </span>
+            <span className="h-px flex-1 bg-border/50" />
+            <span className="text-[0.7rem] font-semibold tabular-nums text-muted-foreground">
+              {group.items.length}
+            </span>
+          </div>
+
+          {group.items.map((item) => (
+            <div key={item.id} className="space-y-1">
+              {recipeNames && item.recipe_id && recipeNames.get(item.recipe_id) && (
+                <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[0.65rem] font-semibold text-success">
+                  <ChefHat className="h-3 w-3" />
+                  {recipeNames.get(item.recipe_id)}
+                </span>
+              )}
+              <ShoppingItemRow
+                item={item}
+                onClick={() => onEdit(item)}
+                addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
+                completedBy={
+                  activeGroupId && item.completed_by
+                    ? profileMap?.get(item.completed_by)
+                    : undefined
+                }
+              />
+            </div>
+          ))}
+        </div>
       ))}
     </div>
   </section>
