@@ -22,6 +22,7 @@ import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog
 import BasketAssignDialog from "@/components/shopping/BasketAssignDialog";
 import BasketEditDialog from "@/components/shopping/BasketEditDialog";
 import ShareShoppingDialog from "@/components/shopping/ShareShoppingDialog";
+import ShoppingCartSheet from "@/components/shopping/ShoppingCartSheet";
 import ShoppingItemRow from "@/components/shopping/ShoppingItemRow";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +31,8 @@ import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
 import { useIsPhone } from "@/hooks/use-shell-mode";
-import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useSetCartMembership, useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from "@/hooks/useRecipes";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -162,6 +164,7 @@ const ShoppingList = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [basketDialogOpen, setBasketDialogOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [managingBasket, setManagingBasket] = useState<{ name: string | null } | null>(null);
   const [shareState, setShareState] = useState<{ items: ShoppingItem[]; title?: string } | null>(
     null
@@ -170,6 +173,25 @@ const ShoppingList = () => {
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
   const isPhone = useIsPhone();
+  const setCart = useSetCartMembership();
+  const { toast } = useToast();
+
+  const cartItems = useMemo(() => (list ?? []).filter((item) => item.in_cart), [list]);
+
+  const addToCart = async (items: ShoppingItem[], label: string) => {
+    const ids = items.filter((item) => !item.in_cart).map((item) => item.id);
+    if (ids.length === 0) {
+      toast({ title: "Already in cart", description: label });
+      setCartOpen(true);
+      return;
+    }
+    await setCart.mutateAsync({ ids, inCart: true });
+    toast({
+      title: `Added to cart`,
+      description: `${ids.length} item${ids.length === 1 ? "" : "s"} from ${label}.`,
+    });
+    setCartOpen(true);
+  };
 
   const activeGroup = groups.find((group) => group.id === activeGroupId);
   const contextLabel = isPersonalMode ? "Personal list" : activeGroup?.name ?? "Shared list";
