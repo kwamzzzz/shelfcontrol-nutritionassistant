@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -21,10 +22,38 @@ import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
 import { useIsPhone } from "@/hooks/use-shell-mode";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useRecipes } from "@/hooks/useRecipes";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | "open" | "completed";
+
+interface DateGroup {
+  key: string;
+  label: string;
+  items: ShoppingItem[];
+}
+
+const dateLabel = (iso: string) => {
+  const date = parseISO(iso);
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "EEE d MMM yyyy");
+};
+
+const groupByDate = (items: ShoppingItem[]): DateGroup[] => {
+  const map = new Map<string, DateGroup>();
+
+  for (const item of items) {
+    const key = item.created_at.slice(0, 10);
+    if (!map.has(key)) {
+      map.set(key, { key, label: dateLabel(item.created_at), items: [] });
+    }
+    map.get(key)!.items.push(item);
+  }
+
+  return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1));
+};
 
 const filterTabs: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
