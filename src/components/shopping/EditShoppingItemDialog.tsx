@@ -130,6 +130,15 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
             />
             <p className="text-xs text-muted-foreground">Leave empty to keep it in the unsorted list.</p>
           </div>
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. organic, small size, check expiry"
+              className="min-h-[80px] resize-y rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50"
+            />
+          </div>
           <div className="flex gap-2">
             <Button type="submit" className="min-h-11 flex-1 rounded-xl" disabled={updateItem.isPending}>
               {updateItem.isPending ? "Saving..." : "Save"}
