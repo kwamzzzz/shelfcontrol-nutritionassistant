@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { Plus, ShoppingBasket, Sparkles, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import ImageUpload from "@/components/shared/ImageUpload";
@@ -251,15 +251,7 @@ const AddShoppingItemDialog = ({
           </TabsList>
 
           <TabsContent value="bulk" className="space-y-3">
-            <div className="space-y-2">
-              <Label>Basket (optional)</Label>
-              <Input
-                className="min-h-11 rounded-xl"
-                value={basket}
-                onChange={(e) => setBasket(e.target.value)}
-                placeholder="e.g. Carrefour, Amazon, Corner shop"
-              />
-            </div>
+            {basketPicker}
             {bulkRows ? (
               <>
                 <div className="min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-border/20 p-2 max-h-[40vh]">
@@ -421,18 +413,7 @@ const AddShoppingItemDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Basket (optional)</Label>
-            <Input
-              className="min-h-11 rounded-xl"
-              value={basket}
-              onChange={(e) => setBasket(e.target.value)}
-              placeholder="e.g. Carrefour, Amazon, Corner shop"
-            />
-            <p className="text-xs text-muted-foreground">
-              Group this trip under a named basket — store, location or online order.
-            </p>
-          </div>
+          {basketPicker}
 
           <div className="space-y-2">
             <Label>Notes (optional)</Label>
