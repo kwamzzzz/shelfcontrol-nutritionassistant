@@ -876,6 +876,7 @@ export type Database = {
       shopping_list: {
         Row: {
           basket: string | null
+          cart_added_at: string | null
           category: string | null
           completed_at: string | null
           completed_by: string | null
@@ -884,6 +885,7 @@ export type Database = {
           group_id: string | null
           id: string
           image_url: string | null
+          in_cart: boolean
           is_purchased: boolean
           item_id: string | null
           name: string
@@ -895,6 +897,7 @@ export type Database = {
         }
         Insert: {
           basket?: string | null
+          cart_added_at?: string | null
           category?: string | null
           completed_at?: string | null
           completed_by?: string | null
@@ -903,6 +906,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           image_url?: string | null
+          in_cart?: boolean
           is_purchased?: boolean
           item_id?: string | null
           name: string
@@ -914,6 +918,7 @@ export type Database = {
         }
         Update: {
           basket?: string | null
+          cart_added_at?: string | null
           category?: string | null
           completed_at?: string | null
           completed_by?: string | null
@@ -922,6 +927,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           image_url?: string | null
+          in_cart?: boolean
           is_purchased?: boolean
           item_id?: string | null
           name?: string

@@ -22,6 +22,7 @@ import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog
 import BasketAssignDialog from "@/components/shopping/BasketAssignDialog";
 import BasketEditDialog from "@/components/shopping/BasketEditDialog";
 import ShareShoppingDialog from "@/components/shopping/ShareShoppingDialog";
+import ShoppingCartSheet from "@/components/shopping/ShoppingCartSheet";
 import ShoppingItemRow from "@/components/shopping/ShoppingItemRow";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +31,8 @@ import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
 import { useIsPhone } from "@/hooks/use-shell-mode";
-import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useSetCartMembership, useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from "@/hooks/useRecipes";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -162,6 +164,7 @@ const ShoppingList = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [basketDialogOpen, setBasketDialogOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [managingBasket, setManagingBasket] = useState<{ name: string | null } | null>(null);
   const [shareState, setShareState] = useState<{ items: ShoppingItem[]; title?: string } | null>(
     null
@@ -170,6 +173,25 @@ const ShoppingList = () => {
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
   const isPhone = useIsPhone();
+  const setCart = useSetCartMembership();
+  const { toast } = useToast();
+
+  const cartItems = useMemo(() => (list ?? []).filter((item) => item.in_cart), [list]);
+
+  const addToCart = async (items: ShoppingItem[], label: string) => {
+    const ids = items.filter((item) => !item.in_cart).map((item) => item.id);
+    if (ids.length === 0) {
+      toast({ title: "Already in cart", description: label });
+      setCartOpen(true);
+      return;
+    }
+    await setCart.mutateAsync({ ids, inCart: true });
+    toast({
+      title: `Added to cart`,
+      description: `${ids.length} item${ids.length === 1 ? "" : "s"} from ${label}.`,
+    });
+    setCartOpen(true);
+  };
 
   const activeGroup = groups.find((group) => group.id === activeGroupId);
   const contextLabel = isPersonalMode ? "Personal list" : activeGroup?.name ?? "Shared list";
@@ -461,6 +483,18 @@ const ShoppingList = () => {
               <Share2 className="mr-1.5 h-4 w-4" />
               Share list
             </Button>
+
+            <Button
+              type="button"
+              className="min-h-11 shrink-0 rounded-2xl"
+              onClick={() => setCartOpen(true)}
+            >
+              <ShoppingCart className="mr-1.5 h-4 w-4" />
+              Cart
+              <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
+                {cartItems.length}
+              </span>
+            </Button>
           </div>
         </div>
       </section>
@@ -496,6 +530,7 @@ const ShoppingList = () => {
               selectedIds={selectedIds}
               onToggleSelected={toggleSelected}
               onShare={(items, title) => setShareState({ items, title })}
+              onAddToCart={(items, label) => addToCart(items, label)}
               onManage={() => setManagingBasket({ name: basket.isUnsorted ? null : basket.key })}
             />
           ))}
@@ -546,11 +581,24 @@ const ShoppingList = () => {
             </Button>
             <Button
               type="button"
+              variant="outline"
               className="min-h-10 rounded-xl"
               onClick={() => setBasketDialogOpen(true)}
             >
               <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              Move to basket
+              To basket
+            </Button>
+            <Button
+              type="button"
+              className="min-h-10 rounded-xl"
+              disabled={setCart.isPending}
+              onClick={async () => {
+                await addToCart(selectedItems, "your selection");
+                exitSelectMode();
+              }}
+            >
+              <ShoppingCart className="mr-1.5 h-4 w-4" />
+              Add to cart
             </Button>
           </div>
         </div>
@@ -577,6 +625,16 @@ const ShoppingList = () => {
         title={shareState?.title}
         canShareToGroup={isPersonalMode}
         onShared={exitSelectMode}
+      />
+
+      <ShoppingCartSheet
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        onEditItem={(item) => {
+          setCartOpen(false);
+          setEditing(item);
+        }}
       />
 
       {editing && (
@@ -642,6 +700,7 @@ interface BasketCardProps {
   selectedIds: string[];
   onToggleSelected: (id: string) => void;
   onShare: (items: ShoppingItem[], title: string) => void;
+  onAddToCart: (items: ShoppingItem[], label: string) => void;
   onManage: () => void;
 }
 
@@ -655,6 +714,7 @@ const BasketCard = ({
   selectedIds,
   onToggleSelected,
   onShare,
+  onAddToCart,
   onManage,
 }: BasketCardProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
@@ -716,6 +776,21 @@ const BasketCard = ({
           }
         >
           <Share2 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          className="min-h-10 shrink-0 rounded-xl px-3.5 text-sm"
+          onClick={() =>
+            onAddToCart(
+              basket.sections.flatMap((section) =>
+                section.groups.flatMap((group) => group.items)
+              ),
+              basket.label
+            )
+          }
+        >
+          <ShoppingCart className="mr-1.5 h-4 w-4" />
+          Add to cart
         </Button>
       </div>
     </header>
