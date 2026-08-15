@@ -79,6 +79,7 @@ const AddShoppingItemDialog = ({
     setCategory("");
     setEstimatedCost("");
     setBasket("");
+    setNotes("");
     setImageUrl(null);
   };
 

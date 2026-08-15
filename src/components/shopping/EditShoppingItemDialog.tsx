@@ -44,6 +44,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         basket: basket.trim() ? basket.trim() : null,
+        notes: notes.trim() ? notes.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
