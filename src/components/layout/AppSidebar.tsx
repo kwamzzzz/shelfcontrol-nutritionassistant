@@ -74,7 +74,6 @@ const navSections = [
     adminOnly?: boolean;
   }[];
 }[];
-}[];
 
 const AppSidebar = ({ mode = "desktop" }: { mode?: ShellMode }) => {
   const navigate = useNavigate();
