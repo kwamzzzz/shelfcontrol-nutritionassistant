@@ -138,7 +138,7 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
 
         <span className="shrink-0 text-right">
           <span className="block font-display text-sm font-semibold tabular-nums text-foreground">
-            ×{quantity}
+            {item.unit ? `${quantity} ${item.unit}` : `×${quantity}`}
           </span>
           {estimatedLineCost > 0 && (
             <span className="mt-0.5 block text-xs tabular-nums text-muted-foreground">
