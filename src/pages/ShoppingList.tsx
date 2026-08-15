@@ -483,6 +483,18 @@ const ShoppingList = () => {
               <Share2 className="mr-1.5 h-4 w-4" />
               Share list
             </Button>
+
+            <Button
+              type="button"
+              className="min-h-11 shrink-0 rounded-2xl"
+              onClick={() => setCartOpen(true)}
+            >
+              <ShoppingCart className="mr-1.5 h-4 w-4" />
+              Cart
+              <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[0.65rem] tabular-nums">
+                {cartItems.length}
+              </span>
+            </Button>
           </div>
         </div>
       </section>
@@ -518,6 +530,7 @@ const ShoppingList = () => {
               selectedIds={selectedIds}
               onToggleSelected={toggleSelected}
               onShare={(items, title) => setShareState({ items, title })}
+              onAddToCart={(items, label) => addToCart(items, label)}
               onManage={() => setManagingBasket({ name: basket.isUnsorted ? null : basket.key })}
             />
           ))}
@@ -568,11 +581,24 @@ const ShoppingList = () => {
             </Button>
             <Button
               type="button"
+              variant="outline"
               className="min-h-10 rounded-xl"
               onClick={() => setBasketDialogOpen(true)}
             >
               <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              Move to basket
+              To basket
+            </Button>
+            <Button
+              type="button"
+              className="min-h-10 rounded-xl"
+              disabled={setCart.isPending}
+              onClick={async () => {
+                await addToCart(selectedItems, "your selection");
+                exitSelectMode();
+              }}
+            >
+              <ShoppingCart className="mr-1.5 h-4 w-4" />
+              Add to cart
             </Button>
           </div>
         </div>
@@ -599,6 +625,16 @@ const ShoppingList = () => {
         title={shareState?.title}
         canShareToGroup={isPersonalMode}
         onShared={exitSelectMode}
+      />
+
+      <ShoppingCartSheet
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        onEditItem={(item) => {
+          setCartOpen(false);
+          setEditing(item);
+        }}
       />
 
       {editing && (
@@ -664,6 +700,7 @@ interface BasketCardProps {
   selectedIds: string[];
   onToggleSelected: (id: string) => void;
   onShare: (items: ShoppingItem[], title: string) => void;
+  onAddToCart: (items: ShoppingItem[], label: string) => void;
   onManage: () => void;
 }
 
@@ -677,6 +714,7 @@ const BasketCard = ({
   selectedIds,
   onToggleSelected,
   onShare,
+  onAddToCart,
   onManage,
 }: BasketCardProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
