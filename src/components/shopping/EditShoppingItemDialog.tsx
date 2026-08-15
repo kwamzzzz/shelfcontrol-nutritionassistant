@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { type ShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem } from "@/hooks/useShoppingList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { CATEGORIES } from "@/lib/pantry-utils";
-import { Trash2 } from "lucide-react";
+import { BadgeDollarSign, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/shared/ImageUpload";
 
@@ -26,6 +27,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const updateItem = useUpdateShoppingItem();
   const deleteItem = useDeleteShoppingItem();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +132,20 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+          {item.item_id && (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full rounded-xl border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+              onClick={() => {
+                onClose();
+                navigate(`/pantry/${item.item_id}/prices`);
+              }}
+            >
+              <BadgeDollarSign className="h-4 w-4" />
+              <span className="ml-2">Compare prices</span>
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>
