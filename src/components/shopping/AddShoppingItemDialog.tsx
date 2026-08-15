@@ -359,6 +359,19 @@ const AddShoppingItemDialog = ({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Basket (optional)</Label>
+            <Input
+              className="min-h-11 rounded-xl"
+              value={basket}
+              onChange={(e) => setBasket(e.target.value)}
+              placeholder="e.g. Carrefour, Amazon, Corner shop"
+            />
+            <p className="text-xs text-muted-foreground">
+              Group this trip under a named basket — store, location or online order.
+            </p>
+          </div>
+
           <Button type="submit" className="min-h-11 w-full rounded-xl" disabled={!name.trim() || createItem.isPending}>
             {createItem.isPending ? "Adding..." : "Add to List"}
           </Button>
