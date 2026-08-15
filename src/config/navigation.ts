@@ -4,6 +4,7 @@ import {
   BarChart3, BookHeart, Lightbulb, Newspaper, Apple, Sparkles, Users, Mail, Trophy,
   UserCircle, Settings,
   BookOpen,
+  MessageSquareHeart, ShieldCheck,
 } from "lucide-react";
 
 /**
@@ -31,6 +32,8 @@ export interface AppNavItem {
   activeFor?: string[];
   /** Shows the pending-invitations badge. */
   hasBadge?: boolean;
+  /** Only rendered for accounts holding the admin role. */
+  adminOnly?: boolean;
 }
 
 // Order matches the current desktop sidebar exactly, so grouping by `desktopGroup`
@@ -54,6 +57,8 @@ export const NAV_ITEMS: AppNavItem[] = [
   { path: "/challenges",        label: "Challenges",          icon: Trophy,           section: "community",    desktopGroup: "GROUP" },
   { path: "/profile",           label: "Profile",             icon: UserCircle,       section: "account",      desktopGroup: "SYSTEM" },
   { path: "/settings",          label: "Settings",            icon: Settings,         section: "account",      desktopGroup: "SYSTEM" },
+  { path: "/feedback",          label: "Feedback",            icon: MessageSquareHeart, section: "account",    desktopGroup: "SYSTEM" },
+  { path: "/admin",             label: "Admin",               icon: ShieldCheck,      section: "account",      desktopGroup: "SYSTEM", adminOnly: true },
 ];
 
 // Desktop sidebar groups, in display order.

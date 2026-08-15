@@ -5,6 +5,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { MORE_SECTIONS, moreItems, isNavItemActive } from "@/config/navigation";
 import { useMyInvites } from "@/hooks/useMyInvites";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -30,6 +31,7 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { pendingCount } = useMyInvites();
+  const { isAdmin } = useIsAdmin();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -46,7 +48,7 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
         </DrawerHeader>
         <div className="space-y-5 overflow-y-auto px-5 pb-5">
           {MORE_SECTIONS.map((section) => {
-            const items = moreItems.filter((i) => i.section === section.key);
+            const items = moreItems.filter((i) => i.section === section.key && (!i.adminOnly || isAdmin));
             if (!items.length) return null;
             const tone = SECTION_TONE[section.key] ?? "var(--bento-emerald)";
             return (
