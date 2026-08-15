@@ -887,6 +887,7 @@ export type Database = {
           is_purchased: boolean
           item_id: string | null
           name: string
+          notes: string | null
           quantity: number | null
           recipe_id: string | null
           unit: string | null
@@ -905,6 +906,7 @@ export type Database = {
           is_purchased?: boolean
           item_id?: string | null
           name: string
+          notes?: string | null
           quantity?: number | null
           recipe_id?: string | null
           unit?: string | null
@@ -923,6 +925,7 @@ export type Database = {
           is_purchased?: boolean
           item_id?: string | null
           name?: string
+          notes?: string | null
           quantity?: number | null
           recipe_id?: string | null
           unit?: string | null
