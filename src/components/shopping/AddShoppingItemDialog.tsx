@@ -60,6 +60,7 @@ const AddShoppingItemDialog = ({
   const [category, setCategory] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
   const [basket, setBasket] = useState("");
+  const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { data: items } = useItems();
   const createItem = useCreateShoppingItem();
@@ -78,6 +79,7 @@ const AddShoppingItemDialog = ({
     setCategory("");
     setEstimatedCost("");
     setBasket("");
+    setNotes("");
     setImageUrl(null);
   };
 
@@ -123,6 +125,7 @@ const AddShoppingItemDialog = ({
           category: null,
           estimated_cost: r.cost ? Number(r.cost) : null,
           basket: basket.trim() ? basket.trim() : null,
+          notes: null,
           image_url: null,
         });
       }
@@ -152,6 +155,7 @@ const AddShoppingItemDialog = ({
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         basket: basket.trim() ? basket.trim() : null,
+        notes: notes.trim() ? notes.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Added", description: `${name} added to shopping list.` });
@@ -370,6 +374,16 @@ const AddShoppingItemDialog = ({
             <p className="text-xs text-muted-foreground">
               Group this trip under a named basket — store, location or online order.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes (optional)</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. organic, small size, check expiry"
+              className="min-h-[80px] resize-y rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50"
+            />
           </div>
 
           <Button type="submit" className="min-h-11 w-full rounded-xl" disabled={!name.trim() || createItem.isPending}>

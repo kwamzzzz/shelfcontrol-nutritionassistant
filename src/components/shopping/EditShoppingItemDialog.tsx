@@ -4,6 +4,7 @@ import { type ShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -26,6 +27,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const [category, setCategory] = useState(item.category ?? "");
   const [estimatedCost, setEstimatedCost] = useState(String(item.estimated_cost ?? ""));
   const [basket, setBasket] = useState(item.basket ?? "");
+  const [notes, setNotes] = useState(item.notes ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
   const updateItem = useUpdateShoppingItem();
   const deleteItem = useDeleteShoppingItem();
@@ -43,6 +45,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         basket: basket.trim() ? basket.trim() : null,
+        notes: notes.trim() ? notes.trim() : null,
         image_url: imageUrl,
       });
       toast({ title: "Updated", description: `${name} updated.` });
@@ -127,6 +130,15 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
               placeholder="e.g. Carrefour, Amazon, Corner shop"
             />
             <p className="text-xs text-muted-foreground">Leave empty to keep it in the unsorted list.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. organic, small size, check expiry"
+              className="min-h-[80px] resize-y rounded-xl text-sm leading-relaxed placeholder:text-muted-foreground/50"
+            />
           </div>
           <div className="flex gap-2">
             <Button type="submit" className="min-h-11 flex-1 rounded-xl" disabled={updateItem.isPending}>
