@@ -186,7 +186,7 @@ const AddShoppingItemDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "bulk")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "bulk")} className="min-w-0">
           <TabsList className="grid min-h-12 w-full grid-cols-2 rounded-xl">
             <TabsTrigger value="single" className="min-h-10 rounded-lg">Single Item</TabsTrigger>
             <TabsTrigger value="bulk" className="min-h-10 rounded-lg">
