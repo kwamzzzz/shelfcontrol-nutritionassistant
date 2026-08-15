@@ -1,0 +1,1 @@
+ALTER TABLE public.shopping_list ADD COLUMN IF NOT EXISTS unit text;
