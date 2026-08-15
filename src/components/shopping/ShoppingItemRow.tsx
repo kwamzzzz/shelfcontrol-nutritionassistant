@@ -7,6 +7,7 @@ import {
   Link2,
   Loader2,
   ShoppingBag,
+  StickyNote,
 } from "lucide-react";
 import { type ShoppingItem, useToggleShoppingItem, useUpdateShoppingItem } from "@/hooks/useShoppingList";
 import { formatCurrency, getActiveCurrency } from "@/lib/currency";
