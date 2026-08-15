@@ -11,6 +11,7 @@ import { CATEGORIES } from "@/lib/pantry-utils";
 import { BadgeDollarSign, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/shared/ImageUpload";
+import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 
 interface Props {
   item: ShoppingItem;
@@ -21,6 +22,7 @@ interface Props {
 const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(String(item.quantity ?? 1));
+  const [unit, setUnit] = useState(item.unit ?? "Piece");
   const [category, setCategory] = useState(item.category ?? "");
   const [estimatedCost, setEstimatedCost] = useState(String(item.estimated_cost ?? ""));
   const [imageUrl, setImageUrl] = useState<string | null>(item.image_url ?? null);
@@ -36,6 +38,7 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
         id: item.id,
         name: name.trim(),
         quantity: quantity ? Number(quantity) : 1,
+        unit: unit || null,
         category: category || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
         image_url: imageUrl,
@@ -88,10 +91,14 @@ const EditShoppingItemDialog = ({ item, open, onClose }: Props) => {
             <Label>Name *</Label>
             <Input className="min-h-11 rounded-xl" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="space-y-2">
               <Label>Qty</Label>
               <Input className="min-h-11 rounded-xl" type="number" min={0} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Unit</Label>
+              <GroupedUnitSelect value={unit} onValueChange={setUnit} triggerClassName="min-h-11 rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>

@@ -887,6 +887,7 @@ export type Database = {
           item_id: string | null
           name: string
           quantity: number | null
+          unit: string | null
           user_id: string
         }
         Insert: {
@@ -902,6 +903,7 @@ export type Database = {
           item_id?: string | null
           name: string
           quantity?: number | null
+          unit?: string | null
           user_id: string
         }
         Update: {
@@ -917,6 +919,7 @@ export type Database = {
           item_id?: string | null
           name?: string
           quantity?: number | null
+          unit?: string | null
           user_id?: string
         }
         Relationships: [
