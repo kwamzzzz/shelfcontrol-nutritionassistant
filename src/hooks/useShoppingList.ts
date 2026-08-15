@@ -91,3 +91,19 @@ export const useDeleteShoppingItem = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["shopping_list"] }),
   });
 };
+
+/** Adds or removes shopping items from the in-store shopping cart. */
+export const useSetCartMembership = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, inCart }: { ids: string[]; inCart: boolean }) => {
+      if (ids.length === 0) return;
+      const { error } = await supabase
+        .from("shopping_list")
+        .update({ in_cart: inCart, cart_added_at: inCart ? new Date().toISOString() : null })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["shopping_list"] }),
+  });
+};
