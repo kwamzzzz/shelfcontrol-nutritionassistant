@@ -45,7 +45,7 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
   const updateItem = useUpdateShoppingItem();
   const photo = useSignedImage(item.image_url);
   const quantity = Number(item.quantity ?? 1);
-  const estimatedLineCost = Number(item.estimated_cost ?? 0) * quantity;
+  const estimatedLineCost = Number(item.estimated_cost ?? 0);
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceDraft, setPriceDraft] = useState(String(item.estimated_cost ?? ""));
 
@@ -166,7 +166,7 @@ const ShoppingItemRow = ({ item, onClick, addedBy, completedBy }: Props) => {
             min={0}
             step="0.01"
             inputMode="decimal"
-            aria-label={`Price per unit for ${item.name}`}
+            aria-label={`Total price for ${item.name}`}
             value={priceDraft}
             onChange={(e) => setPriceDraft(e.target.value)}
             onBlur={commitPrice}
