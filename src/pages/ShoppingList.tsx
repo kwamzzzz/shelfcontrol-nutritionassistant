@@ -121,13 +121,23 @@ const ShoppingList = () => {
     });
   }, [filterTab, list, search]);
 
-  const { unpurchased, purchased } = useMemo(
-    () => ({
-      unpurchased: filtered.filter((item) => !item.is_purchased),
-      purchased: filtered.filter((item) => item.is_purchased),
-    }),
-    [filtered]
-  );
+  const { regularGroups, recipeGroups, regularCount, recipeCount } = useMemo(() => {
+    const regular = filtered.filter((item) => !item.recipe_id);
+    const fromRecipes = filtered.filter((item) => Boolean(item.recipe_id));
+
+    return {
+      regularGroups: groupByDate(regular),
+      recipeGroups: groupByDate(fromRecipes),
+      regularCount: regular.length,
+      recipeCount: fromRecipes.length,
+    };
+  }, [filtered]);
+
+  const recipeNames = useMemo(() => {
+    const map = new Map<string, string>();
+    (recipes ?? []).forEach((recipe) => map.set(recipe.id, recipe.name));
+    return map;
+  }, [recipes]);
 
   const filterCount = (key: FilterTab) => {
     if (key === "open") return totals.open;
