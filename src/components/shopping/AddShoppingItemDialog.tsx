@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateShoppingItem } from "@/hooks/useShoppingList";
+import { useCreateShoppingItem, useShoppingList } from "@/hooks/useShoppingList";
 import { useItems } from "@/hooks/usePantry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ import GroupedUnitSelect from "@/components/shared/GroupedUnitSelect";
 interface Props {
   triggerClassName?: string;
   triggerLabel?: string;
+  /** Pre-selects a basket (null/undefined = unsorted). */
+  defaultBasket?: string | null;
 }
 
 const BULK_PLACEHOLDER = `Item, quantity, unit, price
