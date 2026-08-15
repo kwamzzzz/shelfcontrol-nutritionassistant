@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   ListChecks,
   Package,
+  Pencil,
   Search,
   ShoppingBasket,
   ShoppingCart,
@@ -19,6 +20,7 @@ import {
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
 import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog";
 import BasketAssignDialog from "@/components/shopping/BasketAssignDialog";
+import BasketEditDialog from "@/components/shopping/BasketEditDialog";
 import ShareShoppingDialog from "@/components/shopping/ShareShoppingDialog";
 import ShoppingItemRow from "@/components/shopping/ShoppingItemRow";
 import { Button } from "@/components/ui/button";
@@ -160,6 +162,7 @@ const ShoppingList = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [basketDialogOpen, setBasketDialogOpen] = useState(false);
+  const [managingBasket, setManagingBasket] = useState<{ name: string | null } | null>(null);
   const [shareState, setShareState] = useState<{ items: ShoppingItem[]; title?: string } | null>(
     null
   );
@@ -493,6 +496,7 @@ const ShoppingList = () => {
               selectedIds={selectedIds}
               onToggleSelected={toggleSelected}
               onShare={(items, title) => setShareState({ items, title })}
+              onManage={() => setManagingBasket({ name: basket.isUnsorted ? null : basket.key })}
             />
           ))}
 
@@ -558,6 +562,12 @@ const ShoppingList = () => {
         itemIds={selectedIds}
         existingBaskets={existingBaskets}
         onDone={exitSelectMode}
+      />
+
+      <BasketEditDialog
+        open={Boolean(managingBasket)}
+        onClose={() => setManagingBasket(null)}
+        basketName={managingBasket?.name ?? null}
       />
 
       <ShareShoppingDialog
@@ -632,6 +642,7 @@ interface BasketCardProps {
   selectedIds: string[];
   onToggleSelected: (id: string) => void;
   onShare: (items: ShoppingItem[], title: string) => void;
+  onManage: () => void;
 }
 
 const BasketCard = ({
@@ -644,6 +655,7 @@ const BasketCard = ({
   selectedIds,
   onToggleSelected,
   onShare,
+  onManage,
 }: BasketCardProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
     <header className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
@@ -673,6 +685,16 @@ const BasketCard = ({
             {formatCurrency(basket.openTotal)} still to buy
           </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-xl"
+          aria-label={`Edit ${basket.label}`}
+          onClick={onManage}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <Button
           type="button"
           variant="outline"
