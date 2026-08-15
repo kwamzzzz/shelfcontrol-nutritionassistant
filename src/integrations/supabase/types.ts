@@ -875,6 +875,7 @@ export type Database = {
       }
       shopping_list: {
         Row: {
+          basket: string | null
           category: string | null
           completed_at: string | null
           completed_by: string | null
@@ -892,6 +893,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          basket?: string | null
           category?: string | null
           completed_at?: string | null
           completed_by?: string | null
@@ -909,6 +911,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          basket?: string | null
           category?: string | null
           completed_at?: string | null
           completed_by?: string | null

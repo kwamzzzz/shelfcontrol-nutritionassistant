@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
@@ -9,6 +9,7 @@ import {
   ListChecks,
   Package,
   Search,
+  ShoppingBasket,
   ShoppingCart,
   Sparkles,
   Users,
@@ -16,7 +17,10 @@ import {
 } from "lucide-react";
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
 import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog";
+import BasketAssignDialog from "@/components/shopping/BasketAssignDialog";
 import ShoppingItemRow from "@/components/shopping/ShoppingItemRow";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useGroupContext } from "@/contexts/GroupContext";
 import { useGroups } from "@/hooks/useGroups";
@@ -29,10 +33,36 @@ import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | "open" | "completed";
 
+const UNSORTED = "__unsorted__";
+
+const lineTotal = (item: ShoppingItem) => Number(item.estimated_cost ?? 0);
+const sumTotal = (items: ShoppingItem[]) => items.reduce((sum, item) => sum + lineTotal(item), 0);
+
 interface DateGroup {
   key: string;
   label: string;
   items: ShoppingItem[];
+  total: number;
+}
+
+interface SubSection {
+  id: "regular" | "recipe";
+  title: string;
+  icon: LucideIcon;
+  tone: string;
+  groups: DateGroup[];
+  count: number;
+  total: number;
+}
+
+interface BasketGroup {
+  key: string;
+  label: string;
+  isUnsorted: boolean;
+  count: number;
+  total: number;
+  openTotal: number;
+  sections: SubSection[];
 }
 
 const dateLabel = (iso: string) => {
@@ -48,12 +78,69 @@ const groupByDate = (items: ShoppingItem[]): DateGroup[] => {
   for (const item of items) {
     const key = item.created_at.slice(0, 10);
     if (!map.has(key)) {
-      map.set(key, { key, label: dateLabel(item.created_at), items: [] });
+      map.set(key, { key, label: dateLabel(item.created_at), items: [], total: 0 });
     }
-    map.get(key)!.items.push(item);
+    const group = map.get(key)!;
+    group.items.push(item);
+    group.total += lineTotal(item);
   }
 
   return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1));
+};
+
+const buildSections = (items: ShoppingItem[]): SubSection[] => {
+  const regular = items.filter((item) => !item.recipe_id);
+  const fromRecipes = items.filter((item) => Boolean(item.recipe_id));
+
+  const sections: SubSection[] = [];
+  if (regular.length) {
+    sections.push({
+      id: "regular",
+      title: "Regular shopping",
+      icon: ShoppingCart,
+      tone: "text-primary",
+      groups: groupByDate(regular),
+      count: regular.length,
+      total: sumTotal(regular),
+    });
+  }
+  if (fromRecipes.length) {
+    sections.push({
+      id: "recipe",
+      title: "From My Cook Book",
+      icon: ChefHat,
+      tone: "text-success",
+      groups: groupByDate(fromRecipes),
+      count: fromRecipes.length,
+      total: sumTotal(fromRecipes),
+    });
+  }
+  return sections;
+};
+
+const buildBaskets = (items: ShoppingItem[]): BasketGroup[] => {
+  const map = new Map<string, ShoppingItem[]>();
+
+  for (const item of items) {
+    const key = item.basket?.trim() ? item.basket.trim() : UNSORTED;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+
+  const baskets = [...map.entries()].map(([key, basketItems]) => ({
+    key,
+    label: key === UNSORTED ? "Unsorted list" : key,
+    isUnsorted: key === UNSORTED,
+    count: basketItems.length,
+    total: sumTotal(basketItems),
+    openTotal: sumTotal(basketItems.filter((item) => !item.is_purchased)),
+    sections: buildSections(basketItems),
+  }));
+
+  return baskets.sort((a, b) => {
+    if (a.isUnsorted !== b.isUnsorted) return a.isUnsorted ? 1 : -1;
+    return a.label.localeCompare(b.label);
+  });
 };
 
 const filterTabs: { key: FilterTab; label: string }[] = [
@@ -68,6 +155,9 @@ const ShoppingList = () => {
   const [editing, setEditing] = useState<ShoppingItem | null>(null);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [basketDialogOpen, setBasketDialogOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
@@ -90,15 +180,14 @@ const ShoppingList = () => {
     const items = list ?? [];
     const purchased = items.filter((item) => item.is_purchased).length;
     const open = items.length - purchased;
-    const estimate = items
-      .filter((item) => !item.is_purchased)
-      .reduce((sum, item) => sum + Number(item.estimated_cost ?? 0), 0);
+    const estimate = sumTotal(items.filter((item) => !item.is_purchased));
 
     return {
       all: items.length,
       open,
       purchased,
       estimate,
+      grandTotal: sumTotal(items),
       progress: items.length ? Math.round((purchased / items.length) * 100) : 0,
     };
   }, [list]);
@@ -110,7 +199,8 @@ const ShoppingList = () => {
       const matchesSearch =
         !normalizedSearch ||
         item.name.toLowerCase().includes(normalizedSearch) ||
-        item.category?.toLowerCase().includes(normalizedSearch);
+        item.category?.toLowerCase().includes(normalizedSearch) ||
+        item.basket?.toLowerCase().includes(normalizedSearch);
 
       if (!matchesSearch) return false;
       if (filterTab === "open") return !item.is_purchased;
@@ -119,23 +209,37 @@ const ShoppingList = () => {
     });
   }, [filterTab, list, search]);
 
-  const { regularGroups, recipeGroups, regularCount, recipeCount } = useMemo(() => {
-    const regular = filtered.filter((item) => !item.recipe_id);
-    const fromRecipes = filtered.filter((item) => Boolean(item.recipe_id));
+  const baskets = useMemo(() => buildBaskets(filtered), [filtered]);
 
-    return {
-      regularGroups: groupByDate(regular),
-      recipeGroups: groupByDate(fromRecipes),
-      regularCount: regular.length,
-      recipeCount: fromRecipes.length,
-    };
-  }, [filtered]);
+  const existingBaskets = useMemo(() => {
+    const names = new Set<string>();
+    (list ?? []).forEach((item) => {
+      if (item.basket?.trim()) names.add(item.basket.trim());
+    });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [list]);
 
   const recipeNames = useMemo(() => {
     const map = new Map<string, string>();
     (recipes ?? []).forEach((recipe) => map.set(recipe.id, recipe.name));
     return map;
   }, [recipes]);
+
+  const visibleIds = useMemo(() => filtered.map((item) => item.id), [filtered]);
+
+  useEffect(() => {
+    setSelectedIds((current) => current.filter((id) => visibleIds.includes(id)));
+  }, [visibleIds]);
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
+    );
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds([]);
+  };
 
   const filterCount = (key: FilterTab) => {
     if (key === "open") return totals.open;
@@ -158,7 +262,7 @@ const ShoppingList = () => {
         : `${totals.purchased} of ${totals.all} checked off`;
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-4 md:space-y-6">
+    <div className="mx-auto max-w-[1440px] space-y-4 pb-24 md:space-y-6 md:pb-6">
       {!isPhone && (
         <header className="flex items-end justify-between gap-6">
           <div>
@@ -300,27 +404,39 @@ const ShoppingList = () => {
             ))}
           </div>
 
-          <div className="relative min-w-0 flex-1 lg:max-w-sm">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              inputMode="search"
-              placeholder="Search name or category"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="min-h-11 rounded-2xl border-border/70 bg-[hsl(var(--surface-subtle))] pl-10 pr-11 shadow-none"
-              aria-label="Search shopping list"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                aria-label="Clear search"
-                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1 lg:max-w-sm">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                inputMode="search"
+                placeholder="Search name, category or basket"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="min-h-11 rounded-2xl border-border/70 bg-[hsl(var(--surface-subtle))] pl-10 pr-11 shadow-none"
+                aria-label="Search shopping list"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <Button
+              type="button"
+              variant={selectMode ? "default" : "outline"}
+              className="min-h-11 shrink-0 rounded-2xl"
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            >
+              <ShoppingBasket className="mr-1.5 h-4 w-4" />
+              {selectMode ? "Done selecting" : "Select for basket"}
+            </Button>
           </div>
         </div>
       </section>
@@ -343,37 +459,75 @@ const ShoppingList = () => {
           copy="Try another search or switch the list filter."
         />
       ) : (
-        <div className="space-y-6 md:space-y-8">
-          {regularCount > 0 && (
-            <ShoppingSection
-              title="Regular shopping"
-              description="Everyday items you added yourself"
-              count={regularCount}
-              icon={ShoppingCart}
-              tone="text-primary"
-              groups={regularGroups}
-              onEdit={setEditing}
-              activeGroupId={activeGroupId}
-              profileMap={profileMap}
-            />
-          )}
-
-          {recipeCount > 0 && (
-            <ShoppingSection
-              title="From My Cook Book"
-              description="Ingredients pulled from your recipes"
-              count={recipeCount}
-              icon={ChefHat}
-              tone="text-success"
-              groups={recipeGroups}
+        <div className="space-y-4 md:space-y-6">
+          {baskets.map((basket) => (
+            <BasketCard
+              key={basket.key}
+              basket={basket}
               onEdit={setEditing}
               activeGroupId={activeGroupId}
               profileMap={profileMap}
               recipeNames={recipeNames}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelected={toggleSelected}
             />
-          )}
+          ))}
+
+          <section className="surface-panel flex flex-wrap items-center justify-between gap-3 rounded-[1.75rem] p-4 sm:p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Whole list total
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums text-foreground">
+                {formatCurrency(totals.grandTotal)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Still to buy
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums text-primary">
+                {formatCurrency(totals.estimate)}
+              </p>
+            </div>
+          </section>
         </div>
       )}
+
+      {selectMode && selectedIds.length > 0 && (
+        <div className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-lg items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-[hsl(var(--surface-panel)/0.96)] p-3 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.6)] backdrop-blur">
+          <span className="pl-1 text-sm font-semibold text-foreground">
+            {selectedIds.length} selected
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-10 rounded-xl"
+              onClick={() => setSelectedIds([])}
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              className="min-h-10 rounded-xl"
+              onClick={() => setBasketDialogOpen(true)}
+            >
+              <ShoppingBasket className="mr-1.5 h-4 w-4" />
+              Move to basket
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <BasketAssignDialog
+        open={basketDialogOpen}
+        onClose={() => setBasketDialogOpen(false)}
+        itemIds={selectedIds}
+        existingBaskets={existingBaskets}
+        onDone={exitSelectMode}
+      />
 
       {editing && (
         <EditShoppingItemDialog
@@ -428,80 +582,120 @@ const PulseMetric = ({
   </div>
 );
 
-interface ShoppingSectionProps {
-  title: string;
-  description: string;
-  count: number;
-  icon: LucideIcon;
-  tone: string;
-  groups: DateGroup[];
+interface BasketCardProps {
+  basket: BasketGroup;
   onEdit: (item: ShoppingItem) => void;
   activeGroupId: string | null;
   profileMap?: Map<string, string>;
-  recipeNames?: Map<string, string>;
+  recipeNames: Map<string, string>;
+  selectMode: boolean;
+  selectedIds: string[];
+  onToggleSelected: (id: string) => void;
 }
 
-const ShoppingSection = ({
-  title,
-  description,
-  count,
-  icon: Icon,
-  tone,
-  groups,
+const BasketCard = ({
+  basket,
   onEdit,
   activeGroupId,
   profileMap,
   recipeNames,
-}: ShoppingSectionProps) => (
+  selectMode,
+  selectedIds,
+  onToggleSelected,
+}: BasketCardProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
-    <header className="mb-4 flex items-center justify-between gap-4 px-1">
+    <header className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
       <div className="flex min-w-0 items-center gap-3">
-        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-current/10", tone)}>
-          <Icon className="h-4 w-4" />
+        <span
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
+            basket.isUnsorted ? "bg-muted text-muted-foreground" : "bg-primary/12 text-primary"
+          )}
+        >
+          <ShoppingBasket className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
-          <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <h2 className="truncate font-display text-lg font-bold text-foreground">{basket.label}</h2>
+          <p className="text-xs text-muted-foreground">
+            {basket.count} item{basket.count === 1 ? "" : "s"}
+            {basket.isUnsorted ? " • not in a basket yet" : ""}
+          </p>
         </div>
       </div>
-      <span className="rounded-full bg-[hsl(var(--surface-subtle))] px-2.5 py-1 text-xs font-semibold tabular-nums text-muted-foreground">
-        {count}
-      </span>
+      <div className="text-right">
+        <p className="font-display text-xl font-bold tabular-nums text-foreground">
+          {formatCurrency(basket.total)}
+        </p>
+        <p className="text-[0.68rem] font-medium text-muted-foreground">
+          {formatCurrency(basket.openTotal)} still to buy
+        </p>
+      </div>
     </header>
 
-    <div className="space-y-7">
-      {groups.map((group) => (
-        <div key={group.key} className="space-y-2">
-          <div className="flex items-center gap-3 px-1">
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {group.label}
+    <div className="space-y-6">
+      {basket.sections.map((section) => (
+        <div key={section.id} className="space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+              <section.icon className={cn("h-4 w-4", section.tone)} />
+              {section.title}
+              <span className="rounded-full bg-[hsl(var(--surface-subtle))] px-2 py-0.5 text-[0.65rem] tabular-nums text-muted-foreground">
+                {section.count}
+              </span>
             </span>
-            <span className="h-px flex-1 bg-border/50" />
-            <span className="text-[0.7rem] font-semibold tabular-nums text-muted-foreground">
-              {group.items.length}
+            <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+              {formatCurrency(section.total)}
             </span>
           </div>
 
-          {group.items.map((item) => (
-            <div key={item.id} className="space-y-1">
-              {recipeNames && item.recipe_id && recipeNames.get(item.recipe_id) && (
-                <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[0.65rem] font-semibold text-success">
-                  <ChefHat className="h-3 w-3" />
-                  {recipeNames.get(item.recipe_id)}
-                </span>
-              )}
-              <ShoppingItemRow
-                item={item}
-                onClick={() => onEdit(item)}
-                addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
-                completedBy={
-                  activeGroupId && item.completed_by
-                    ? profileMap?.get(item.completed_by)
-                    : undefined
-                }
-              />
-            </div>
-          ))}
+          <div className="space-y-6">
+            {section.groups.map((group) => (
+              <div key={group.key} className="space-y-2">
+                <div className="flex items-center gap-3 px-1">
+                  <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {group.label}
+                  </span>
+                  <span className="h-px flex-1 bg-border/50" />
+                  <span className="text-[0.7rem] font-semibold tabular-nums text-muted-foreground">
+                    {group.items.length} • {formatCurrency(group.total)}
+                  </span>
+                </div>
+
+                {group.items.map((item) => (
+                  <div key={item.id} className="space-y-1">
+                    {item.recipe_id && recipeNames.get(item.recipe_id) && (
+                      <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[0.65rem] font-semibold text-success">
+                        <ChefHat className="h-3 w-3" />
+                        {recipeNames.get(item.recipe_id)}
+                      </span>
+                    )}
+                    <div className="flex min-w-0 items-center gap-2">
+                      {selectMode && (
+                        <Checkbox
+                          checked={selectedIds.includes(item.id)}
+                          onCheckedChange={() => onToggleSelected(item.id)}
+                          aria-label={`Select ${item.name}`}
+                          className="ml-1 h-5 w-5 shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <ShoppingItemRow
+                          item={item}
+                          onClick={() => onEdit(item)}
+                          addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
+                          completedBy={
+                            activeGroupId && item.completed_by
+                              ? profileMap?.get(item.completed_by)
+                              : undefined
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
