@@ -887,6 +887,7 @@ export type Database = {
           item_id: string | null
           name: string
           quantity: number | null
+          recipe_id: string | null
           unit: string | null
           user_id: string
         }
@@ -903,6 +904,7 @@ export type Database = {
           item_id?: string | null
           name: string
           quantity?: number | null
+          recipe_id?: string | null
           unit?: string | null
           user_id: string
         }
@@ -919,6 +921,7 @@ export type Database = {
           item_id?: string | null
           name?: string
           quantity?: number | null
+          recipe_id?: string | null
           unit?: string | null
           user_id?: string
         }
@@ -935,6 +938,13 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
         ]
