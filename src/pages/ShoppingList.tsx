@@ -11,6 +11,7 @@ import {
   Search,
   ShoppingBasket,
   ShoppingCart,
+  Share2,
   Sparkles,
   Users,
   X,
@@ -18,6 +19,7 @@ import {
 import AddShoppingItemDialog from "@/components/shopping/AddShoppingItemDialog";
 import EditShoppingItemDialog from "@/components/shopping/EditShoppingItemDialog";
 import BasketAssignDialog from "@/components/shopping/BasketAssignDialog";
+import ShareShoppingDialog from "@/components/shopping/ShareShoppingDialog";
 import ShoppingItemRow from "@/components/shopping/ShoppingItemRow";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -158,6 +160,9 @@ const ShoppingList = () => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [basketDialogOpen, setBasketDialogOpen] = useState(false);
+  const [shareState, setShareState] = useState<{ items: ShoppingItem[]; title?: string } | null>(
+    null
+  );
   const [searchParams] = useSearchParams();
   const { activeGroupId, isPersonalMode } = useGroupContext();
   const { groups } = useGroups();
@@ -240,6 +245,11 @@ const ShoppingList = () => {
     setSelectMode(false);
     setSelectedIds([]);
   };
+
+  const selectedItems = useMemo(
+    () => (list ?? []).filter((item) => selectedIds.includes(item.id)),
+    [list, selectedIds]
+  );
 
   const filterCount = (key: FilterTab) => {
     if (key === "open") return totals.open;
@@ -435,7 +445,18 @@ const ShoppingList = () => {
               onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
             >
               <ShoppingBasket className="mr-1.5 h-4 w-4" />
-              {selectMode ? "Done selecting" : "Select for basket"}
+              {selectMode ? "Done selecting" : "Select items"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 shrink-0 rounded-2xl"
+              disabled={!filtered.length}
+              onClick={() => setShareState({ items: filtered, title: contextLabel })}
+            >
+              <Share2 className="mr-1.5 h-4 w-4" />
+              Share list
             </Button>
           </div>
         </div>
@@ -471,6 +492,7 @@ const ShoppingList = () => {
               selectMode={selectMode}
               selectedIds={selectedIds}
               onToggleSelected={toggleSelected}
+              onShare={(items, title) => setShareState({ items, title })}
             />
           ))}
 
@@ -511,6 +533,15 @@ const ShoppingList = () => {
             </Button>
             <Button
               type="button"
+              variant="outline"
+              className="min-h-10 rounded-xl"
+              onClick={() => setShareState({ items: selectedItems, title: contextLabel })}
+            >
+              <Share2 className="mr-1.5 h-4 w-4" />
+              Share
+            </Button>
+            <Button
+              type="button"
               className="min-h-10 rounded-xl"
               onClick={() => setBasketDialogOpen(true)}
             >
@@ -527,6 +558,15 @@ const ShoppingList = () => {
         itemIds={selectedIds}
         existingBaskets={existingBaskets}
         onDone={exitSelectMode}
+      />
+
+      <ShareShoppingDialog
+        open={Boolean(shareState)}
+        onClose={() => setShareState(null)}
+        items={shareState?.items ?? []}
+        title={shareState?.title}
+        canShareToGroup={isPersonalMode}
+        onShared={exitSelectMode}
       />
 
       {editing && (
@@ -591,6 +631,7 @@ interface BasketCardProps {
   selectMode: boolean;
   selectedIds: string[];
   onToggleSelected: (id: string) => void;
+  onShare: (items: ShoppingItem[], title: string) => void;
 }
 
 const BasketCard = ({
@@ -602,6 +643,7 @@ const BasketCard = ({
   selectMode,
   selectedIds,
   onToggleSelected,
+  onShare,
 }: BasketCardProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
     <header className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
@@ -622,13 +664,32 @@ const BasketCard = ({
           </p>
         </div>
       </div>
-      <div className="text-right">
-        <p className="font-display text-xl font-bold tabular-nums text-foreground">
-          {formatCurrency(basket.total)}
-        </p>
-        <p className="text-[0.68rem] font-medium text-muted-foreground">
-          {formatCurrency(basket.openTotal)} still to buy
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="font-display text-xl font-bold tabular-nums text-foreground">
+            {formatCurrency(basket.total)}
+          </p>
+          <p className="text-[0.68rem] font-medium text-muted-foreground">
+            {formatCurrency(basket.openTotal)} still to buy
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-xl"
+          aria-label={`Share ${basket.label}`}
+          onClick={() =>
+            onShare(
+              basket.sections.flatMap((section) =>
+                section.groups.flatMap((group) => group.items)
+              ),
+              basket.label
+            )
+          }
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
       </div>
     </header>
 
