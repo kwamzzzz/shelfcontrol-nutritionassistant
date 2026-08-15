@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   CheckCircle2,
+  ChefHat,
   CircleDollarSign,
   ListChecks,
   Package,
@@ -21,10 +23,38 @@ import { useGroups } from "@/hooks/useGroups";
 import { useProfileNames } from "@/hooks/useProfileNames";
 import { useIsPhone } from "@/hooks/use-shell-mode";
 import { useShoppingList, type ShoppingItem } from "@/hooks/useShoppingList";
+import { useRecipes } from "@/hooks/useRecipes";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | "open" | "completed";
+
+interface DateGroup {
+  key: string;
+  label: string;
+  items: ShoppingItem[];
+}
+
+const dateLabel = (iso: string) => {
+  const date = parseISO(iso);
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "EEE d MMM yyyy");
+};
+
+const groupByDate = (items: ShoppingItem[]): DateGroup[] => {
+  const map = new Map<string, DateGroup>();
+
+  for (const item of items) {
+    const key = item.created_at.slice(0, 10);
+    if (!map.has(key)) {
+      map.set(key, { key, label: dateLabel(item.created_at), items: [] });
+    }
+    map.get(key)!.items.push(item);
+  }
+
+  return [...map.values()].sort((a, b) => (a.key < b.key ? 1 : -1));
+};
 
 const filterTabs: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
@@ -34,6 +64,7 @@ const filterTabs: { key: FilterTab; label: string }[] = [
 
 const ShoppingList = () => {
   const { data: list, isLoading } = useShoppingList();
+  const { data: recipes } = useRecipes();
   const [editing, setEditing] = useState<ShoppingItem | null>(null);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -92,13 +123,23 @@ const ShoppingList = () => {
     });
   }, [filterTab, list, search]);
 
-  const { unpurchased, purchased } = useMemo(
-    () => ({
-      unpurchased: filtered.filter((item) => !item.is_purchased),
-      purchased: filtered.filter((item) => item.is_purchased),
-    }),
-    [filtered]
-  );
+  const { regularGroups, recipeGroups, regularCount, recipeCount } = useMemo(() => {
+    const regular = filtered.filter((item) => !item.recipe_id);
+    const fromRecipes = filtered.filter((item) => Boolean(item.recipe_id));
+
+    return {
+      regularGroups: groupByDate(regular),
+      recipeGroups: groupByDate(fromRecipes),
+      regularCount: regular.length,
+      recipeCount: fromRecipes.length,
+    };
+  }, [filtered]);
+
+  const recipeNames = useMemo(() => {
+    const map = new Map<string, string>();
+    (recipes ?? []).forEach((recipe) => map.set(recipe.id, recipe.name));
+    return map;
+  }, [recipes]);
 
   const filterCount = (key: FilterTab) => {
     if (key === "open") return totals.open;
@@ -306,39 +347,33 @@ const ShoppingList = () => {
           copy="Try another search or switch the list filter."
         />
       ) : (
-        <div
-          className={cn(
-            "grid gap-4",
-            unpurchased.length > 0 &&
-              purchased.length > 0 &&
-              "xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]"
-          )}
-        >
-          {unpurchased.length > 0 && (
+        <div className="space-y-6 md:space-y-8">
+          {regularCount > 0 && (
             <ShoppingSection
-              title="To buy"
-              description="Your active shopping queue"
-              count={unpurchased.length}
+              title="Regular shopping"
+              description="Everyday items you added yourself"
+              count={regularCount}
               icon={ShoppingCart}
               tone="text-primary"
-              items={unpurchased}
+              groups={regularGroups}
               onEdit={setEditing}
               activeGroupId={activeGroupId}
               profileMap={profileMap}
             />
           )}
 
-          {purchased.length > 0 && (
+          {recipeCount > 0 && (
             <ShoppingSection
-              title="In the basket"
-              description={totals.open === 0 ? "This shop is complete" : "Already picked up"}
-              count={purchased.length}
-              icon={CheckCircle2}
+              title="From My Cook Book"
+              description="Ingredients pulled from your recipes"
+              count={recipeCount}
+              icon={ChefHat}
               tone="text-success"
-              items={purchased}
+              groups={recipeGroups}
               onEdit={setEditing}
               activeGroupId={activeGroupId}
               profileMap={profileMap}
+              recipeNames={recipeNames}
             />
           )}
         </div>
@@ -403,10 +438,11 @@ interface ShoppingSectionProps {
   count: number;
   icon: LucideIcon;
   tone: string;
-  items: ShoppingItem[];
+  groups: DateGroup[];
   onEdit: (item: ShoppingItem) => void;
   activeGroupId: string | null;
   profileMap?: Map<string, string>;
+  recipeNames?: Map<string, string>;
 }
 
 const ShoppingSection = ({
@@ -415,10 +451,11 @@ const ShoppingSection = ({
   count,
   icon: Icon,
   tone,
-  items,
+  groups,
   onEdit,
   activeGroupId,
   profileMap,
+  recipeNames,
 }: ShoppingSectionProps) => (
   <section className="surface-panel min-w-0 rounded-[2rem] p-4 sm:p-5">
     <header className="mb-4 flex items-center justify-between gap-4 px-1">
@@ -436,19 +473,40 @@ const ShoppingSection = ({
       </span>
     </header>
 
-    <div className="space-y-2">
-      {items.map((item) => (
-        <ShoppingItemRow
-          key={item.id}
-          item={item}
-          onClick={() => onEdit(item)}
-          addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
-          completedBy={
-            activeGroupId && item.completed_by
-              ? profileMap?.get(item.completed_by)
-              : undefined
-          }
-        />
+    <div className="space-y-7">
+      {groups.map((group) => (
+        <div key={group.key} className="space-y-2">
+          <div className="flex items-center gap-3 px-1">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {group.label}
+            </span>
+            <span className="h-px flex-1 bg-border/50" />
+            <span className="text-[0.7rem] font-semibold tabular-nums text-muted-foreground">
+              {group.items.length}
+            </span>
+          </div>
+
+          {group.items.map((item) => (
+            <div key={item.id} className="space-y-1">
+              {recipeNames && item.recipe_id && recipeNames.get(item.recipe_id) && (
+                <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[0.65rem] font-semibold text-success">
+                  <ChefHat className="h-3 w-3" />
+                  {recipeNames.get(item.recipe_id)}
+                </span>
+              )}
+              <ShoppingItemRow
+                item={item}
+                onClick={() => onEdit(item)}
+                addedBy={activeGroupId ? profileMap?.get(item.user_id) : undefined}
+                completedBy={
+                  activeGroupId && item.completed_by
+                    ? profileMap?.get(item.completed_by)
+                    : undefined
+                }
+              />
+            </div>
+          ))}
+        </div>
       ))}
     </div>
   </section>

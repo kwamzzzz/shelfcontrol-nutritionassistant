@@ -202,6 +202,7 @@ const RecipeDetail = () => {
             name: line.name,
             quantity: line.quantity,
             item_id: need.ingredient.item_id ?? null,
+            recipe_id: recipe.id,
           });
           added += 1;
         } catch {

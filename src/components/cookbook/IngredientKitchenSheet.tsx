@@ -159,6 +159,7 @@ const KitchenSheetBody = ({ need, scale, recipeId, onClose }: Omit<Props, "open"
         name: line.name,
         quantity: line.quantity,
         item_id: ingredient.item_id ?? null,
+        recipe_id: recipeId ?? null,
       });
       toast.success(`${ingredient.name} added to your shopping list`);
     } catch (error: unknown) {
