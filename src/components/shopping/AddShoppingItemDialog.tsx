@@ -206,7 +206,7 @@ const AddShoppingItemDialog = ({
             </div>
             {bulkRows ? (
               <>
-                <div className="min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-border/20 p-2 max-h-[55vh]">
+                <div className="min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-border/20 p-2 max-h-[40vh]">
                   <div className="min-w-[640px] space-y-2">
                     {bulkRows.map((r) => (
                       <div key={r.id} className="grid grid-cols-[minmax(150px,1fr)_4.5rem_7rem_5.5rem_2rem] items-center gap-2">
