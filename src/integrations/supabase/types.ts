@@ -158,39 +158,54 @@ export type Database = {
         Row: {
           admin_notes: string | null
           category: string
+          context: Json
           created_at: string
           id: string
           message: string
           page_path: string | null
           rating: number | null
+          replied_at: string | null
+          screen: string
           screenshot_path: string | null
           status: string
+          status_changed_at: string | null
+          target: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
           admin_notes?: string | null
           category?: string
+          context?: Json
           created_at?: string
           id?: string
           message: string
           page_path?: string | null
           rating?: number | null
+          replied_at?: string | null
+          screen?: string
           screenshot_path?: string | null
           status?: string
+          status_changed_at?: string | null
+          target?: Json | null
           updated_at?: string
           user_id?: string
         }
         Update: {
           admin_notes?: string | null
           category?: string
+          context?: Json
           created_at?: string
           id?: string
           message?: string
           page_path?: string | null
           rating?: number | null
+          replied_at?: string | null
+          screen?: string
           screenshot_path?: string | null
           status?: string
+          status_changed_at?: string | null
+          target?: Json | null
           updated_at?: string
           user_id?: string
         }

@@ -6,6 +6,8 @@ import PhoneHeader from "./PhoneHeader";
 import MobileBottomNav from "./MobileBottomNav";
 import QuickAddSheet from "./QuickAddSheet";
 import MoreSheet from "./MoreSheet";
+import FeedbackButton from "@/components/feedback/FeedbackButton";
+import FeedbackHighlighter from "@/components/feedback/FeedbackHighlighter";
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { Mail, Bell, Search } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -74,6 +76,7 @@ const AppLayout = () => {
                   </span>
                 </button>
               )}
+              <FeedbackButton />
               <button className="flex h-10 w-10 items-center justify-center rounded-full glass-card glass-card-hover">
                 <Bell className="h-4 w-4 text-foreground" />
               </button>
@@ -86,6 +89,8 @@ const AppLayout = () => {
         <main className={cn("flex-1", isPhone ? "px-4 pt-phone-header pb-phone-nav" : "p-6 lg:p-8")}>
           <Outlet />
         </main>
+        {/* Shows the admin what a piece of feedback pointed at, when they arrive from it. */}
+        <FeedbackHighlighter />
       </div>
 
       {isPhone && (

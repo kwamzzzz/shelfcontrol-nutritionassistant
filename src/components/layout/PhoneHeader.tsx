@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import GroupSwitcher from "./GroupSwitcher";
+import FeedbackButton from "@/components/feedback/FeedbackButton";
 import { NAV_ITEMS } from "@/config/navigation";
 
 function titleForPath(pathname: string): string {
@@ -13,7 +14,7 @@ function titleForPath(pathname: string): string {
 }
 
 /**
- * Compact phone header: contextual title + group switching. Fixed to the top and
+ * Compact phone header: contextual title, feedback + group switching. Fixed to the top and
  * padded for the safe-area/notch. Search and secondary actions live within the
  * relevant screens, not here (brief → Headers).
  */
@@ -26,7 +27,10 @@ const PhoneHeader = () => {
         <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
           {titleForPath(pathname)}
         </h1>
-        <GroupSwitcher />
+        <div className="flex shrink-0 items-center gap-2">
+          <FeedbackButton compact />
+          <GroupSwitcher />
+        </div>
       </div>
     </header>
   );

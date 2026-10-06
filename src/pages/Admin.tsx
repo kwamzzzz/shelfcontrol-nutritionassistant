@@ -1,51 +1,24 @@
 import { useState } from "react";
-import { formatDistanceToNow, parseISO, format } from "date-fns";
+import { parseISO, format } from "date-fns";
 import { toast } from "sonner";
 import {
   ShieldCheck, Users, Package, UtensilsCrossed, Receipt, ShoppingCart,
-  MessageSquare, Trash2, Star, ShieldOff, Loader2,
+  MessageSquare, ShieldOff, Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useIsAdmin, useAdminStats, useAdminUsers } from "@/hooks/useAdmin";
-import {
-  useAllFeedback, useUpdateFeedback, useDeleteFeedback, type FeedbackStatus,
-} from "@/hooks/useFeedback";
-import { useSignedImage } from "@/hooks/useSignedImage";
+import { useAllFeedback, useDeleteFeedback } from "@/hooks/useFeedback";
+import FeedbackInbox from "@/components/feedback/FeedbackInbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
-
-const statusStyles: Record<string, string> = {
-  new: "bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-500/20",
-  reviewed: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/20",
-  resolved: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/20",
-};
-
-const Screenshot = ({ path }: { path: string }) => {
-  const src = useSignedImage(path);
-  if (!src) return null;
-  return (
-    <a href={src} target="_blank" rel="noreferrer" className="block w-fit">
-      <img
-        src={src}
-        alt="Feedback screenshot"
-        className="max-h-40 rounded-xl border border-border object-cover"
-      />
-    </a>
-  );
-};
 
 const Admin = () => {
   const { isAdmin, isLoading: checkingRole } = useIsAdmin();
@@ -55,12 +28,11 @@ const Admin = () => {
   const { data: stats } = useAdminStats(isAdmin);
   const { data: users = [] } = useAdminUsers(isAdmin);
   const { data: feedback = [] } = useAllFeedback(isAdmin);
-  const updateFeedback = useUpdateFeedback();
   const deleteFeedback = useDeleteFeedback();
 
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [savingRole, setSavingRole] = useState<string | null>(null);
+  const emails = Object.fromEntries(users.map((u) => [u.id, u.email ?? ""]));
 
   if (checkingRole) {
     return <p className="text-sm text-muted-foreground">Checking access…</p>;
@@ -79,24 +51,6 @@ const Admin = () => {
       </Card>
     );
   }
-
-  const setStatus = async (id: string, status: FeedbackStatus) => {
-    try {
-      await updateFeedback.mutateAsync({ id, status });
-      toast.success(`Marked as ${status}`);
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Couldn't update feedback.");
-    }
-  };
-
-  const saveNote = async (id: string) => {
-    try {
-      await updateFeedback.mutateAsync({ id, admin_notes: notes[id] ?? "" });
-      toast.success("Reply saved");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save the reply.");
-    }
-  };
 
   const toggleAdmin = async (userId: string, grant: boolean) => {
     setSavingRole(userId);
@@ -148,73 +102,8 @@ const Admin = () => {
           <TabsTrigger value="stats">Usage</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="feedback" className="mt-5 space-y-3">
-          {feedback.length === 0 ? (
-            <Card className="rounded-2xl">
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                No feedback submitted yet.
-              </CardContent>
-            </Card>
-          ) : (
-            feedback.map((f) => (
-              <Card key={f.id} className="rounded-2xl shadow-sm">
-                <CardContent className="space-y-3 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="capitalize">{f.category}</Badge>
-                    <Badge variant="outline" className={cn(statusStyles[f.status])}>{f.status}</Badge>
-                    {f.rating != null && (
-                      <span className="flex items-center gap-0.5 text-xs text-amber-500">
-                        {Array.from({ length: f.rating }).map((_, i) => (
-                          <Star key={i} className="h-3.5 w-3.5 fill-current" />
-                        ))}
-                      </span>
-                    )}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {formatDistanceToNow(parseISO(f.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
-
-                  <p className="whitespace-pre-wrap text-sm text-foreground">{f.message}</p>
-                  {f.page_path && (
-                    <p className="text-[11px] text-muted-foreground">Page: {f.page_path}</p>
-                  )}
-                  {f.screenshot_path && <Screenshot path={f.screenshot_path} />}
-
-                  <Textarea
-                    rows={2}
-                    placeholder="Reply / internal note (visible to the submitter)"
-                    value={notes[f.id] ?? f.admin_notes ?? ""}
-                    onChange={(e) => setNotes((n) => ({ ...n, [f.id]: e.target.value }))}
-                  />
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Select value={f.status} onValueChange={(v) => setStatus(f.id, v as FeedbackStatus)}>
-                      <SelectTrigger className="h-9 w-[150px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="reviewed">Reviewed</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" variant="secondary" onClick={() => saveNote(f.id)}>
-                      Save reply
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setPendingDelete(f.id)}
-                    >
-                      <Trash2 className="mr-1.5 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value="feedback" className="mt-5">
+          <FeedbackInbox feedback={feedback} emails={emails} onDelete={setPendingDelete} />
         </TabsContent>
 
         <TabsContent value="users" className="mt-5">

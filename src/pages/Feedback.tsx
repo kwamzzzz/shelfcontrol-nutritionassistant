@@ -1,18 +1,12 @@
 import { useState } from "react";
 import { formatDistanceToNow, parseISO } from "date-fns";
-import { MessageSquarePlus, Star, Inbox } from "lucide-react";
+import { MessageSquarePlus, Star, Inbox, Crosshair } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FeedbackDialog from "@/components/feedback/FeedbackDialog";
-import { useMyFeedback } from "@/hooks/useFeedback";
+import { useMyFeedback, statusLabel, statusStyles } from "@/hooks/useFeedback";
 import { cn } from "@/lib/utils";
-
-const statusStyles: Record<string, string> = {
-  new: "bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-500/20",
-  reviewed: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/20",
-  resolved: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/20",
-};
 
 const Feedback = () => {
   const [open, setOpen] = useState(false);
@@ -24,7 +18,8 @@ const Feedback = () => {
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Feedback</h1>
           <p className="mt-1 text-muted-foreground">
-            Share bugs, ideas and ratings — and follow what we've done with them.
+            What you've sent and what we've done with it. Use the Feedback button at the top of
+            any screen to send more.
           </p>
         </div>
         <Button onClick={() => setOpen(true)}>
@@ -53,7 +48,7 @@ const Feedback = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="capitalize">{f.category}</Badge>
                   <Badge variant="outline" className={cn(statusStyles[f.status])}>
-                    {f.status}
+                    {statusLabel(f.status)}
                   </Badge>
                   {f.rating != null && (
                     <span className="flex items-center gap-0.5 text-xs text-amber-500">
@@ -67,8 +62,14 @@ const Feedback = () => {
                   </span>
                 </div>
                 <p className="whitespace-pre-wrap text-sm text-foreground">{f.message}</p>
-                {f.page_path && (
-                  <p className="text-[11px] text-muted-foreground">Page: {f.page_path}</p>
+                {(f.screen || f.page_path) && (
+                  <p className="text-[11px] text-muted-foreground">On {f.screen || f.page_path}</p>
+                )}
+                {f.target && (
+                  <p className="flex items-center gap-1.5 text-[11px] text-[#FF5A25]">
+                    <Crosshair className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{f.target.label}</span>
+                  </p>
                 )}
                 {f.admin_notes && (
                   <p className="rounded-lg bg-secondary/60 p-2 text-xs text-muted-foreground">
