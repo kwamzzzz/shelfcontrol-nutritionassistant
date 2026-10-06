@@ -9,6 +9,10 @@ vi.mock("@/hooks/useMyInvites", () => ({
   useMyInvites: () => ({ pendingCount: 0 }),
 }));
 
+vi.mock("@/hooks/useAdmin", () => ({
+  useIsAdmin: () => ({ isAdmin: false }),
+}));
+
 vi.mock("@/components/ModeToggle", async () => {
   const React = await import("react");
   const ModeToggle = React.forwardRef<HTMLButtonElement, { className?: string }>(
