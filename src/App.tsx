@@ -1,11 +1,12 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Outlet, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { GroupProvider } from "@/contexts/GroupContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppLayout from "@/components/layout/AppLayout";
@@ -36,6 +37,7 @@ import ItemCatalog from "@/pages/ItemCatalog";
 import PantryAlert from "@/pages/PantryAlert";
 import Feedback from "@/pages/Feedback";
 import Admin from "@/pages/Admin";
+import ResetPassword from "@/pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,27 @@ const AuthRoute = () => {
   return <Auth />;
 };
 
+// A password-reset email link signs the user in with a "recovery" marker. Wherever the link
+// lands, send them to set a new password first. Read the marker now, before it is cleared.
+const arrivedFromRecoveryLink = window.location.hash.includes("type=recovery");
+
+const RecoveryRedirect = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Wait until the link has signed the user in; moving earlier would drop it from the address.
+    if (arrivedFromRecoveryLink) {
+      supabase.auth.getSession().then(() => navigate("/reset-password", { replace: true }));
+    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") navigate("/reset-password", { replace: true });
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  return null;
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -96,8 +119,10 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <RecoveryRedirect />
         <Routes>
           <Route path="/auth" element={<AuthRoute />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/invite/:token" element={<AcceptInvite />} />
           <Route element={<ProtectedRoutes />}>
             <Route path="/" element={<Dashboard />} />

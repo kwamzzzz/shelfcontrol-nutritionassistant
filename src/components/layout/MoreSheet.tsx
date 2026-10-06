@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { MORE_SECTIONS, moreItems, isNavItemActive } from "@/config/navigation";
 import { useMyInvites } from "@/hooks/useMyInvites";
 import { useIsAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -38,6 +39,13 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
   const go = (path: string) => {
     onOpenChange(false);
     navigate(path);
+  };
+
+  // Same as the desktop sidebar's Sign Out: phones have no sidebar, so it lives here.
+  const signOut = async () => {
+    onOpenChange(false);
+    await supabase.auth.signOut();
+    navigate("/auth");
   };
 
   return (
@@ -101,6 +109,18 @@ const MoreSheet = ({ open, onOpenChange }: MoreSheetProps) => {
               <span className="min-w-0 flex-1 text-sm font-medium">{isDark ? "Light mode" : "Dark mode"}</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={signOut}
+            className="bento-action"
+            style={{ "--tone": "var(--bento-slate)" } as ToneStyle}
+          >
+            <span className="bento-well">
+              <LogOut className="h-5 w-5" strokeWidth={2.2} />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-medium">Sign out</span>
+          </button>
         </div>
       </DrawerContent>
     </Drawer>
