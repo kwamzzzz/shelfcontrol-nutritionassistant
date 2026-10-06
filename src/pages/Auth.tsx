@@ -96,6 +96,8 @@ const Auth = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
+                // Keep focus in the password box, so a phone keyboard stays open.
+                onMouseDown={(e) => e.preventDefault()}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
                 className="absolute inset-y-0 right-0 inline-flex h-11 w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
