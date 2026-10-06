@@ -68,3 +68,17 @@ Claude in Lovable.
 - Tests: ResetPassword.test.tsx, 4 pass (new one covers a session without a reset link).
 - Files: src/pages/Auth.tsx, src/pages/ResetPassword.tsx, src/pages/ResetPassword.test.tsx, src/App.tsx.
 - Still needs: journal chapter and before/after captures.
+
+---
+
+## Run-down for Claude Code — reset password polish (Lovable, 6 Oct 2026)
+
+**What changed:** On the "Set a new password" page (`src/pages/ResetPassword.tsx`), the "Type it again" box now has its own show/hide eye (it previously shared the first box's eye and had no button of its own). After a successful reset the page no longer redirects instantly — it shows a confirmation screen: green check, "Password reset", "Your new password is saved. You're signed in with it now.", and a "Continue to Shelf Control" button.
+
+**Why:** Kwame asked that users can see both the new and retyped password, and get a clear confirmation that the reset worked.
+
+**Tested:** Headless Chromium on localhost:8080 with the injected session and the `sc-recovery` flag set; the auth save call was stubbed so no real password changed. Both eyes toggle dots ↔ plain text independently; submitting shows the confirmation screen (screenshot verified). Build OK.
+
+**Files touched:** `src/pages/ResetPassword.tsx` only.
+
+**Still to do on your side:** journal chapter + before/after capture on 127.0.0.1:8095. Lovable commits to `main` automatically; nothing left uncommitted by me.
