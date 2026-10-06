@@ -39,9 +39,13 @@ const ResetPassword = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
+    sessionStorage.removeItem("sc-recovery");
     toast({ title: "Password updated", description: "You're signed in with your new password." });
     navigate("/", { replace: true });
   };
+
+  // Only a session opened by a reset link may set a password here without the old one.
+  const fromResetLink = sessionStorage.getItem("sc-recovery") === "1";
 
   if (loading) return null;
 
@@ -56,7 +60,7 @@ const ResetPassword = () => {
           <h1 className="text-sm text-muted-foreground">Set a new password</h1>
         </div>
 
-        {!session ? (
+        {!session || !fromResetLink ? (
           <div className="space-y-4 text-center">
             <p className="text-sm text-muted-foreground">
               This link has expired or has already been used. Ask for a new one and use the latest email.

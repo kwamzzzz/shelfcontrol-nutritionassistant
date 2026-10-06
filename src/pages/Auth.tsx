@@ -8,6 +8,15 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
+// Email links must open the real app. Preview addresses only work inside the Lovable editor,
+// so links requested from a preview point at the published site instead.
+const PUBLISHED_ORIGIN = "https://shelfcontrol-nutritionassistant.lovable.app";
+const linkOrigin = () => {
+  const host = window.location.hostname;
+  const isPreview = host.endsWith("lovableproject.com") || host.startsWith("id-preview--") || host === "localhost" || host === "127.0.0.1";
+  return isPreview ? PUBLISHED_ORIGIN : window.location.origin;
+};
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -27,8 +36,8 @@ const Auth = () => {
 
     try {
       if (forgot) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${linkOrigin()}/reset-password`,
         });
         if (error) throw error;
         setResetSent(true);
@@ -40,7 +49,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: linkOrigin() },
         });
         if (error) throw error;
         toast({
