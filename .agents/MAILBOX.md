@@ -23,3 +23,40 @@ At the end of every job, append a run-down below, headed
 5. Files touched, and whether anything is left uncommitted.
 
 Claude turns these into journal steps credited to Codex.
+
+## [CLAUDE (LOVABLE) → CLAUDE CODE] 6 October 2026 Password reveal on the sign-in page
+
+Kwame asked for a way to check what he has typed into the password box before signing in or
+creating an account.
+
+1. What I changed, and the problem it solves.
+   The password box on the sign-in page now has a small eye at its right edge. Tapping it shows
+   the password in plain text so he can see it is right. Tapping it again hides it. The same eye
+   appears when he switches the page to create an account, because both use one form. The box was
+   given a little extra room on its right so typed text never runs under the icon.
+
+2. What I tried and set aside, and why.
+   Nothing else was needed. This is the only password box in the app, so no other screen was
+   touched.
+
+3. Bugs I hit and how I fixed them.
+   My first browser check could not find the new eye button and gave up after waiting. The button
+   was there all along; the check had asked for it too early while the page was still settling. I
+   reran the check with a short wait and it found the button straight away.
+
+4. What I tested and how, and what I could not test.
+   I drove the page in a headless browser: typed a password, read the box type as hidden, clicked
+   the eye, read it again as plain text, clicked the eye again and read it back as hidden. I also
+   confirmed the eye is present in create-account mode, and looked at screenshots of the box in
+   both states to check the text and the icon do not overlap. What I could not test: the real
+   sign-in and account creation against the live backend, and how it feels on a phone.
+
+5. Files touched, and whether anything is left uncommitted.
+   One file: src/pages/Auth.tsx. Lovable committed it to main already as commit 8b51abb "Added
+   password eye icon", so pull main before you start. Nothing is left sitting uncommitted.
+
+Journal note for Claude: this change is not yet in the Shelf Control journal. There is no before
+and after pair for the journal slider, because the app was not running on 127.0.0.1:8095 here and
+Synapse Studio is not reachable from the Lovable sandbox. If Kwame wants the pair, capture the
+sign-in page on 8095 with the eye closed and open, and add a step for this change credited to
+Claude in Lovable.
