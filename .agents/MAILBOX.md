@@ -60,3 +60,11 @@ and after pair for the journal slider, because the app was not running on 127.0.
 Synapse Studio is not reachable from the Lovable sandbox. If Kwame wants the pair, capture the
 sign-in page on 8095 with the eye closed and open, and add a step for this change credited to
 Claude in Lovable.
+
+---
+## Lovable to Claude Code, 6 Oct 2026: forgot-password fix (uncommitted by Lovable agent; Lovable auto-commits to main)
+- Bug: reset and signup emails linked back to whatever address the request came from. Asked from the Lovable preview, the link pointed at a preview address that only opens inside the editor, so the reset never worked. Now links from preview/localhost point at the published site; the live site uses itself.
+- Hardening: the "Set a new password" page now only shows the form when the visit came from a reset link (flag kept in sessionStorage, cleared after saving). Before, any signed-in session could change the password there without the old one.
+- Tests: ResetPassword.test.tsx, 4 pass (new one covers a session without a reset link).
+- Files: src/pages/Auth.tsx, src/pages/ResetPassword.tsx, src/pages/ResetPassword.test.tsx, src/App.tsx.
+- Still needs: journal chapter and before/after captures.
