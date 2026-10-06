@@ -23,6 +23,14 @@ describe("ResetPassword", () => {
   beforeEach(() => {
     updateUser.mockReset().mockResolvedValue({ error: null });
     session = { user: { id: "u1" } };
+    sessionStorage.setItem("sc-recovery", "1");
+  });
+
+  it("will not change a password for a session that did not come from a reset link", () => {
+    sessionStorage.removeItem("sc-recovery");
+    renderPage();
+    expect(screen.queryByLabelText("New password")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send a new link" })).toBeInTheDocument();
   });
 
   it("refuses two different passwords", () => {
