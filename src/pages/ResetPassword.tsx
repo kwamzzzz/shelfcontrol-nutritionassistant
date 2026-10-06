@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,8 +21,10 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [mismatch, setMismatch] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
