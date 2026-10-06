@@ -61,7 +61,24 @@ const ResetPassword = () => {
           <h1 className="text-sm text-muted-foreground">Set a new password</h1>
         </div>
 
-        {!session || !fromResetLink ? (
+        {done ? (
+          <div className="space-y-4 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-primary" aria-hidden />
+            <div className="space-y-1">
+              <p className="text-base font-medium text-foreground">Password reset</p>
+              <p className="text-sm text-muted-foreground">
+                Your new password is saved. You're signed in with it now.
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => navigate("/", { replace: true })}
+              className="w-full rounded-xl h-11 font-medium gradient-cool border-0 hover:opacity-90 transition-opacity"
+            >
+              Continue to Shelf Control
+            </Button>
+          </div>
+        ) : !session || !fromResetLink ? (
           <div className="space-y-4 text-center">
             <p className="text-sm text-muted-foreground">
               This link has expired or has already been used. Ask for a new one and use the latest email.
