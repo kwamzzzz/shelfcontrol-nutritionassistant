@@ -124,21 +124,33 @@ const ResetPassword = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm-password" className="text-muted-foreground">Type it again</Label>
-              <Input
-                id="confirm-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => {
-                  setConfirm(e.target.value);
-                  setMismatch(false);
-                }}
-                required
-                minLength={6}
-                aria-invalid={mismatch}
-                aria-describedby={mismatch ? "password-mismatch" : undefined}
-                className={inputClass}
-              />
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirm ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => {
+                    setConfirm(e.target.value);
+                    setMismatch(false);
+                  }}
+                  required
+                  minLength={6}
+                  aria-invalid={mismatch}
+                  aria-describedby={mismatch ? "password-mismatch" : undefined}
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={showConfirm ? "Hide retyped password" : "Show retyped password"}
+                  aria-pressed={showConfirm}
+                  className="absolute inset-y-0 right-0 inline-flex h-11 w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {mismatch && (
                 <p id="password-mismatch" role="alert" className="text-sm text-destructive">
                   The two passwords don't match.
