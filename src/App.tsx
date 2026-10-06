@@ -101,9 +101,11 @@ const RecoveryRedirect = () => {
   useEffect(() => {
     // Wait until the link has signed the user in; moving earlier would drop it from the address.
     if (arrivedFromRecoveryLink) {
+      sessionStorage.setItem("sc-recovery", "1");
       supabase.auth.getSession().then(() => navigate("/reset-password", { replace: true }));
     }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") sessionStorage.setItem("sc-recovery", "1");
       if (event === "PASSWORD_RECOVERY") navigate("/reset-password", { replace: true });
     });
     return () => subscription.unsubscribe();
