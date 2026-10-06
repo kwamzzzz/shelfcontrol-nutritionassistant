@@ -49,6 +49,13 @@ const FeedbackPicker = ({
   const [box, setBox] = useState<FeedbackTarget["rect"] | null>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
 
+  // The dialog this opens from makes the page ignore the pointer until its
+  // closing animation ends, which hides everything from elementsFromPoint. A
+  // quick tap could land in that gap, so the page is made pickable at once.
+  useEffect(() => {
+    document.body.style.pointerEvents = "auto";
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -111,8 +118,13 @@ const FeedbackPicker = ({
       onPointerMove={move}
       onPointerDown={(e) => {
         e.preventDefault();
-        e.currentTarget.setPointerCapture(e.pointerId);
         start.current = { x: e.clientX, y: e.clientY };
+        try {
+          // Keeps a drag going when the finger slides over other parts of the page.
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // Without capture, the overlay still covers the whole screen.
+        }
         setBox(null);
       }}
       onPointerUp={up}

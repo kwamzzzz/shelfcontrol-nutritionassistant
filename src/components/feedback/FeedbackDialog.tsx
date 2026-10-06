@@ -157,10 +157,18 @@ const FeedbackDialog = ({ open, onOpenChange }: Props) => {
 
   return (
     <>
-      <Dialog open={open && !picking} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
+      {/* While picking, the dialog is still fading out, and it would take a touch on
+          the picker for a tap outside and close itself, losing what was typed. */}
+      <Dialog
+        open={open && !picking}
+        onOpenChange={(v) => (v ? onOpenChange(true) : !picking && close())}
+      >
         <DialogContent
           data-feedback-ui
           overlayProps={{ "data-feedback-ui": "" }}
+          onInteractOutside={(e) => {
+            if ((e.target as Element | null)?.closest?.("[data-feedback-ui]")) e.preventDefault();
+          }}
           className="overflow-x-hidden sm:max-w-lg [&>*]:min-w-0"
         >
           <DialogHeader>
