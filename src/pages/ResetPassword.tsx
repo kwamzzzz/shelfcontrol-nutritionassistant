@@ -42,8 +42,7 @@ const ResetPassword = () => {
       return;
     }
     sessionStorage.removeItem("sc-recovery");
-    toast({ title: "Password updated", description: "You're signed in with your new password." });
-    navigate("/", { replace: true });
+    setDone(true);
   };
 
   // Only a session opened by a reset link may set a password here without the old one.
