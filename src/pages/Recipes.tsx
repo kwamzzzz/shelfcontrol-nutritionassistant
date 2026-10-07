@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Search, Share2, Sparkles, Users, X } from "lucide-react";
+import { BookOpen, Download, Search, Share2, Sparkles, Users, X } from "lucide-react";
+import { downloadRecipeExchange } from "@/lib/recipe-exchange";
 import { cn } from "@/lib/utils";
 import { MOCK_RECIPES } from "@/data/cookbookMockData";
 import { DEFAULT_TAGS } from "@/components/recipes/RecipeTagEditor";
@@ -175,6 +176,17 @@ const Recipes = () => {
           >
             <Sparkles className="h-4 w-4" /> Sample cookbook page
           </Link>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full"
+            disabled={!recipes?.length}
+            onClick={() => recipes && downloadRecipeExchange(recipes)}
+            title="Download these recipes as a file Medfolio can import (Wellness › Recipes › Import)"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export to Medfolio
+          </Button>
           <RecipeImportDialog />
           <AddRecipeDialog />
         </div>

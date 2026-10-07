@@ -95,7 +95,7 @@ export const normalizeNutritionUnit = (unit?: string | null) => {
   return UNIT_ALIASES[normalized] ?? normalized;
 };
 
-const gramsFor = (quantity: number, unit: string, item: NutritionItemLike) => {
+export const gramsFor = (quantity: number, unit: string, item: NutritionItemLike) => {
   switch (unit) {
     case "mg":
       return quantity / 1000;
